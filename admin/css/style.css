@@ -1,0 +1,56 @@
+/* FONDO MÁS OSCURO PARA TODO EL SISTEMA */
+body {
+    margin: 0;
+    padding: 0;
+    background: #e9ecef !important;  /* ← MÁS OSCURO que #f8f9fa */
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content-wrapper {
+    min-height: 100vh;
+    background: #e9ecef !important;  /* ← MÁS OSCURO */
+}
+
+/* Fondo más oscuro para las cards */
+.card {
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    background: #ffffff;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Fondo para el header del navbar */
+.navbar-dark.bg-primary {
+    background: linear-gradient(45deg, #2c3e50, #3498db) !important; /* ← MÁS OSCURO */
+}
+
+/* ============================================================
+   FIX: Evitar que la barra de navegación se superponga en Reportes
+   ============================================================ */
+.content-wrapper {
+    padding-top: 80px !important;
+    margin-top: 0 !important;
+}
+
+body > nav.navbar,
+body > header,
+.navbar.fixed-top {
+    z-index: 1030;
+}
+
+.card form,
+.card .form-label {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding-top: 70px !important;
+    }
+}

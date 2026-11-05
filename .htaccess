@@ -1,0 +1,15 @@
+Options -Indexes
+
+# Bloquear acceso directo a archivos sensibles
+<FilesMatch "\.(sql|bak|log|md|txt|zip)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso a archivos ocultos del sistema
+<FilesMatch "^\.htaccess$">
+    Require all denied
+</FilesMatch>
+
+<Files ".env">
+    Require all denied
+</Files>

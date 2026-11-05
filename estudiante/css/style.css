@@ -1,0 +1,48 @@
+.dashboard-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 10px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.bg-estudiantes { background: linear-gradient(45deg, #667eea, #764ba2); }
+.bg-profesores { background: linear-gradient(45deg, #f093fb, #f5576c); }
+.bg-secciones { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+.bg-notas { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+
+.sidebar {
+    min-height: calc(100vh - 76px);
+    background: #2c3e50;
+}
+
+.sidebar .nav-link {
+    color: #ecf0f1;
+    padding: 12px 20px;
+    margin: 5px 0;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover {
+    background: #34495e;
+    color: #3498db;
+}
+
+.sidebar .nav-link.active {
+    background: #3498db;
+    color: white;
+}

@@ -1,0 +1,25 @@
+# Sistema de Gestión Estudiantil
+
+Aplicación PHP y MySQL para gestionar estudiantes, profesores, secciones, asistencia, evaluaciones, notas y documentos escolares.
+
+## Requisitos
+
+- PHP 7.4 o superior y MySQL/MariaDB.
+- Extensiones PHP `pdo_mysql`, `mbstring` y las requeridas por TCPDF para generar documentos PDF.
+- HTTPS en producción.
+
+## Base de datos
+
+Configura la conexión usando las variables de entorno `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASS`, o copia `includes/config.local.example.php` a `includes/config.local.php` y reemplaza los valores de ejemplo. El archivo local está excluido de Git.
+
+Los archivos SQL y respaldos actuales pueden contener datos personales de estudiantes. Se conservan en el equipo, pero están excluidos de Git y bloqueados para descarga directa desde Apache. Antes de preparar un repositorio, crea un esquema de instalación limpio y anonimizado si hace falta compartirlo.
+
+El proyecto incluye `migracion_reset_password.sql` para una migración concreta; revisa su contenido y compatibilidad con la base de datos antes de ejecutarla.
+
+## Despliegue
+
+No se incluye configuración automática de publicación: primero confirma el proveedor, la ruta pública y los requisitos de PHP. En producción, deja `APP_ENV=production`, configura las credenciales de la base de datos y verifica HTTPS. La carpeta de registros se crea durante la ejecución y no debe publicarse.
+
+## PDF
+
+El sistema usa **TCPDF**, incluido en `includes/tcpdf/` (versión 6.10.0). Se conserva su licencia junto con la biblioteca; no elimines esa carpeta ni sus fuentes requeridas.

@@ -1,0 +1,10 @@
+.env
+includes/config.local.php
+logs/
+admin/respaldos/backups/
+sistema_estudiantes (8).sql
+*.zip
+arbol.txt
+tree.txt
+text.txt
+texto.txt

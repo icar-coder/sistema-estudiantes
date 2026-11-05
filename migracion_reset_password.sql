@@ -1,0 +1,3 @@
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255) NULL AFTER ultimo_login,
+  ADD COLUMN IF NOT EXISTS reset_expira DATETIME NULL AFTER reset_token;
