@@ -45,7 +45,7 @@ $año_escolar_activo = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$año_escolar_activo) {
     error_log("Error en " . __FILE__ . ": No hay año escolar activo disponible.");
     $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 

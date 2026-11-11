@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/paths.php';
+
 // ============================================================
 // CONFIGURACIÓN DE SESIÓN
 // ============================================================
@@ -6,12 +8,7 @@ define('SESSION_TIMEOUT', 1800);   // 30 minutos de inactividad
 define('SESSION_WARNING', 300);    // 5 minutos antes de expirar
 
 function obtenerRutaBaseApp() {
-    if (defined('BASE_URL') && BASE_URL) {
-        $ruta = parse_url(BASE_URL, PHP_URL_PATH);
-        return $ruta ?: '/SistemaEstudiantes';
-    }
-
-    return '/SistemaEstudiantes';
+    return app_base_path();
 }
 
 function iniciarSesionSegura() {
@@ -45,8 +42,7 @@ function redirigirAlLogin($mensaje = 'Debes iniciar sesión para continuar.', $t
     $_SESSION['mensaje_login'] = $mensaje;
     $_SESSION['tipo_mensaje'] = $tipo;
 
-    $base = obtenerRutaBaseApp();
-    header('Location: ' . $base . '/login.php');
+    header('Location: ' . app_url('login.php'));
     exit();
 }
 
@@ -99,8 +95,7 @@ function checkRole($allowed_roles) {
     iniciarSesionSegura();
 
     if (!isset($_SESSION['rol']) || !in_array($_SESSION['rol'], $allowed_roles, true)) {
-        $base = obtenerRutaBaseApp();
-        header('Location: ' . $base . '/acceso-denegado.php');
+        header('Location: ' . app_url('acceso-denegado.php'));
         exit();
     }
 }

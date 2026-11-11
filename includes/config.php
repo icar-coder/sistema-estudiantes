@@ -1,10 +1,11 @@
 <?php
 // includes/config.php
 
-$script_dir = dirname($_SERVER['PHP_SELF'] ?? '/');
+require_once __DIR__ . '/paths.php';
+
 $base_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$base_path = $script_dir !== '/' ? rtrim($script_dir, '/') : '';
+$base_path = app_base_path();
 
 // Configuración de la aplicación
 define('APP_ENV', getenv('APP_ENV') ?: 'production');

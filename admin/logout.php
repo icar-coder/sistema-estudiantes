@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../includes/paths.php';
+
 session_start();
 
 $_SESSION = [];
@@ -23,6 +25,6 @@ session_regenerate_id(true);
 $_SESSION['mensaje_login'] = 'Has cerrado sesión correctamente.';
 $_SESSION['tipo_mensaje'] = 'success';
 
-header('Location: /SistemaEstudiantes/login.php');
+header('Location: ' . app_url('login.php'));
 exit;
 ?>

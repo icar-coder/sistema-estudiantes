@@ -10,7 +10,7 @@ $inscripcion_id = $_GET['id'] ?? null;
 if (!$inscripcion_id) {
     error_log("Error en " . __FILE__ . ": ID de inscripciÃ³n no especificado.");
     $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 
@@ -57,14 +57,14 @@ try {
     if (!$inscripcion) {
         error_log("Error en " . __FILE__ . ": InscripciÃ³n no encontrada.");
         $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
         exit;
     }
     
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
     $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 

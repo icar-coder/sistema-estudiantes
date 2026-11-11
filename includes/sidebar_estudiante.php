@@ -1,7 +1,6 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF']);
-$base = defined('BASE_URL') ? parse_url(BASE_URL, PHP_URL_PATH) : '/SistemaEstudiantes';
-$base = rtrim($base ?: '/SistemaEstudiantes', '/');
+$base = app_base_path();
 ?>
 
 <div class="col-md-3 sidebar">

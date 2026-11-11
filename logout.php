@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/includes/paths.php';
+
 session_start();
 
 $motivo = $_GET['expired'] ?? null;
@@ -35,6 +37,6 @@ if ($motivo === '1') {
     $_SESSION['tipo_mensaje'] = 'success';
 }
 
-header('Location: /SistemaEstudiantes/login.php');
+header('Location: ' . app_url('login.php'));
 exit;
 ?>

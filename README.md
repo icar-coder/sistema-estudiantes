@@ -20,6 +20,8 @@ El proyecto incluye `migracion_reset_password.sql` para una migración concreta;
 
 No se incluye configuración automática de publicación: primero confirma el proveedor, la ruta pública y los requisitos de PHP. En producción, deja `APP_ENV=production`, configura las credenciales de la base de datos y verifica HTTPS. La carpeta de registros se crea durante la ejecución y no debe publicarse.
 
+Las rutas web se ajustan automáticamente a la ubicación de la aplicación: por ejemplo, `/SistemaEstudiantes` en XAMPP y `/` cuando se publica en la raíz del dominio. Si se instala bajo otra ruta, se puede definir `APP_BASE_PATH` con esa ruta (por ejemplo, `/mi-aplicacion`).
+
 ## PDF
 
 El sistema usa **TCPDF**, incluido en `includes/tcpdf/` (versión 6.10.0). Se conserva su licencia junto con la biblioteca; no elimines esa carpeta ni sus fuentes requeridas.

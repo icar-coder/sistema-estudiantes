@@ -32,7 +32,7 @@ try {
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
     $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 

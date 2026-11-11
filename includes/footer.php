@@ -7,16 +7,14 @@
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <?php $asset_base = defined('BASE_URL') ? BASE_URL : 'http://localhost/sistemaestudiantes2'; ?>
-    <script src="<?php echo $asset_base; ?>/js/main.js"></script>
+    <script src="<?php echo htmlspecialchars(app_url('js/main.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 
     <?php if (isset($_SESSION['user_id'])): ?>
     <script>
     (function() {
         const TIMEOUT_MS = <?php echo SESSION_TIMEOUT * 1000; ?>;
         const WARNING_MS = <?php echo SESSION_WARNING * 1000; ?>;
-        const basePath = '<?php echo defined('BASE_URL') ? parse_url(BASE_URL, PHP_URL_PATH) ?: '/SistemaEstudiantes' : '/SistemaEstudiantes'; ?>';
-        const LOGOUT_URL = basePath + '/logout.php?expired=1';
+        const LOGOUT_URL = <?php echo json_encode(app_url('logout.php?expired=1')); ?>;
         let ultimaActividad = Date.now();
         let avisoMostrado = false;
 

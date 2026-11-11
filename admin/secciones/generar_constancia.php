@@ -8,7 +8,7 @@ checkRole(['admin']);
 if (!isset($_GET['inscripcion_id']) || empty($_GET['inscripcion_id'])) {
     error_log("Error en " . __FILE__ . ": No se proporcionó ID de inscripción.");
     $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 
@@ -64,7 +64,7 @@ $datos = obtenerDatosInscripcion($inscripcion_id, $pdo);
 if (!$datos) {
     error_log("Error en " . __FILE__ . ": No se encontraron datos para la inscripción ID: " . $inscripcion_id);
     $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 

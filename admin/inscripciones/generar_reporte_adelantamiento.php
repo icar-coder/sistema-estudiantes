@@ -9,7 +9,7 @@ $historial_id = $_GET['id'] ?? null;
 if (!$historial_id) {
     error_log("Error en " . __FILE__ . ": ID de historial no especificado.");
     $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 
@@ -39,7 +39,7 @@ try {
     if (!$adelanto) {
         error_log("Error en " . __FILE__ . ": Adelantamiento no encontrado.");
         $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
         exit;
     }
 
@@ -77,7 +77,7 @@ try {
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
     $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/SistemaEstudiantes/'));
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 

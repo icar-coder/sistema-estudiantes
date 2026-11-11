@@ -1,6 +1,6 @@
 <?php
 // includes/sidebar_profesor.php
-$base_url = "http://localhost/SistemaEstudiantes";
+$base_url = app_base_path();
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/includes/paths.php';
+
 if (headers_sent()) {
     error_log('Error en ' . __FILE__ . ': headers ya enviados antes de iniciar sesión.');
     echo 'Ocurrió un error al iniciar sesión. Intente nuevamente.';
@@ -88,12 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['nombre'] = obtenerNombreUsuario($pdo, $usuario['rol'], $usuario['relacion_id']);
 
                     $redirecciones = [
-                        'admin' => '/SistemaEstudiantes/admin/dashboard.php',
-                        'profesor' => '/SistemaEstudiantes/profesor/dashboard.php',
-                        'estudiante' => '/SistemaEstudiantes/estudiante/dashboard.php'
+                        'admin' => app_url('admin/dashboard.php'),
+                        'profesor' => app_url('profesor/dashboard.php'),
+                        'estudiante' => app_url('estudiante/dashboard.php')
                     ];
 
-                    header('Location: ' . ($redirecciones[$usuario['rol']] ?? '/SistemaEstudiantes/'));
+                    header('Location: ' . ($redirecciones[$usuario['rol']] ?? app_url()));
                     exit;
                 }
 
