@@ -158,7 +158,7 @@ try {
         'completado' => $horarios_count > 0,
         'titulo' => 'Horarios Configurados',
         'descripcion' => 'Asignar horarios a las secciones',
-        'enlace' => 'secciones/asignar_profesores.php',
+        'enlace' => 'horarios/gestionar.php',
         'icono' => 'fas fa-clock',
         'cantidad' => $horarios_count
     ];

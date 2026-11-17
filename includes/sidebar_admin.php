@@ -3,6 +3,7 @@
 <?php
 // includes/sidebar_admin.php
 $current_page = basename($_SERVER['PHP_SELF']);
+$current_path = str_replace('\\', '/', $_SERVER['PHP_SELF']);
 $base = app_base_path();
 ?>
 
@@ -55,8 +56,8 @@ $base = app_base_path();
                         <span>Secciones</span>
                     </a>
                 </div>
-                <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/secciones/gestionar.php" class="nav-link">
+                <div class="nav-item <?php echo (strpos($current_path, '/admin/secciones/') === false && strpos($current_path, '/admin/horarios/') !== false) ? 'active' : ''; ?>">
+                    <a href="<?php echo $base; ?>/admin/horarios/gestionar.php" class="nav-link">
                         <i class="fas fa-clock"></i>
                         <span>Horarios</span>
                     </a>
