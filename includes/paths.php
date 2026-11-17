@@ -4,6 +4,7 @@ function app_base_path(): string
 {
     $configuredPath = getenv('APP_BASE_PATH');
     if ($configuredPath !== false) {
+        $configuredPath = str_replace('\\', '/', $configuredPath);
         $configuredPath = trim($configuredPath, '/');
         return $configuredPath === '' ? '' : '/' . $configuredPath;
     }
@@ -13,7 +14,7 @@ function app_base_path(): string
         return rtrim($matches[1], '/');
     }
 
-    $directory = dirname($scriptName);
+    $directory = str_replace('\\', '/', dirname($scriptName));
     return $directory === '/' || $directory === '.' ? '' : rtrim($directory, '/');
 }
 

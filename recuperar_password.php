@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/database.php';
+require_once __DIR__ . '/includes/paths.php';
+require_once __DIR__ . '/includes/email.php';
 
 $mensaje = '';
 $tipo_mensaje = 'info';
@@ -19,40 +21,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($usuario) {
                 $token = bin2hex(random_bytes(32));
-                $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                $tokenHash = hash('sha256', $token);
 
-                $update = $pdo->prepare('UPDATE usuarios SET reset_token = ?, reset_expira = ? WHERE id = ?');
-                $update->execute([$token, $expira, $usuario['id']]);
+                $update = $pdo->prepare('UPDATE usuarios SET reset_token = ?, reset_expira = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id = ?');
+                $update->execute([$tokenHash, $usuario['id']]);
 
-                $base = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . dirname($_SERVER['SCRIPT_NAME']);
-                $reset_link = rtrim($base, '/') . '/reset_password.php?token=' . urlencode($token);
-
-                $body = "Hola {$usuario['username']},\n\n"
-                    . "Recibimos una solicitud para restablecer tu contraseña.\n"
-                    . "Haz clic en el siguiente enlace para continuar: \n\n"
-                    . "$reset_link\n\n"
-                    . "Si no pediste este cambio, puedes ignorar este mensaje.\n\n"
-                    . "Este enlace expira en 1 hora.";
-
-                $email_enviado = false;
-                if (function_exists('mail')) {
-                    $headers = "From: no-reply@sistemaestudiantes.local\r\n" . "Reply-To: no-reply@sistemaestudiantes.local\r\n" . "X-Mailer: PHP/" . phpversion();
-                    $email_enviado = @mail($email, 'Recuperación de contraseña - Sistema Estudiantil', $body, $headers);
+                $localConfigPath = __DIR__ . '/includes/config.local.php';
+                $localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
+                if (!is_array($localConfig)) {
+                    throw new RuntimeException('La configuración local debe devolver un arreglo.');
                 }
 
-                $_SESSION['reset_debug_link'] = $reset_link;
-                $mensaje = $email_enviado
-                    ? 'Se envió un enlace de recuperación a tu correo electrónico.'
-                    : 'Se generó un enlace de recuperación. Copia este enlace para continuar: ' . $reset_link;
-                $tipo_mensaje = 'success';
-            } else {
-                $mensaje = 'Si el correo está registrado en el sistema, recibirás un enlace de recuperación.';
-                $tipo_mensaje = 'success';
+                $appUrl = getenv('APP_URL');
+                if ($appUrl === false) {
+                    $appUrl = $localConfig['app_url'] ?? '';
+                }
+                $appUrl = rtrim((string) $appUrl, '/');
+                $appUrlParts = parse_url($appUrl);
+                if (
+                    $appUrlParts === false
+                    || !isset($appUrlParts['scheme'], $appUrlParts['host'])
+                    || !in_array(strtolower($appUrlParts['scheme']), ['http', 'https'], true)
+                    || (isset($appUrlParts['path']) && trim($appUrlParts['path'], '/') !== '')
+                    || isset($appUrlParts['user'])
+                    || isset($appUrlParts['pass'])
+                    || isset($appUrlParts['query'])
+                    || isset($appUrlParts['fragment'])
+                ) {
+                    throw new RuntimeException('APP_URL debe ser el origen público del sistema, sin ruta ni parámetros.');
+                }
+
+                $resetLink = $appUrl . app_url('reset_password.php') . '?token=' . rawurlencode($token);
+                enviarCorreoRecuperacion($email, $usuario['username'], $resetLink);
+
             }
+
+            $mensaje = 'Si el correo está registrado en el sistema, recibirás un enlace de recuperación.';
+            $tipo_mensaje = 'success';
         } catch (Exception $e) {
+            if (isset($usuario['id'])) {
+                try {
+                    $invalidate = $pdo->prepare('UPDATE usuarios SET reset_token = NULL, reset_expira = NULL WHERE id = ?');
+                    $invalidate->execute([$usuario['id']]);
+                } catch (Exception $invalidateError) {
+                    error_log('No se pudo invalidar el token de recuperación: ' . $invalidateError->getMessage());
+                }
+            }
             error_log('Error al recuperar contraseña: ' . $e->getMessage());
-            $mensaje = 'Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente.';
-            $tipo_mensaje = 'danger';
+            $mensaje = 'Si el correo está registrado en el sistema, recibirás un enlace de recuperación.';
+            $tipo_mensaje = 'success';
         }
     }
 }
@@ -85,14 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="alert alert-<?php echo htmlspecialchars($tipo_mensaje); ?>" role="alert">
                     <?php echo nl2br(htmlspecialchars($mensaje)); ?>
                 </div>
-            <?php endif; ?>
-
-            <?php if (!empty($_SESSION['reset_debug_link'])): ?>
-                <div class="alert alert-warning">
-                    <strong>Enlace de prueba:</strong><br>
-                    <a href="<?php echo htmlspecialchars($_SESSION['reset_debug_link']); ?>"><?php echo htmlspecialchars($_SESSION['reset_debug_link']); ?></a>
-                </div>
-                <?php unset($_SESSION['reset_debug_link']); ?>
             <?php endif; ?>
 
             <form method="POST" action="">

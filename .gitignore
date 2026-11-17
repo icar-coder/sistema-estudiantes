@@ -1,5 +1,6 @@
 .env
 includes/config.local.php
+vendor/
 logs/
 admin/respaldos/backups/
 sistema_estudiantes (8).sql

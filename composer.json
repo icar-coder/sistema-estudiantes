@@ -1,0 +1,9 @@
+{
+    "name": "icar-coder/sistema-estudiantes",
+    "description": "Sistema de gestión estudiantil",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
+    }
+}

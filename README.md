@@ -16,6 +16,12 @@ Los archivos SQL y respaldos actuales pueden contener datos personales de estudi
 
 El proyecto incluye `migracion_reset_password.sql` para una migración concreta; revisa su contenido y compatibilidad con la base de datos antes de ejecutarla.
 
+## Correo de recuperación
+
+El envío de recuperación usa Gmail SMTP mediante PHPMailer. Instala la dependencia con `composer install --no-dev --optimize-autoloader` y despliega también la carpeta `vendor/`.
+
+Configura `APP_URL` con el origen público del sitio, sin ruta ni barra final (por ejemplo, `https://sistemaestudiante.alwaysdata.net`). En `includes/config.local.php` puedes agregar la sección `mail` siguiendo `includes/config.local.example.php`, o definir las variables de entorno `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS` y `MAIL_FROM_NAME`. Para Gmail usa `smtp.gmail.com`, puerto `587`, cifrado `tls`, tu dirección Gmail y una contraseña de aplicación de Google; no uses la contraseña normal de la cuenta. Activa la verificación en dos pasos de Google y genera una contraseña de aplicación desde la configuración de seguridad de esa cuenta.
+
 ## Despliegue
 
 No se incluye configuración automática de publicación: primero confirma el proveedor, la ruta pública y los requisitos de PHP. En producción, deja `APP_ENV=production`, configura las credenciales de la base de datos y verifica HTTPS. La carpeta de registros se crea durante la ejecución y no debe publicarse.

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/database.php';
+require_once __DIR__ . '/includes/paths.php';
 
 $token = trim((string) ($_GET['token'] ?? ''));
 $mensaje = '';
@@ -10,7 +11,7 @@ $token_valido = false;
 if ($token !== '') {
     try {
         $stmt = $pdo->prepare('SELECT id, username, email FROM usuarios WHERE reset_token = ? AND reset_expira > NOW() LIMIT 1');
-        $stmt->execute([$token]);
+        $stmt->execute([hash('sha256', $token)]);
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
         $token_valido = (bool) $usuario;
     } catch (Exception $e) {
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $stmt = $pdo->prepare('SELECT id FROM usuarios WHERE reset_token = ? AND reset_expira > NOW() LIMIT 1');
-            $stmt->execute([$token_post]);
+            $stmt->execute([hash('sha256', $token_post)]);
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$usuario) {
@@ -49,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $_SESSION['mensaje_login'] = 'Tu contraseña se actualizó correctamente. Inicia sesión con tu nueva clave.';
                 $_SESSION['tipo_mensaje'] = 'success';
-                header('Location: login.php');
+                header('Location: ' . app_url('login.php'));
                 exit;
             }
         } catch (Exception $e) {
