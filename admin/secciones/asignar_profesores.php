@@ -68,9 +68,9 @@ function ajustarBrillo($hex, $factor) {
     $g = hexdec(substr($hex,2,2));
     $b = hexdec(substr($hex,4,2));
     
-    $r = min(255, max(0, $r * $factor));
-    $g = min(255, max(0, $g * $factor));
-    $b = min(255, max(0, $b * $factor));
+    $r = min(255, max(0, (int) ($r * $factor)));
+    $g = min(255, max(0, (int) ($g * $factor)));
+    $b = min(255, max(0, (int) ($b * $factor)));
     
     return '#'.str_pad(dechex($r), 2, '0', STR_PAD_LEFT)
            .str_pad(dechex($g), 2, '0', STR_PAD_LEFT)
