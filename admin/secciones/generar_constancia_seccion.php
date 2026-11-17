@@ -1,19 +1,19 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
 checkRole(['admin']);
 
 if (!isset($_GET['seccion_id']) || empty($_GET['seccion_id'])) {
-    error_log("Error en " . __FILE__ . ": No se proporcionÃ³ ID de secciÃ³n.");
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    error_log("Error en " . __FILE__ . ": No se proporcionó ID de sección.");
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 
 $seccion_id = $_GET['seccion_id'];
 
-// Obtener estudiantes de la secciÃ³n
+// Obtener estudiantes de la sección
 function obtenerEstudiantesSeccion($seccion_id, $pdo) {
     try {
         $stmt = $pdo->prepare("
@@ -43,7 +43,7 @@ $estudiantes = obtenerEstudiantesSeccion($seccion_id, $pdo);
     
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Generar Constancias de MatrÃ­cula</h2>
+            <h2>Generar Constancias de Matrícula</h2>
             <a href="gestionar.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Volver
             </a>
@@ -51,22 +51,22 @@ $estudiantes = obtenerEstudiantesSeccion($seccion_id, $pdo);
 
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Estudiantes de la SecciÃ³n</h5>
+                <h5 class="card-title mb-0">Estudiantes de la Sección</h5>
             </div>
             <div class="card-body">
                 <?php if ($estudiantes): ?>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        Seleccione un estudiante para generar su constancia de matrÃ­cula individual.
+                        Seleccione un estudiante para generar su constancia de matrícula individual.
                     </div>
                     
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>CÃ©dula Escolar</th>
+                                    <th>Cédula Escolar</th>
                                     <th>Nombre Completo</th>
-                                    <th>SecciÃ³n</th>
+                                    <th>Sección</th>
                                     <th>Año Escolar</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -93,10 +93,10 @@ $estudiantes = obtenerEstudiantesSeccion($seccion_id, $pdo);
                 <?php else: ?>
                     <div class="text-center py-4">
                         <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
-                        <h5>No hay estudiantes en esta secciÃ³n</h5>
-                        <p class="text-muted">No se encontraron estudiantes activos en esta secciÃ³n.</p>
+                        <h5>No hay estudiantes en esta sección</h5>
+                        <p class="text-muted">No se encontraron estudiantes activos en esta sección.</p>
                         <a href="gestionar.php" class="btn btn-primary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver a GestiÃ³n de Secciones
+                            <i class="fas fa-arrow-left me-2"></i>Volver a Gestión de Secciones
                         </a>
                     </div>
                 <?php endif; ?>

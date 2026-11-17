@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -17,7 +17,7 @@ if (!$inscripcion_id || !$estudiante_id) {
     exit;
 }
 
-// Obtener datos del estudiante y su inscripciÃ³n actual
+// Obtener datos del estudiante y su inscripción actual
 $stmt = $pdo->prepare("
     SELECT e.*, i.*, s.nombre as seccion_actual, s.grado_id as grado_actual_id, s.id as seccion_actual_id,
            g.nombre as grado_actual, g.numero as grado_numero_actual,
@@ -44,7 +44,7 @@ $año_escolar_activo = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$año_escolar_activo) {
     error_log("Error en " . __FILE__ . ": No hay año escolar activo disponible.");
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -58,7 +58,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$datos_estudiante['grado_actual_id']]);
 $grados_superiores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener Ã¡reas de aprendizaje e indicadores
+// Obtener áreas de aprendizaje e indicadores
 $areas_aprendizaje = [];
 $stmt = $pdo->query("SELECT * FROM areas_aprendizaje WHERE estado = 'activa' ORDER BY nombre");
 $areas_aprendizaje = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -88,16 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adelantar_estudiante'
             throw new Exception("Complete todos los campos obligatorios");
         }
         
-        // Verificar que la nueva secciÃ³n pertenezca al grado seleccionado
+        // Verificar que la nueva sección pertenezca al grado seleccionado
         $stmt = $pdo->prepare("SELECT grado_id FROM secciones WHERE id = ?");
         $stmt->execute([$seccion_id]);
         $seccion_destino = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$seccion_destino || $seccion_destino['grado_id'] != $nuevo_grado_id) {
-            throw new Exception("La secciÃ³n seleccionada no pertenece al grado destino.");
+            throw new Exception("La sección seleccionada no pertenece al grado destino.");
         }
         
-        // Guardar historial acadÃ©mico del grado anterior
+        // Guardar historial académico del grado anterior
         $stmt = $pdo->prepare("
             INSERT INTO historial_academico 
             (estudiante_id, año_escolar_id, grado_id, literal_final, tipo_adelantamiento, observaciones) 
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adelantar_estudiante'
         ]);
         $historial_id = $pdo->lastInsertId();
         
-        // Guardar indicadores de evaluaciÃ³n
+        // Guardar indicadores de evaluación
         if (isset($_POST['indicadores']) && is_array($_POST['indicadores'])) {
             foreach ($_POST['indicadores'] as $indicador_id => $valoracion) {
                 if (!empty($valoracion)) {
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adelantar_estudiante'
             }
         }
         
-        // 2. ACTUALIZAR la inscripciÃ³n existente (no crear nueva)
+        // 2. ACTUALIZAR la inscripción existente (no crear nueva)
         $stmt = $pdo->prepare("
             UPDATE inscripciones 
             SET seccion_id = ?, fecha_inscripcion = CURDATE() 
@@ -137,19 +137,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adelantar_estudiante'
         
         $pdo->commit();
         
-        $_SESSION['mensaje'] = "âœ… Estudiante adelantado correctamente al siguiente grado";
+        $_SESSION['mensaje'] = "✅ Estudiante adelantado correctamente al siguiente grado";
         $_SESSION['tipo_mensaje'] = "success";
         header("Location: gestionar.php");
         exit;
         
     } catch (Exception $e) {
         $pdo->rollBack();
-        $mensaje = "âŒ Error: " . $e->getMessage();
+        $mensaje = "❌ Error: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
 
-// Obtener informaciÃ³n del grado actual para mostrar
+// Obtener información del grado actual para mostrar
 $grado_actual_numero = $datos_estudiante['grado_numero_actual'] ?? 1;
 $grado_destino_sugerido = $grado_actual_numero + 1;
 ?>
@@ -160,7 +160,7 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>ðŸŽ“ Adelantar Estudiante</h2>
+        <h2>🎓 Adelantar Estudiante</h2>
         <a href="gestionar.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Volver
         </a>
@@ -170,7 +170,7 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
         <div class="alert alert-<?php echo $tipo_mensaje; ?>"><?php echo $mensaje; ?></div>
     <?php endif; ?>
 
-    <!-- InformaciÃ³n del Estudiante -->
+    <!-- Información del Estudiante -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
@@ -181,13 +181,13 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Estudiante:</strong> <?php echo htmlspecialchars($datos_estudiante['nombre'] . ' ' . $datos_estudiante['apellido']); ?></p>
-                    <p><strong>CÃ©dula Escolar:</strong> <?php echo htmlspecialchars($datos_estudiante['cedula_escolar']); ?></p>
+                    <p><strong>Cédula Escolar:</strong> <?php echo htmlspecialchars($datos_estudiante['cedula_escolar']); ?></p>
                     <p><strong>Año Escolar:</strong> <?php echo htmlspecialchars($datos_estudiante['año_escolar']); ?></p>
                 </div>
                 <div class="col-md-6">
                     <p><strong>Grado Actual:</strong> <?php echo htmlspecialchars($datos_estudiante['grado_actual']); ?></p>
-                    <p><strong>SecciÃ³n Actual:</strong> <?php echo htmlspecialchars($datos_estudiante['seccion_actual']); ?></p>
-                    <p><strong>Grado Sugerido:</strong> <span class="badge bg-success"><?php echo $grado_destino_sugerido; ?>Â° Grado</span></p>
+                    <p><strong>Sección Actual:</strong> <?php echo htmlspecialchars($datos_estudiante['seccion_actual']); ?></p>
+                    <p><strong>Grado Sugerido:</strong> <span class="badge bg-success"><?php echo $grado_destino_sugerido; ?>° Grado</span></p>
                 </div>
             </div>
         </div>
@@ -209,13 +209,13 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
                     <div class="col-md-6">
                         <label for="tipo_adelantamiento" class="form-label">Motivo del Adelantamiento *</label>
                         <select class="form-select" id="tipo_adelantamiento" name="tipo_adelantamiento" required>
-                            <option value="transferencia">ðŸ“š Transferencia de otra escuela</option>
-                            <option value="academico">ðŸ† MÃ©rito acadÃ©mico (adelanto interno)</option>
-                            <option value="otros">ðŸ”§ Otros motivos</option>
+                            <option value="transferencia">📚 Transferencia de otra escuela</option>
+                            <option value="academico">🏆 Mérito académico (adelanto interno)</option>
+                            <option value="otros">🔧 Otros motivos</option>
                         </select>
                         <div class="form-text">
-                            <strong>Transferencia:</strong> Para estudiantes que vienen de otra instituciÃ³n<br>
-                            <strong>MÃ©rito acadÃ©mico:</strong> Para estudiantes de la escuela con desempeño sobresaliente<br>
+                            <strong>Transferencia:</strong> Para estudiantes que vienen de otra institución<br>
+                            <strong>Mérito académico:</strong> Para estudiantes de la escuela con desempeño sobresaliente<br>
                             <strong>Otros:</strong> Casos especiales o adecuaciones curriculares
                         </div>
                     </div>
@@ -223,17 +223,17 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
             </div>
         </div>
         
-        <!-- SelecciÃ³n del Nuevo Grado -->
+        <!-- Selección del Nuevo Grado -->
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-forward me-2"></i>Seleccionar Nuevo Grado y SecciÃ³n
+                    <i class="fas fa-forward me-2"></i>Seleccionar Nuevo Grado y Sección
                 </h5>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    El estudiante serÃ¡ <strong>transferido a una nueva secciÃ³n</strong> dentro del mismo año escolar <?php echo htmlspecialchars($datos_estudiante['año_escolar']); ?>
+                    El estudiante será <strong>transferido a una nueva sección</strong> dentro del mismo año escolar <?php echo htmlspecialchars($datos_estudiante['año_escolar']); ?>
                 </div>
                 
                 <div class="row">
@@ -248,30 +248,30 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text">Seleccione el grado al que serÃ¡ adelantado</div>
+                        <div class="form-text">Seleccione el grado al que será adelantado</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="seccion_id" class="form-label">Nueva SecciÃ³n *</label>
+                        <label for="seccion_id" class="form-label">Nueva Sección *</label>
                         <select class="form-select" id="seccion_id" name="seccion_id" required disabled>
                             <option value="">Primero seleccione un grado</option>
                         </select>
-                        <div class="form-text" id="seccion_info">Las secciones se cargarÃ¡n segÃºn el grado seleccionado</div>
+                        <div class="form-text" id="seccion_info">Las secciones se cargarán según el grado seleccionado</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- EvaluaciÃ³n del Grado Anterior -->
+        <!-- Evaluación del Grado Anterior -->
         <div class="card mb-4">
             <div class="card-header bg-warning text-dark">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>EvaluaciÃ³n del Grado Anterior - <?php echo htmlspecialchars($datos_estudiante['grado_actual']); ?>
+                    <i class="fas fa-history me-2"></i>Evaluación del Grado Anterior - <?php echo htmlspecialchars($datos_estudiante['grado_actual']); ?>
                 </h5>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    Complete la evaluaciÃ³n final del estudiante en el grado actual o anterior.
+                    Complete la evaluación final del estudiante en el grado actual o anterior.
                 </div>
                 
                 <!-- Literal Final -->
@@ -288,8 +288,8 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
                     </div>
                 </div>
 
-                <!-- Indicadores por Ãrea -->
-                <h6 class="mb-3">Indicadores de EvaluaciÃ³n por Ãrea</h6>
+                <!-- Indicadores por Área -->
+                <h6 class="mb-3">Indicadores de Evaluación por Área</h6>
                 <?php foreach ($areas_aprendizaje as $area): ?>
                 <div class="card mb-3">
                     <div class="card-header bg-light">
@@ -325,7 +325,7 @@ $grado_destino_sugerido = $grado_actual_numero + 1;
                     <div class="col-12">
                         <label for="observaciones" class="form-label">Observaciones Generales</label>
                         <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
-                                  placeholder="Observaciones sobre el rendimiento acadÃ©mico, conducta, escuela de origen, etc..."><?php echo htmlspecialchars($_POST['observaciones'] ?? ''); ?></textarea>
+                                  placeholder="Observaciones sobre el rendimiento académico, conducta, escuela de origen, etc..."><?php echo htmlspecialchars($_POST['observaciones'] ?? ''); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         if (data.success && data.secciones && data.secciones.length > 0) {
-                            seccionSelect.innerHTML = '<option value="">Seleccionar secciÃ³n...</option>';
+                            seccionSelect.innerHTML = '<option value="">Seleccionar sección...</option>';
                             data.secciones.forEach(seccion => {
                                 const option = document.createElement('option');
                                 option.value = seccion.id;
@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 option.textContent = textoSeccion;
                                 seccionSelect.appendChild(option);
                             });
-                            seccionInfo.innerHTML = `<span class="text-success">${data.secciones.length} secciÃ³n(es) disponible(s)</span>`;
+                            seccionInfo.innerHTML = `<span class="text-success">${data.secciones.length} sección(es) disponible(s)</span>`;
                         } else {
                             seccionSelect.innerHTML = '<option value="">No hay secciones disponibles</option>';
                             seccionInfo.innerHTML = '<span class="text-danger">No hay secciones disponibles para este grado</span>';
@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 seccionSelect.disabled = true;
                 seccionSelect.innerHTML = '<option value="">Primero seleccione un grado</option>';
-                seccionInfo.innerHTML = 'Las secciones se cargarÃ¡n segÃºn el grado seleccionado';
+                seccionInfo.innerHTML = 'Las secciones se cargarán según el grado seleccionado';
             }
         });
         

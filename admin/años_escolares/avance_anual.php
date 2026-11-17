@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 require_once '../../includes/functions_notas.php';
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
             $mensaje .= "Aprobados: {$resultado['aprobados']}, ";
             $mensaje .= "Reprobados: {$resultado['reprobados']}, ";
             $mensaje .= "Sin literales: {$resultado['sin_literales']}, ";
-            $mensaje .= "En recuperaciÃ³n: {$resultado['recuperacion']}";
+            $mensaje .= "En recuperación: {$resultado['recuperacion']}";
             $tipo_mensaje = "success";
             
             $reporte = $resultado; // Guardar para mostrar detalles
@@ -51,13 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
             $tipo_mensaje = "danger";
         }
     } else {
-        $mensaje = "Seleccione años escolares vÃ¡lidos y diferentes";
+        $mensaje = "Seleccione años escolares válidos y diferentes";
         $tipo_mensaje = "warning";
     }
 }
 
 
-// FunciÃ³n para obtener estudiantes que necesitan recuperaciÃ³n
+// Función para obtener estudiantes que necesitan recuperación
 
 ?>
 
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>ðŸŽ“ Avance Anual de Estudiantes</h2>
+        <h2>🎓 Avance Anual de Estudiantes</h2>
         <a href="gestionar.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Volver a Años Escolares
         </a>
@@ -139,13 +139,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="opcion_sin_literales" value="excluir" id="excluir_sin_literales" checked>
                                 <label class="form-check-label" for="excluir_sin_literales">
-                                    âŒ Excluir del avance (repetirÃ¡n año)
+                                    ❌ Excluir del avance (repetirán año)
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="opcion_sin_literales" value="forzar_avance" id="forzar_avance">
                                 <label class="form-check-label" for="forzar_avance">
-                                    âš ï¸ Forzar avance (asignar literal C automÃ¡ticamente)
+                                    ⚠ï¸ Forzar avance (asignar literal C automáticamente)
                                 </label>
                             </div>
                             <div class="mt-2">
@@ -157,26 +157,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                         </div>
                         <?php endif; ?>
 
-                        <!-- Opciones para estudiantes en recuperaciÃ³n -->
+                        <!-- Opciones para estudiantes en recuperación -->
                         <?php if (count($estudiantes_recuperacion) > 0): ?>
                         <div class="mb-3">
                             <label class="form-label">Estudiantes con Literal D/E (<?php echo count($estudiantes_recuperacion); ?>)</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="opcion_recuperacion" value="repetir" id="repetir_recuperacion" checked>
                                 <label class="form-check-label" for="repetir_recuperacion">
-                                    ðŸ”„ Repetir año automÃ¡ticamente
+                                    🔄 Repetir año automáticamente
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="opcion_recuperacion" value="recuperacion" id="recuperacion">
                                 <label class="form-check-label" for="recuperacion">
-                                    ðŸ“ Dar oportunidad de recuperaciÃ³n
+                                    📝 Dar oportunidad de recuperación
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="opcion_recuperacion" value="forzar_promocion" id="forzar_promocion">
                                 <label class="form-check-label" for="forzar_promocion">
-                                    âœ… Forzar promociÃ³n (casos especiales)
+                                    ✅ Forzar promoción (casos especiales)
                                 </label>
                             </div>
                         </div>
@@ -185,10 +185,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                         <div class="alert alert-warning">
                             <strong><i class="fas fa-exclamation-triangle me-2"></i>Advertencia:</strong>
                             <ul class="mb-0 mt-2">
-                                <li>Esta acciÃ³n no se puede deshacer</li>
-                                <li>Se crearÃ¡n nuevas inscripciones automÃ¡ticamente</li>
-                                <li>Los estudiantes reprobados repetirÃ¡n el mismo grado</li>
-                                <li>Se generarÃ¡ un reporte detallado del proceso</li>
+                                <li>Esta acción no se puede deshacer</li>
+                                <li>Se crearán nuevas inscripciones automáticamente</li>
+                                <li>Los estudiantes reprobados repetirán el mismo grado</li>
+                                <li>Se generará un reporte detallado del proceso</li>
                             </ul>
                         </div>
                         
@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
             </div>
         </div>
         
-        <!-- Panel de InformaciÃ³n y Resultados de VerificaciÃ³n -->
+        <!-- Panel de Información y Resultados de Verificación -->
         <div class="col-md-6">
             <?php if (isset($_GET['verificar_estudiantes']) && $_GET['año_origen_id']): ?>
                 <!-- Estudiantes sin literales -->
@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                                 <thead>
                                     <tr>
                                         <th>Estudiante</th>
-                                        <th>SecciÃ³n</th>
+                                        <th>Sección</th>
                                         <th>Grado</th>
                                     </tr>
                                 </thead>
@@ -250,13 +250,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                 </div>
                 <?php endif; ?>
 
-                <!-- Estudiantes en recuperaciÃ³n -->
+                <!-- Estudiantes en recuperación -->
                 <?php if (count($estudiantes_recuperacion) > 0): ?>
                 <div class="card">
                     <div class="card-header bg-warning text-dark">
                         <h6 class="card-title mb-0">
                             <i class="fas fa-clock me-2"></i>
-                            Estudiantes para RecuperaciÃ³n (<?php echo count($estudiantes_recuperacion); ?>)
+                            Estudiantes para Recuperación (<?php echo count($estudiantes_recuperacion); ?>)
                         </h6>
                     </div>
                     <div class="card-body">
@@ -265,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                                 <thead>
                                     <tr>
                                         <th>Estudiante</th>
-                                        <th>SecciÃ³n</th>
+                                        <th>Sección</th>
                                         <th>Literal</th>
                                         <th>Observaciones</th>
                                     </tr>
@@ -297,33 +297,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                 <?php else: ?>
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    No hay estudiantes que requieran recuperaciÃ³n.
+                    No hay estudiantes que requieran recuperación.
                 </div>
                 <?php endif; ?>
             <?php else: ?>
-                <!-- InformaciÃ³n general cuando no hay verificaciÃ³n -->
+                <!-- Información general cuando no hay verificación -->
                 <div class="card">
                     <div class="card-header bg-info text-white">
-                        <h5 class="card-title mb-0">InformaciÃ³n del Proceso</h5>
+                        <h5 class="card-title mb-0">Información del Proceso</h5>
                     </div>
                     <div class="card-body">
-                        <h6>ðŸ“‹ Pasos Recomendados:</h6>
+                        <h6>📋 Pasos Recomendados:</h6>
                         <ol>
                             <li><strong>Seleccione el año escolar</strong> y haga clic en "Verificar"</li>
-                            <li><strong>Revise los estudiantes</strong> sin literal final o en recuperaciÃ³n</li>
+                            <li><strong>Revise los estudiantes</strong> sin literal final o en recuperación</li>
                             <li><strong>Configure las opciones</strong> para cada caso especial</li>
-                            <li><strong>Procese el avance anual</strong> cuando todo estÃ© listo</li>
+                            <li><strong>Procese el avance anual</strong> cuando todo esté listo</li>
                         </ol>
                         
-                        <h6>ðŸŽ¯ Criterios de PromociÃ³n:</h6>
+                        <h6>🎯 Criterios de Promoción:</h6>
                         <ul>
                             <li><strong>Literal A-C:</strong> Avanza al siguiente grado</li>
-                            <li><strong>Literal D-E:</strong> Requiere recuperaciÃ³n o repite</li>
-                            <li><strong>Sin literal:</strong> No puede avanzar automÃ¡ticamente</li>
+                            <li><strong>Literal D-E:</strong> Requiere recuperación o repite</li>
+                            <li><strong>Sin literal:</strong> No puede avanzar automáticamente</li>
                         </ul>
                         
                         <div class="alert alert-success">
-                            <strong><i class="fas fa-lightbulb me-2"></i>RecomendaciÃ³n:</strong>
+                            <strong><i class="fas fa-lightbulb me-2"></i>Recomendación:</strong>
                             <br>Realice una copia de seguridad de la base de datos antes de ejecutar este proceso.
                         </div>
                     </div>
@@ -378,7 +378,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <h3><?php echo $reporte['recuperacion']; ?></h3>
-                            <p class="mb-0">RecuperaciÃ³n</p>
+                            <p class="mb-0">Recuperación</p>
                         </div>
                     </div>
                 </div>
@@ -390,11 +390,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_avance'])) {
                     <thead>
                         <tr>
                             <th>Estudiante</th>
-                            <th>CÃ©dula</th>
-                            <th>SecciÃ³n Actual</th>
+                            <th>Cédula</th>
+                            <th>Sección Actual</th>
                             <th>Literal</th>
                             <th>Resultado</th>
-                            <th>Nueva SecciÃ³n</th>
+                            <th>Nueva Sección</th>
                             <th>Observaciones</th>
                         </tr>
                     </thead>
@@ -454,11 +454,11 @@ function confirmAvance() {
         return false;
     }
     
-    return confirm('Â¿EstÃ¡ seguro de procesar el avance anual? Esta acciÃ³n es irreversible y afectarÃ¡ a todos los estudiantes.');
+    return confirm('¿Está seguro de procesar el avance anual? Esta acción es irreversible y afectará a todos los estudiantes.');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // ValidaciÃ³n adicional
+    // Validación adicional
     const formAvance = document.getElementById('form-avance');
     if (formAvance) {
         formAvance.addEventListener('submit', function(e) {

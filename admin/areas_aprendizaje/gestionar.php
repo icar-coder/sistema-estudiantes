@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/areas_aprendizaje/gestionar.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -17,15 +17,15 @@ if (isset($_GET['cambiar_estado'])) {
         $stmt = $pdo->prepare("UPDATE areas_aprendizaje SET estado = ? WHERE id = ?");
         $stmt->execute([$nuevo_estado, $id]);
         
-        $mensaje = "Estado del Ã¡rea actualizado correctamente";
+        $mensaje = "Estado del área actualizado correctamente";
         $tipo_mensaje = "success";
     } catch (PDOException $e) {
-        $mensaje = "Error al actualizar Ã¡rea: " . $e->getMessage();
+        $mensaje = "Error al actualizar área: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
 
-// Obtener Ã¡reas de aprendizaje (CONSULTA CORREGIDA)
+// Obtener áreas de aprendizaje (CONSULTA CORREGIDA)
 try {
     $stmt = $pdo->query("
         SELECT a.*, 
@@ -39,11 +39,11 @@ try {
     $areas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $areas = [];
-    $mensaje = "Error al cargar Ã¡reas: " . $e->getMessage();
+    $mensaje = "Error al cargar áreas: " . $e->getMessage();
     $tipo_mensaje = "danger";
 }
 
-// Calcular estadÃ­sticas
+// Calcular estadísticas
 $total_areas = count($areas);
 $total_activas = 0;
 $total_primaria = 0;
@@ -66,13 +66,13 @@ foreach ($areas as $area) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
    <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>GestiÃ³n de Ãreas de Aprendizaje</h2>
+    <h2>Gestión de Áreas de Aprendizaje</h2>
     <div>
         <a href="gestionar_indicadores.php" class="btn btn-info me-2">
             <i class="fas fa-list-check me-2"></i>Gestionar Indicadores
         </a>
         <a href="agregar.php" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Agregar Ãrea
+            <i class="fas fa-plus me-2"></i>Agregar Área
         </a>
     </div>
 </div>
@@ -86,7 +86,7 @@ foreach ($areas as $area) {
 
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">Lista de Ãreas de Aprendizaje</h5>
+            <h5 class="card-title mb-0">Lista de Áreas de Aprendizaje</h5>
         </div>
         <div class="card-body">
             <?php if ($areas): ?>
@@ -94,9 +94,9 @@ foreach ($areas as $area) {
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>CÃ³digo</th>
+                                <th>Código</th>
                                 <th>Nombre</th>
-                                <th>DescripciÃ³n</th>
+                                <th>Descripción</th>
                                 <th>Nivel</th>
                                 <th>Horarios</th>
                                 <th>Secciones</th>
@@ -114,7 +114,7 @@ foreach ($areas as $area) {
                                     <strong><?php echo htmlspecialchars($area['nombre']); ?></strong>
                                 </td>
                                 <td>
-                                    <small class="text-muted"><?php echo htmlspecialchars($area['descripcion'] ?? 'Sin descripciÃ³n'); ?></small>
+                                    <small class="text-muted"><?php echo htmlspecialchars($area['descripcion'] ?? 'Sin descripción'); ?></small>
                                 </td>
                                 <td>
                                     <?php 
@@ -156,13 +156,13 @@ foreach ($areas as $area) {
                                         <?php if ($area['estado'] == 'activa'): ?>
                                             <a href="gestionar.php?cambiar_estado=<?php echo $area['id']; ?>&estado=inactiva" 
                                                class="btn btn-outline-warning" title="Desactivar"
-                                               onclick="return confirm('Â¿Desactivar esta Ã¡rea?')">
+                                               onclick="return confirm('¿Desactivar esta área?')">
                                                 <i class="fas fa-pause"></i>
                                             </a>
                                         <?php else: ?>
                                             <a href="gestionar.php?cambiar_estado=<?php echo $area['id']; ?>&estado=activa" 
                                                class="btn btn-outline-success" title="Activar"
-                                               onclick="return confirm('Â¿Activar esta Ã¡rea?')">
+                                               onclick="return confirm('¿Activar esta área?')">
                                                 <i class="fas fa-play"></i>
                                             </a>
                                         <?php endif; ?>
@@ -174,13 +174,13 @@ foreach ($areas as $area) {
                     </table>
                 </div>
                 
-                <!-- EstadÃ­sticas -->
+                <!-- Estadísticas -->
                 <div class="row mt-4">
                     <div class="col-md-3">
                         <div class="card bg-primary text-white">
                             <div class="card-body text-center">
                                 <h3><?php echo $total_areas; ?></h3>
-                                <p class="mb-0">Total Ãreas</p>
+                                <p class="mb-0">Total Áreas</p>
                             </div>
                         </div>
                     </div>
@@ -213,10 +213,10 @@ foreach ($areas as $area) {
             <?php else: ?>
                 <div class="text-center py-4">
                     <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                    <h5>No hay Ã¡reas de aprendizaje registradas</h5>
-                    <p class="text-muted">Comienza agregando las Ã¡reas bÃ¡sicas para el sistema.</p>
+                    <h5>No hay áreas de aprendizaje registradas</h5>
+                    <p class="text-muted">Comienza agregando las áreas básicas para el sistema.</p>
                     <a href="agregar.php" class="btn btn-primary me-2">
-                        <i class="fas fa-plus me-2"></i>Agregar Primera Ãrea
+                        <i class="fas fa-plus me-2"></i>Agregar Primera Área
                     </a>
                     <a href="agregar.php?cargar_predefinidas=1" class="btn btn-success">
                         <i class="fas fa-bolt me-2"></i>Cargar Predefinidas

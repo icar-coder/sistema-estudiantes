@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -59,7 +59,7 @@ if ($grado_id_preseleccionado) {
     }
 }
 
-// Obtener especialidades Ãºnicas para el filtro
+// Obtener especialidades únicas para el filtro
 $especialidades = [];
 foreach ($profesores as $profesor) {
     if ($profesor['especialidad'] && !in_array($profesor['especialidad'], $especialidades)) {
@@ -68,7 +68,7 @@ foreach ($profesores as $profesor) {
 }
 sort($especialidades);
 
-// Obtener Ã¡reas de aprendizaje para primaria
+// Obtener áreas de aprendizaje para primaria
 try {
     $stmt = $pdo->query("SELECT id, nombre, codigo FROM areas_aprendizaje WHERE nivel = 'primaria' AND estado = 'activa' ORDER BY nombre");
     $areas_aprendizaje = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -77,7 +77,7 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Si viene de un grado especÃ­fico, usar ese grado_id, sino usar el del formulario
+    // Si viene de un grado específico, usar ese grado_id, sino usar el del formulario
     $grado_id = $grado_id_preseleccionado ?: $_POST['grado_id'];
     $letra = $_POST['letra'];
     $año_escolar_id = $_POST['año_escolar_id'];
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nivel = 'primaria';
     $tipo_grado = 'grado';
     
-    // Obtener nombre del grado para construir el nombre de la secciÃ³n
+    // Obtener nombre del grado para construir el nombre de la sección
     $nombre_grado = '';
     foreach ($grados as $grado) {
         if ($grado['id'] == $grado_id) {
@@ -99,16 +99,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // DEBUG DETALLADO
     error_log("=== DEBUG DETALLADO DEL FORMULARIO ===");
-    error_log("grado_id: " . ($grado_id ?: 'VACÃO'));
-    error_log("nombre_grado: " . ($nombre_grado ?: 'VACÃO'));
-    error_log("letra: " . ($letra ?: 'VACÃO'));
-    error_log("año_escolar_id: " . ($año_escolar_id ?: 'VACÃO'));
-    error_log("profesor_id: " . ($profesor_id ?: 'VACÃO'));
+    error_log("grado_id: " . ($grado_id ?: 'VACÍO'));
+    error_log("nombre_grado: " . ($nombre_grado ?: 'VACÍO'));
+    error_log("letra: " . ($letra ?: 'VACÍO'));
+    error_log("año_escolar_id: " . ($año_escolar_id ?: 'VACÍO'));
+    error_log("profesor_id: " . ($profesor_id ?: 'VACÍO'));
     error_log("capacidad: " . ($capacidad ?: 'NULL'));
     error_log("Todos los POST: " . print_r($_POST, true));
     error_log("=====================================");
     
-    // Validar campos obligatorios con mÃ¡s detalle
+    // Validar campos obligatorios con más detalle
     $campos_faltantes = [];
     if (empty($grado_id)) $campos_faltantes[] = "Grado";
     if (empty($letra)) $campos_faltantes[] = "Letra";
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$nombre, $año_escolar_id]);
             
             if ($stmt->fetch()) {
-                $mensaje = "Ya existe una secciÃ³n con el nombre '$nombre' en este año escolar";
+                $mensaje = "Ya existe una sección con el nombre '$nombre' en este año escolar";
                 $tipo_mensaje = "warning";
             } else {
                 // Incluir grado_id en el INSERT
@@ -131,9 +131,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$nombre, $año_escolar_id, $grado_id, $capacidad, $nivel, $tipo_grado, $profesor_id]);
                 $seccion_id = $pdo->lastInsertId();
                 
-                error_log("DEBUG - SecciÃ³n creada con ID: " . $seccion_id);
+                error_log("DEBUG - Sección creada con ID: " . $seccion_id);
                 
-                // Crear horario automÃ¡tico
+                // Crear horario automático
                 if (count($areas_aprendizaje) > 0) {
                     $dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
                     $horarios_base = [
@@ -159,11 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
                     }
-                    error_log("DEBUG - Horarios creados para " . $total_areas . " Ã¡reas");
+                    error_log("DEBUG - Horarios creados para " . $total_areas . " áreas");
                 }
                 
                 $pdo->commit();
-                $mensaje = "SecciÃ³n '$nombre' agregada correctamente con " . count($areas_aprendizaje) . " Ã¡reas de aprendizaje";
+                $mensaje = "Sección '$nombre' agregada correctamente con " . count($areas_aprendizaje) . " áreas de aprendizaje";
                 $tipo_mensaje = "success";
                 $_POST = [];
 
@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (PDOException $e) {
             $pdo->rollBack();
-            $mensaje = "Error al agregar secciÃ³n: " . $e->getMessage();
+            $mensaje = "Error al agregar sección: " . $e->getMessage();
             $tipo_mensaje = "danger";
             error_log("ERROR - " . $e->getMessage());
         }
@@ -192,9 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>
             <?php if ($grado_seleccionado): ?>
-                Agregar SecciÃ³n - <?php echo htmlspecialchars($grado_seleccionado['nombre']); ?>
+                Agregar Sección - <?php echo htmlspecialchars($grado_seleccionado['nombre']); ?>
             <?php else: ?>
-                Agregar Nueva SecciÃ³n - PRIMARIA
+                Agregar Nueva Sección - PRIMARIA
             <?php endif; ?>
         </h2>
         <a href="gestionar.php" class="btn btn-outline-secondary">
@@ -209,11 +209,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php endif; ?>
 
-    <!-- Checklist de ConfiguraciÃ³n -->
+    <!-- Checklist de Configuración -->
     <div class="card mb-4 border-warning">
         <div class="card-header bg-warning text-dark">
             <h5 class="card-title mb-0">
-                <i class="fas fa-clipboard-check me-2"></i>Checklist de ConfiguraciÃ³n del Sistema
+                <i class="fas fa-clipboard-check me-2"></i>Checklist de Configuración del Sistema
             </h5>
         </div>
         <div class="card-body">
@@ -229,11 +229,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'descripcion' => 'Configure el año escolar activo'
                     ],
                     'areas_aprendizaje' => [
-                        'nombre' => 'Ãreas de Aprendizaje', 
+                        'nombre' => 'Áreas de Aprendizaje',
                         'icono' => 'fas fa-book',
                         'estado' => false,
                         'enlace' => '../areas_aprendizaje/gestionar.php',
-                        'descripcion' => 'Defina las materias/Ã¡reas del sistema'
+                        'descripcion' => 'Defina las materias/áreas del sistema'
                     ],
                     'profesores' => [
                         'nombre' => 'Profesores',
@@ -257,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->query("SELECT COUNT(*) as total FROM años_escolares WHERE estado = 'activo'");
                     $configuraciones['años_escolares']['estado'] = $stmt->fetch()['total'] > 0;
                     
-                    // Verificar Ã¡reas de aprendizaje
+                    // Verificar áreas de aprendizaje
                     $stmt = $pdo->query("SELECT COUNT(*) as total FROM areas_aprendizaje WHERE estado = 'activa'");
                     $configuraciones['areas_aprendizaje']['estado'] = $stmt->fetch()['total'] > 0;
                     
@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Barra de progreso -->
                 <div class="col-12 mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-bold">Progreso de ConfiguraciÃ³n:</span>
+                        <span class="fw-bold">Progreso de Configuración:</span>
                         <span class="badge bg-<?php echo $porcentaje_completo == 100 ? 'success' : 'warning'; ?>">
                             <?php echo $configuraciones_completadas; ?>/<?php echo $total_configuraciones; ?> completado
                         </span>
@@ -299,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Items de configuraciÃ³n -->
+                <!-- Items de configuración -->
                 <?php foreach ($configuraciones as $key => $config): ?>
                     <div class="col-md-6 col-lg-3 mb-3">
                         <div class="card h-100 border-<?php echo $config['estado'] ? 'success' : 'secondary'; ?>">
@@ -330,27 +330,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </div>
 
-            <!-- Mensaje segÃºn el progreso -->
+            <!-- Mensaje según el progreso -->
             <div class="mt-3">
                 <?php if ($porcentaje_completo == 100): ?>
                     <div class="alert alert-success mb-0">
                         <i class="fas fa-check-circle me-2"></i>
-                        <strong>Â¡ConfiguraciÃ³n completa!</strong> El sistema estÃ¡ listo para funcionar.
+                        <strong>¡Configuración completa!</strong> El sistema está listo para funcionar.
                     </div>
                 <?php elseif ($porcentaje_completo >= 75): ?>
                     <div class="alert alert-info mb-0">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Â¡Buen progreso!</strong> Solo faltan algunos ajustes para completar la configuraciÃ³n.
+                        <strong>¡Buen progreso!</strong> Solo faltan algunos ajustes para completar la configuración.
                     </div>
                 <?php elseif ($porcentaje_completo >= 50): ?>
                     <div class="alert alert-warning mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>ConfiguraciÃ³n a medias.</strong> Complete las configuraciones pendientes para un funcionamiento Ã³ptimo.
+                        <strong>Configuración a medias.</strong> Complete las configuraciones pendientes para un funcionamiento óptimo.
                     </div>
                 <?php else: ?>
                     <div class="alert alert-danger mb-0">
                         <i class="fas fa-exclamation-circle me-2"></i>
-                        <strong>ConfiguraciÃ³n bÃ¡sica requerida.</strong> Configure los elementos esenciales para comenzar.
+                        <strong>Configuración básica requerida.</strong> Configure los elementos esenciales para comenzar.
                     </div>
                 <?php endif; ?>
             </div>
@@ -362,9 +362,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h5 class="card-title mb-0">
                 <i class="fas fa-chalkboard-teacher me-2"></i>
                 <?php if ($grado_seleccionado): ?>
-                    Datos de la SecciÃ³n - <?php echo htmlspecialchars($grado_seleccionado['nombre']); ?>
+                    Datos de la Sección - <?php echo htmlspecialchars($grado_seleccionado['nombre']); ?>
                 <?php else: ?>
-                    Datos de la SecciÃ³n - NIVEL PRIMARIA
+                    Datos de la Sección - NIVEL PRIMARIA
                 <?php endif; ?>
             </h5>
         </div>
@@ -374,11 +374,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-md-12 mb-3">
                         <div class="alert alert-info">
                             <strong><i class="fas fa-info-circle me-2"></i>NIVEL PRIMARIA:</strong> 
-                            Sistema de profesor titular que imparte todas las Ã¡reas de aprendizaje bÃ¡sicas.
+                            Sistema de profesor titular que imparte todas las áreas de aprendizaje básicas.
                         </div>
                     </div>
                     
-                    <!-- CAMBIO: Si viene de un grado especÃ­fico, mostrar informaciÃ³n fija -->
+                    <!-- CAMBIO: Si viene de un grado específico, mostrar información fija -->
                     <?php if ($grado_seleccionado): ?>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Grado *</label>
@@ -389,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="form-text">Grado pre-seleccionado</div>
                         </div>
                     <?php else: ?>
-                        <!-- Si no viene de un grado especÃ­fico, mostrar select normal -->
+                        <!-- Si no viene de un grado específico, mostrar select normal -->
                         <div class="col-md-3 mb-3">
                             <label for="grado_id" class="form-label">Grado *</label>
                             <select class="form-select" id="grado_id" name="grado_id" required>
@@ -420,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </select>
                     </div>
                     
-                    <!-- CAMBIO: Año escolar preseleccionado automÃ¡ticamente -->
+                    <!-- CAMBIO: Año escolar preseleccionado automáticamente -->
                     <div class="col-md-4 mb-3">
                         <label for="año_escolar_id" class="form-label">Año Escolar *</label>
                         <?php if ($año_escolar_activo): ?>
@@ -448,16 +448,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="col-md-3 mb-3">
-                        <label for="capacidad" class="form-label">Capacidad MÃ¡xima</label>
+                        <label for="capacidad" class="form-label">Capacidad Máxima</label>
                         <select class="form-select" id="capacidad" name="capacidad">
-                            <option value="">Sin lÃ­mite especÃ­fico</option>
+                            <option value="">Sin límite específico</option>
                             <?php 
                             $capacidades = [20, 25, 30, 35];
                             foreach ($capacidades as $cap): 
                             ?>
                                 <option value="<?php echo $cap; ?>" 
                                     <?php echo ($_POST['capacidad'] ?? '') == $cap ? 'selected' : ''; ?>>
-                                    MÃ¡ximo <?php echo $cap; ?> estudiantes
+                                    Máximo <?php echo $cap; ?> estudiantes
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -465,21 +465,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 
-                <!-- SECCIÃ“N MEJORADA DE SELECCIÃ“N DE PROFESOR -->
+                <!-- SECCIÓN MEJORADA DE SELECCIÓN DE PROFESOR -->
                 <div class="card mb-4">
                     <div class="card-header bg-warning">
                         <h6 class="card-title mb-0 text-dark">
-                            <i class="fas fa-search me-2"></i>SelecciÃ³n del Profesor Titular *
+                            <i class="fas fa-search me-2"></i>Selección del Profesor Titular *
                         </h6>
                     </div>
                     <div class="card-body">
-                        <!-- Filtros de bÃºsqueda -->
+                        <!-- Filtros de búsqueda -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="filtro-busqueda" class="form-label">Buscar Profesor</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="filtro-busqueda" 
-                                           placeholder="Buscar por nombre, apellido o cÃ©dula...">
+                                           placeholder="Buscar por nombre, apellido o cédula...">
                                     <button type="button" class="btn btn-outline-secondary" onclick="limpiarBusqueda()">
                                         <i class="fas fa-times"></i>
                                     </button>
@@ -549,7 +549,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="form-text">
                                 <i class="fas fa-lightbulb me-1"></i>
-                                El profesor seleccionado serÃ¡ asignado a TODAS las Ã¡reas de aprendizaje de esta secciÃ³n
+                                El profesor seleccionado será asignado a TODAS las áreas de aprendizaje de esta sección
                             </div>
                         </div>
                         
@@ -563,10 +563,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label">Vista Previa de la SecciÃ³n</label>
+                        <label class="form-label">Vista Previa de la Sección</label>
                         <div class="form-control" style="background-color: #f8f9fa; font-weight: bold;">
                             <span id="vista-previa-nombre" class="text-muted">
-                                Nombre de la secciÃ³n aparecerÃ¡ aquÃ­...
+                                Nombre de la sección aparecerá aquí...
                             </span>
                         </div>
                     </div>
@@ -576,19 +576,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="nivel" value="primaria">
                 <input type="hidden" name="tipo_grado" value="grado">
                 
-                <!-- InformaciÃ³n de Ã¡reas de aprendizaje -->
+                <!-- Información de áreas de aprendizaje -->
                 <?php if (count($areas_aprendizaje) > 0): ?>
                 <div class="card mt-4">
                     <div class="card-header bg-light">
                         <h6 class="card-title mb-0">
-                            <i class="fas fa-book me-2"></i>Ãreas de Aprendizaje Asignadas AutomÃ¡ticamente
+                            <i class="fas fa-book me-2"></i>Áreas de Aprendizaje Asignadas Automáticamente
                         </h6>
                     </div>
                     <div class="card-body">
                         <div class="alert alert-success">
                             <small>
                                 <i class="fas fa-check-circle me-1"></i>
-                                <strong>ConfiguraciÃ³n AutomÃ¡tica:</strong> El profesor titular serÃ¡ asignado a TODAS estas Ã¡reas de aprendizaje.
+                                <strong>Configuración Automática:</strong> El profesor titular será asignado a TODAS estas áreas de aprendizaje.
                             </small>
                         </div>
                         
@@ -612,8 +612,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php else: ?>
                 <div class="alert alert-warning mt-4">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Advertencia:</strong> No hay Ã¡reas de aprendizaje configuradas para primaria. 
-                    <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar Ã¡reas de aprendizaje</a>
+                    <strong>Advertencia:</strong> No hay áreas de aprendizaje configuradas para primaria.
+                    <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar áreas de aprendizaje</a>
                 </div>
                 <?php endif; ?>
                 
@@ -622,7 +622,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <i class="fas fa-undo me-2"></i>Limpiar
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Guardar SecciÃ³n y Horario
+                        <i class="fas fa-save me-2"></i>Guardar Sección y Horario
                     </button>
                 </div>
             </form>
@@ -650,10 +650,10 @@ const gradosData = {
     <?php endforeach; ?>
 };
 
-// FunciÃ³n para actualizar vista previa
+// Función para actualizar vista previa
 function actualizarVistaPrevia() {
     <?php if ($grado_seleccionado): ?>
-        // Si viene de un grado especÃ­fico, usar ese grado
+        // Si viene de un grado específico, usar ese grado
         const gradoId = <?php echo $grado_seleccionado['id']; ?>;
     <?php else: ?>
         // Si no, usar el select
@@ -668,12 +668,12 @@ function actualizarVistaPrevia() {
         vistaPrevia.textContent = `${nombreGrado} ${letra}`;
         vistaPrevia.className = 'text-success';
     } else {
-        vistaPrevia.textContent = 'Nombre de la secciÃ³n aparecerÃ¡ aquÃ­...';
+        vistaPrevia.textContent = 'Nombre de la sección aparecerá aquí...';
         vistaPrevia.className = 'text-muted';
     }
 }
 
-// FunciÃ³n para filtrar profesores
+// Función para filtrar profesores
 function filtrarProfesores() {
     const busqueda = document.getElementById('filtro-busqueda').value.toLowerCase();
     const especialidad = document.getElementById('filtro-especialidad').value;
@@ -699,21 +699,21 @@ function filtrarProfesores() {
     document.getElementById('contador-profesores').textContent = contador;
 }
 
-// FunciÃ³n para limpiar bÃºsqueda
+// Función para limpiar búsqueda
 function limpiarBusqueda() {
     document.getElementById('filtro-busqueda').value = '';
     document.getElementById('filtro-especialidad').value = '';
     filtrarProfesores();
 }
 
-// FunciÃ³n para mostrar todos
+// Función para mostrar todos
 function mostrarTodos() {
     document.getElementById('filtro-busqueda').value = '';
     document.getElementById('filtro-especialidad').value = '';
     filtrarProfesores();
 }
 
-// FunciÃ³n para actualizar profesor seleccionado
+// Función para actualizar profesor seleccionado
 function actualizarProfesorSeleccionado() {
     const profesorSeleccionado = document.querySelector('input[name="profesor_id"]:checked');
     const divSeleccionado = document.getElementById('profesor-seleccionado');
@@ -739,7 +739,7 @@ function actualizarProfesorSeleccionado() {
 }
 
 function limpiarFormulario() {
-    document.getElementById('vista-previa-nombre').textContent = 'Nombre de la secciÃ³n aparecerÃ¡ aquÃ­...';
+    document.getElementById('vista-previa-nombre').textContent = 'Nombre de la sección aparecerá aquí...';
     document.getElementById('vista-previa-nombre').className = 'text-muted';
     document.getElementById('profesor-seleccionado').style.display = 'none';
 }
@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarProfesorSeleccionado();
 });
 
-// ValidaciÃ³n adicional antes de enviar
+// Validación adicional antes de enviar
 document.getElementById('form-seccion').addEventListener('submit', function(e) {
     <?php if ($grado_seleccionado): ?>
         const gradoId = <?php echo $grado_seleccionado['id']; ?>;
@@ -788,10 +788,10 @@ document.getElementById('form-seccion').addEventListener('submit', function(e) {
     
     let errores = [];
     
-    if (!gradoId) errores.push("â€¢ Seleccione el grado");
-    if (!letra) errores.push("â€¢ Seleccione la letra de la secciÃ³n");
-    if (!añoEscolar) errores.push("â€¢ Seleccione el año escolar");
-    if (!profesor) errores.push("â€¢ Seleccione un profesor titular");
+    if (!gradoId) errores.push("• Seleccione el grado");
+    if (!letra) errores.push("• Seleccione la letra de la sección");
+    if (!añoEscolar) errores.push("• Seleccione el año escolar");
+    if (!profesor) errores.push("• Seleccione un profesor titular");
     
     if (errores.length > 0) {
         e.preventDefault();
@@ -800,18 +800,18 @@ document.getElementById('form-seccion').addEventListener('submit', function(e) {
     }
     
     <?php if (count($areas_aprendizaje) === 0): ?>
-    if (!confirm('ADVERTENCIA: No hay Ã¡reas de aprendizaje configuradas para primaria. Â¿Desea continuar de todos modos?')) {
+    if (!confirm('ADVERTENCIA: No hay áreas de aprendizaje configuradas para primaria. ¿Desea continuar de todos modos?')) {
         e.preventDefault();
         return false;
     }
     <?php endif; ?>
     
-    // Mostrar confirmaciÃ³n final
+    // Mostrar confirmación final
     const nombreGrado = gradosData[gradoId] || '';
     const nombreSeccion = nombreGrado + ' ' + letra;
     const profesorNombre = profesor ? document.querySelector('label[for="profesor_' + profesor.value + '"]').textContent.trim() : '';
     
-    if (!confirm(`Â¿EstÃ¡ seguro de crear la secciÃ³n "${nombreSeccion}"?\n\nProfesor: ${profesorNombre}`)) {
+    if (!confirm(`¿Está seguro de crear la sección "${nombreSeccion}"?\n\nProfesor: ${profesorNombre}`)) {
         e.preventDefault();
         return false;
     }

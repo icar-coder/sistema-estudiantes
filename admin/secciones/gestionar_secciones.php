@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -13,7 +13,7 @@ try {
     $total_grados = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     if ($total_grados == 0) {
-        // Insertar grados base automÃ¡ticamente
+        // Insertar grados base automáticamente
         $grados_base = [
             [1, 'Primer Grado', 'primaria', 1],
             [2, 'Segundo Grado', 'primaria', 2],
@@ -32,7 +32,7 @@ try {
     error_log("Error al verificar grados: " . $e->getMessage());
 }
 
-// Procesar eliminaciÃ³n de secciÃ³n
+// Procesar eliminación de sección
 if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     
@@ -42,16 +42,16 @@ if (isset($_GET['eliminar'])) {
         $tiene_estudiantes = $stmt->fetchColumn();
         
         if ($tiene_estudiantes > 0) {
-            $mensaje = "No se puede eliminar la secciÃ³n porque tiene estudiantes inscritos";
+            $mensaje = "No se puede eliminar la sección porque tiene estudiantes inscritos";
             $tipo_mensaje = "warning";
         } else {
             $stmt = $pdo->prepare("DELETE FROM secciones WHERE id = ?");
             $stmt->execute([$id]);
-            $mensaje = "SecciÃ³n eliminada correctamente";
+            $mensaje = "Sección eliminada correctamente";
             $tipo_mensaje = "success";
         }
     } catch (PDOException $e) {
-        $mensaje = "Error al eliminar secciÃ³n: " . $e->getMessage();
+        $mensaje = "Error al eliminar sección: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
@@ -111,11 +111,11 @@ try {
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>
-            <i class="fas fa-door-open me-2"></i>GestiÃ³n de Secciones por Grado
+            <i class="fas fa-door-open me-2"></i>Gestión de Secciones por Grado
         </h2>
         <div>
             <a href="agregar.php" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Nueva SecciÃ³n
+                <i class="fas fa-plus me-2"></i>Nueva Sección
             </a>
         </div>
     </div>
@@ -189,7 +189,7 @@ try {
                     <div class="d-grid gap-2">
                         <a href="agregar.php?grado_id=<?php echo $grado['id']; ?>" 
                            class="btn btn-<?php echo $this->getColorByGrado($grado['numero']); ?> btn-sm">
-                            <i class="fas fa-plus me-1"></i>Crear SecciÃ³n
+                            <i class="fas fa-plus me-1"></i>Crear Sección
                         </a>
                     </div>
                 </div>
@@ -248,7 +248,7 @@ try {
                                                 </div>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-muted">Sin lÃ­mite</span>
+                                            <span class="text-muted">Sin límite</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -291,12 +291,12 @@ try {
 
 <script>
 function confirmarEliminacion(id, nombre) {
-    if (confirm(`Â¿EstÃ¡s seguro de eliminar la secciÃ³n "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de eliminar la sección "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
         window.location.href = `gestionar.php?eliminar=${id}`;
     }
 }
 
-// FunciÃ³n auxiliar para colores por grado (deberÃ­a estar en PHP, pero por simplicidad)
+// Función auxiliar para colores por grado (debería estar en PHP, pero por simplicidad)
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <?php 
-// FunciÃ³n auxiliar para colores por grado
+// Función auxiliar para colores por grado
 function getColorByGrado($numero) {
     $colores = [
         1 => 'primary',

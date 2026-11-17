@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Archivo: agregar.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -12,7 +12,7 @@ $mostrar_formulario_completo = false;
 $representante_existente = null;
 $cedula_rep_actual = '';
 
-// Generar cÃ©dula escolar automÃ¡tica
+// Generar cédula escolar automática
 function generarCedulaEscolar($pdo) {
     $year = date('Y');
     $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM estudiantes WHERE cedula_escolar LIKE ?");
@@ -22,21 +22,21 @@ function generarCedulaEscolar($pdo) {
     return "EST{$year}" . str_pad($numero, 3, '0', STR_PAD_LEFT);
 }
 
-// FunciÃ³n para buscar representante existente
+// Función para buscar representante existente
 function buscarRepresentante($pdo, $cedula) {
     $stmt = $pdo->prepare("SELECT * FROM representantes WHERE cedula = ?");
     $stmt->execute([$cedula]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para obtener el año escolar activo
+// Función para obtener el año escolar activo
 function obtenerAnoEscolarActivo($pdo) {
     $stmt = $pdo->prepare("SELECT id, nombre FROM años_escolares WHERE estado = 'activo' LIMIT 1");
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para obtener secciones disponibles para un grado
+// Función para obtener secciones disponibles para un grado
 function obtenerSeccionesDisponibles($pdo, $ano_escolar_id, $grado) {
     $stmt = $pdo->prepare("
         SELECT s.id, s.nombre, s.capacidad, 
@@ -59,10 +59,10 @@ function obtenerSeccionesDisponibles($pdo, $ano_escolar_id, $grado) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para crear nueva secciÃ³n automÃ¡ticamente
+// Función para crear nueva sección automáticamente
 function crearNuevaSeccion($pdo, $ano_escolar_id, $grado, $profesor_default_id = null) {
     try {
-        // Obtener la Ãºltima letra usada para este grado
+        // Obtener la última letra usada para este grado
         $stmt = $pdo->prepare("
             SELECT nombre FROM secciones 
             WHERE año_escolar_id = ? AND nombre LIKE ?
@@ -101,7 +101,7 @@ function crearNuevaSeccion($pdo, $ano_escolar_id, $grado, $profesor_default_id =
             $profesor_default_id = $profesor ? $profesor['id'] : null;
         }
         
-        // Crear nueva secciÃ³n
+        // Crear nueva sección
         $stmt = $pdo->prepare("
             INSERT INTO secciones 
             (nombre, año_escolar_id, capacidad, nivel, tipo_grado, profesor_id) 
@@ -120,11 +120,11 @@ function crearNuevaSeccion($pdo, $ano_escolar_id, $grado, $profesor_default_id =
         ];
         
     } catch (Exception $e) {
-        throw new Exception("Error al crear nueva secciÃ³n: " . $e->getMessage());
+        throw new Exception("Error al crear nueva sección: " . $e->getMessage());
     }
 }
 
-// FunciÃ³n para inscribir estudiante en secciÃ³n
+// Función para inscribir estudiante en sección
 function inscribirEstudiante($pdo, $estudiante_id, $seccion_id, $ano_escolar_id) {
     $stmt = $pdo->prepare("
         INSERT INTO inscripciones 
@@ -135,16 +135,16 @@ function inscribirEstudiante($pdo, $estudiante_id, $seccion_id, $ano_escolar_id)
     return $stmt->execute([$estudiante_id, $seccion_id, $ano_escolar_id]);
 }
 
-// Procesar bÃºsqueda inicial de representante
+// Procesar búsqueda inicial de representante
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buscar_representante'])) {
     $cedula_rep = trim($_POST['representante_cedula'] ?? '');
     $cedula_rep_actual = $cedula_rep;
     
     if (empty($cedula_rep)) {
-        $mensaje = "Por favor ingrese la cÃ©dula del representante";
+        $mensaje = "Por favor ingrese la cédula del representante";
         $tipo_mensaje = "warning";
     } elseif (!preg_match('/^[0-9]{6,20}$/', $cedula_rep)) {
-        $mensaje = "La cÃ©dula debe contener solo nÃºmeros (6-20 dÃ­gitos)";
+        $mensaje = "La cédula debe contener solo números (6-20 dígitos)";
         $tipo_mensaje = "danger";
     } else {
         $representante_existente = buscarRepresentante($pdo, $cedula_rep);
@@ -154,26 +154,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buscar_representante'
             $tipo_mensaje = "success";
             $mostrar_formulario_completo = true;
         } else {
-            $mensaje = "CÃ©dula no encontrada. Complete los datos del nuevo representante.";
+            $mensaje = "Cédula no encontrada. Complete los datos del nuevo representante.";
             $tipo_mensaje = "info";
             $mostrar_formulario_completo = true;
         }
     }
 }
 
-// Procesar formulario completo (cuando el representante ya estÃ¡ verificado)
+// Procesar formulario completo (cuando el representante ya está verificado)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])) {
     try {
         $validador = new Validador($_POST);
         $validador->texto('representante_nombre', 'Nombre del representante', 2, 100, true);
         $validador->texto('representante_apellido', 'Apellido del representante', 2, 100, true);
-        $validador->cedula('representante_cedula', 'CÃ©dula del representante', 6, 20, true);
-        $validador->texto('representante_profesion', 'ProfesiÃ³n', 1, 100, false);
+        $validador->cedula('representante_cedula', 'Cédula del representante', 6, 20, true);
+        $validador->texto('representante_profesion', 'Profesión', 1, 100, false);
         $validador->texto('representante_lugar_trabajo', 'Lugar de trabajo', 1, 255, false);
-        $validador->telefono('representante_telefono_numero', 'TelÃ©fono del representante', true);
+        $validador->telefono('representante_telefono_numero', 'Teléfono del representante', true);
         $validador->texto('nombre', 'Nombre del estudiante', 2, 100, true);
         $validador->texto('apellido', 'Apellido del estudiante', 2, 100, true);
-        $validador->cedulaEscolar('cedula_escolar', 'CÃ©dula escolar', false);
+        $validador->cedulaEscolar('cedula_escolar', 'Cédula escolar', false);
         $validador->fecha('fecha_nacimiento', 'Fecha de nacimiento', false, true);
         $validador->texto('lugar_nacimiento', 'Lugar de nacimiento', 1, 100, false);
         $validador->texto('escuela_anterior', 'Escuela anterior', 1, 255, false);
@@ -228,10 +228,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
                 }
             }
             
-            // Validar telÃ©fono del representante
+            // Validar teléfono del representante
             $telefono_rep = $_POST['representante_telefono_codigo'] . $_POST['representante_telefono_numero'];
             if (!preg_match('/^[0-9]{11}$/', $telefono_rep)) {
-                throw new Exception("El telÃ©fono del representante debe tener 11 dÃ­gitos");
+                throw new Exception("El teléfono del representante debe tener 11 dígitos");
             }
             
             // Insertar nuevo representante
@@ -268,22 +268,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
             throw new Exception("Debe seleccionar al menos un documento presentado");
         }
         
-        // Generar cÃ©dula escolar si no se proporciona
+        // Generar cédula escolar si no se proporciona
         $cedula_escolar = trim($_POST['cedula_escolar']);
         if (empty($cedula_escolar)) {
             $cedula_escolar = generarCedulaEscolar($pdo);
         }
         
-        // Validar formato de cÃ©dula escolar
+        // Validar formato de cédula escolar
         if (!preg_match('/^[A-Z0-9]{3,20}$/', $cedula_escolar)) {
-            throw new Exception("La cÃ©dula escolar debe contener solo letras y nÃºmeros (3-20 caracteres)");
+            throw new Exception("La cédula escolar debe contener solo letras y números (3-20 caracteres)");
         }
         
-        // Verificar si la cÃ©dula escolar ya existe
+        // Verificar si la cédula escolar ya existe
         $stmt = $pdo->prepare("SELECT id FROM estudiantes WHERE cedula_escolar = ?");
         $stmt->execute([$cedula_escolar]);
         if ($stmt->fetch()) {
-            throw new Exception("La cÃ©dula escolar ya existe. Por favor use otra.");
+            throw new Exception("La cédula escolar ya existe. Por favor use otra.");
         }
         
         // Insertar estudiante
@@ -315,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         
         $estudiante_id = $pdo->lastInsertId();
         
-        // PROCESAR INSCRIPCIÃ“N AUTOMÃTICA EN SECCIÃ“N
+        // PROCESAR INSCRIPCIÓN AUTOMÁTICA EN SECCIÓN
         $grado_seleccionado = $_POST['grado_inscripcion'] ?? '1er Grado';
         $ano_escolar_activo = obtenerAnoEscolarActivo($pdo);
         
@@ -328,16 +328,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         $seccion_inscripcion = null;
         
         if (count($secciones_disponibles) > 0) {
-            // Usar la primera secciÃ³n disponible
+            // Usar la primera sección disponible
             $seccion_inscripcion = $secciones_disponibles[0];
-            $info_inscripcion = "SecciÃ³n existente: {$seccion_inscripcion['nombre']}";
+            $info_inscripcion = "Sección existente: {$seccion_inscripcion['nombre']}";
         } else {
-            // Crear nueva secciÃ³n automÃ¡ticamente
+            // Crear nueva sección automáticamente
             $seccion_inscripcion = crearNuevaSeccion($pdo, $ano_escolar_activo['id'], $grado_seleccionado);
-            $info_inscripcion = "Nueva secciÃ³n creada: {$seccion_inscripcion['nombre']}";
+            $info_inscripcion = "Nueva sección creada: {$seccion_inscripcion['nombre']}";
         }
         
-        // Inscribir estudiante en la secciÃ³n
+        // Inscribir estudiante en la sección
         $inscripcion_exitosa = inscribirEstudiante(
             $pdo, 
             $estudiante_id, 
@@ -346,7 +346,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         );
         
         if (!$inscripcion_exitosa) {
-            throw new Exception("Error al inscribir estudiante en la secciÃ³n");
+            throw new Exception("Error al inscribir estudiante en la sección");
         }
         
         // Procesar representantes adicionales si existen
@@ -380,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
                         $rep_adicional_id = $rep_existente['id'];
                     }
                     
-                    // Insertar relaciÃ³n estudiante-representante adicional
+                    // Insertar relación estudiante-representante adicional
                     $stmt_rel = $pdo->prepare("INSERT INTO estudiantes_representantes 
                         (estudiante_id, representante_id, parentesco, es_principal) 
                         VALUES (?, ?, ?, ?)");
@@ -395,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
             }
         }
 
-        // Insertar el representante principal en la tabla de relaciÃ³n
+        // Insertar el representante principal en la tabla de relación
         $stmt_principal = $pdo->prepare("INSERT INTO estudiantes_representantes 
             (estudiante_id, representante_id, parentesco, es_principal) 
             VALUES (?, ?, ?, ?)");
@@ -409,11 +409,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         
         $pdo->commit();
         
-        $mensaje = "âœ… Estudiante agregado e inscrito correctamente.<br>
-                   <strong>CÃ©dula escolar:</strong> {$cedula_escolar}<br>
+        $mensaje = "✅ Estudiante agregado e inscrito correctamente.<br>
+                   <strong>Cédula escolar:</strong> {$cedula_escolar}<br>
                    <strong>Estudiante:</strong> {$_POST['nombre']} {$_POST['apellido']}<br>
                    <strong>Grado:</strong> {$grado_seleccionado}<br>
-                   <strong>SecciÃ³n:</strong> {$seccion_inscripcion['nombre']}<br>
+                   <strong>Sección:</strong> {$seccion_inscripcion['nombre']}<br>
                    <strong>Representante:</strong> " . ($representante_existente ? $representante_existente['nombre'] . ' ' . $representante_existente['apellido'] : $_POST['representante_nombre'] . ' ' . $_POST['representante_apellido']);
         $tipo_mensaje = "success";
         
@@ -424,16 +424,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         
     } catch (Exception $e) {
         $pdo->rollBack();
-        $mensaje = "âŒ Error: " . $e->getMessage();
+        $mensaje = "❌ Error: " . $e->getMessage();
         $tipo_mensaje = "danger";
         $mostrar_formulario_completo = true;
     }
 }
 
-// Obtener cÃ©dula sugerida
+// Obtener cédula sugerida
 $cedula_sugerida = generarCedulaEscolar($pdo);
 
-// Obtener año escolar activo para mostrar informaciÃ³n
+// Obtener año escolar activo para mostrar información
 $ano_escolar_activo = obtenerAnoEscolarActivo($pdo);
 
 // Opciones predefinidas para comboboxes
@@ -442,9 +442,9 @@ $tipos_vivienda = ['Propia', 'Alquilada', 'Familiar', 'Otro'];
 $grados_disponibles = ['1er Grado', '2do Grado', '3er Grado', '4to Grado', '5to Grado', '6to Grado'];
 $documentos_requeridos = [
     'acta_nacimiento' => 'Acta de Nacimiento',
-    'cedula_representante' => 'CÃ©dula del Representante',
+    'cedula_representante' => 'Cédula del Representante',
     'fotos' => 'Fotos Tipo Carnet',
-    'certificado_medico' => 'Certificado MÃ©dico',
+    'certificado_medico' => 'Certificado Médico',
     'boleta_anterior' => 'Boleta del Año Anterior',
     'partida_bautismo' => 'Partida de Bautismo'
 ];
@@ -469,7 +469,7 @@ $documentos_requeridos = [
         </div>
     <?php endif; ?>
 
-    <!-- Paso 1: BÃºsqueda del Representante -->
+    <!-- Paso 1: Búsqueda del Representante -->
     <?php if (!$mostrar_formulario_completo): ?>
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
@@ -482,19 +482,19 @@ $documentos_requeridos = [
                 <div class="col-md-8">
                     <p class="text-muted">
                         <i class="fas fa-info-circle me-2"></i>
-                        Ingrese la cÃ©dula del representante principal. Si ya existe en el sistema, se cargarÃ¡n sus datos automÃ¡ticamente.
+                        Ingrese la cédula del representante principal. Si ya existe en el sistema, se cargarán sus datos automáticamente.
                     </p>
                 </div>
             </div>
             <form method="POST" action="" id="formBuscarRepresentante">
                 <div class="row">
                     <div class="col-md-8">
-                        <label for="representante_cedula" class="form-label">CÃ©dula del Representante Principal *</label>
+                        <label for="representante_cedula" class="form-label">Cédula del Representante Principal *</label>
                         <input type="text" class="form-control" id="representante_cedula" name="representante_cedula" data-tipo="cedula"
                                value="<?php echo htmlspecialchars($cedula_rep_actual); ?>"
                                maxlength="20" pattern="[0-9]+" required
-                               placeholder="Ingrese la cÃ©dula del representante (solo nÃºmeros)">
-                        <div class="form-text">Solo nÃºmeros, sin puntos ni espacios</div>
+                               placeholder="Ingrese la cédula del representante (solo números)">
+                        <div class="form-text">Solo números, sin puntos ni espacios</div>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
                         <button type="submit" name="buscar_representante" class="btn btn-primary w-100">
@@ -507,16 +507,16 @@ $documentos_requeridos = [
     </div>
     <?php endif; ?>
 
-    <!-- Paso 2: Formulario Completo (solo se muestra despuÃ©s de buscar representante) -->
+    <!-- Paso 2: Formulario Completo (solo se muestra después de buscar representante) -->
     <?php if ($mostrar_formulario_completo): ?>
     <form method="POST" action="" id="formEstudiante">
         <input type="hidden" name="representante_cedula" value="<?php echo htmlspecialchars($cedula_rep_actual); ?>">
         
-        <!-- InformaciÃ³n del Año Escolar y Grado -->
+        <!-- Información del Año Escolar y Grado -->
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-calendar-alt me-2"></i>InscripciÃ³n Escolar
+                    <i class="fas fa-calendar-alt me-2"></i>Inscripción Escolar
                 </h5>
             </div>
             <div class="card-body">
@@ -529,7 +529,7 @@ $documentos_requeridos = [
                                 </span>
                             </div>
                             <div class="col-md-6">
-                                <strong>Sistema:</strong> InscripciÃ³n AutomÃ¡tica en Primera SecciÃ³n Disponible
+                                <strong>Sistema:</strong> Inscripción Automática en Primera Sección Disponible
                             </div>
                         </div>
                     </div>
@@ -547,18 +547,18 @@ $documentos_requeridos = [
                                 <?php endforeach; ?>
                             </select>
                             <div class="form-text">
-                                El estudiante serÃ¡ inscrito automÃ¡ticamente en la primera secciÃ³n disponible de este grado
+                                El estudiante será inscrito automáticamente en la primera sección disponible de este grado
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">InformaciÃ³n de Secciones en Tiempo Real</label>
+                            <label class="form-label">Información de Secciones en Tiempo Real</label>
                             <div id="info_secciones" class="form-control" style="background-color: #f8f9fa; min-height: 80px; max-height: 200px; overflow-y: auto;">
                                 <small class="text-muted">
                                     Seleccione un grado para ver las secciones disponibles...
                                 </small>
                             </div>
                             <div class="form-text">
-                                <i class="fas fa-sync-alt me-1"></i>La informaciÃ³n se actualiza automÃ¡ticamente
+                                <i class="fas fa-sync-alt me-1"></i>La información se actualiza automáticamente
                             </div>
                         </div>
                     </div>
@@ -573,7 +573,7 @@ $documentos_requeridos = [
             </div>
         </div>
 
-        <!-- InformaciÃ³n del Representante Principal -->
+        <!-- Información del Representante Principal -->
         <div class="card mb-4">
             <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">
@@ -604,7 +604,7 @@ $documentos_requeridos = [
                                 <?php echo htmlspecialchars($representante_existente['nombre'] . ' ' . $representante_existente['apellido']); ?>
                             </div>
                             <div class="col-md-2">
-                                <strong>CÃ©dula:</strong><br>
+                                <strong>Cédula:</strong><br>
                                 <?php echo htmlspecialchars($representante_existente['cedula']); ?>
                             </div>
                             <div class="col-md-2">
@@ -612,7 +612,7 @@ $documentos_requeridos = [
                                 <?php echo ucfirst($representante_existente['parentesco']); ?>
                             </div>
                             <div class="col-md-3">
-                                <strong>TelÃ©fono:</strong><br>
+                                <strong>Teléfono:</strong><br>
                                 <?php echo htmlspecialchars($representante_existente['telefono']); ?>
                             </div>
                             <div class="col-md-2">
@@ -640,7 +640,7 @@ $documentos_requeridos = [
                             <label for="representante_nombre" class="form-label">Nombre del Representante *</label>
                             <input type="text" class="form-control" id="representante_nombre" name="representante_nombre"
                                    value="<?php echo htmlspecialchars($_POST['representante_nombre'] ?? ''); ?>"
-                                   maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
+                                   maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
                                    placeholder="Ej: Carmen">
                         </div>
                         
@@ -648,8 +648,8 @@ $documentos_requeridos = [
                             <label for="representante_apellido" class="form-label">Apellido del Representante *</label>
                             <input type="text" class="form-control" id="representante_apellido" name="representante_apellido"
                                    value="<?php echo htmlspecialchars($_POST['representante_apellido'] ?? ''); ?>"
-                                   maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
-                                   placeholder="Ej: RodrÃ­guez">
+                                   maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
+                                   placeholder="Ej: Rodríguez">
                         </div>
                         
                         <div class="col-md-4 mb-3">
@@ -660,8 +660,8 @@ $documentos_requeridos = [
                                 <option value="padre" <?php echo ($_POST['representante_parentesco'] ?? '') == 'padre' ? 'selected' : ''; ?>>Padre</option>
                                 <option value="abuelo" <?php echo ($_POST['representante_parentesco'] ?? '') == 'abuelo' ? 'selected' : ''; ?>>Abuelo</option>
                                 <option value="abuela" <?php echo ($_POST['representante_parentesco'] ?? '') == 'abuela' ? 'selected' : ''; ?>>Abuela</option>
-                                <option value="tio" <?php echo ($_POST['representante_parentesco'] ?? '') == 'tio' ? 'selected' : ''; ?>>TÃ­o</option>
-                                <option value="tia" <?php echo ($_POST['representante_parentesco'] ?? '') == 'tia' ? 'selected' : ''; ?>>TÃ­a</option>
+                                <option value="tio" <?php echo ($_POST['representante_parentesco'] ?? '') == 'tio' ? 'selected' : ''; ?>>Tío</option>
+                                <option value="tia" <?php echo ($_POST['representante_parentesco'] ?? '') == 'tia' ? 'selected' : ''; ?>>Tía</option>
                                 <option value="hermano" <?php echo ($_POST['representante_parentesco'] ?? '') == 'hermano' ? 'selected' : ''; ?>>Hermano</option>
                                 <option value="hermana" <?php echo ($_POST['representante_parentesco'] ?? '') == 'hermana' ? 'selected' : ''; ?>>Hermana</option>
                                 <option value="otro" <?php echo ($_POST['representante_parentesco'] ?? '') == 'otro' ? 'selected' : ''; ?>>Otro</option>
@@ -671,10 +671,10 @@ $documentos_requeridos = [
                     
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <label for="representante_telefono_codigo" class="form-label">TelÃ©fono Principal *</label>
+                            <label for="representante_telefono_codigo" class="form-label">Teléfono Principal *</label>
                             <div class="input-group">
                                 <select class="form-select" id="representante_telefono_codigo" name="representante_telefono_codigo" style="max-width: 100px;" required>
-                                    <option value="">CÃ³digo</option>
+                                    <option value="">Código</option>
                                     <?php foreach ($codigos_telefonicos as $codigo): ?>
                                         <option value="<?php echo $codigo; ?>" <?php echo ($_POST['representante_telefono_codigo'] ?? '') == $codigo ? 'selected' : ''; ?>>
                                             <?php echo $codigo; ?>
@@ -690,10 +690,10 @@ $documentos_requeridos = [
                         </div>
                         
                         <div class="col-md-3 mb-3">
-                            <label for="representante_telefono_alternativo" class="form-label">TelÃ©fono Alternativo</label>
+                            <label for="representante_telefono_alternativo" class="form-label">Teléfono Alternativo</label>
                             <div class="input-group">
                                 <select class="form-select" name="representante_telefono_alternativo_codigo" style="max-width: 100px;">
-                                    <option value="">CÃ³digo</option>
+                                    <option value="">Código</option>
                                     <?php foreach ($codigos_telefonicos as $codigo): ?>
                                         <option value="<?php echo $codigo; ?>"><?php echo $codigo; ?></option>
                                     <?php endforeach; ?>
@@ -715,7 +715,7 @@ $documentos_requeridos = [
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="representante_profesion" class="form-label">ProfesiÃ³n</label>
+                            <label for="representante_profesion" class="form-label">Profesión</label>
                             <input type="text" class="form-control" id="representante_profesion" name="representante_profesion" data-tipo="texto"
                                    value="<?php echo htmlspecialchars($_POST['representante_profesion'] ?? ''); ?>"
                                    maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s'.-]+"
@@ -739,7 +739,7 @@ $documentos_requeridos = [
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="representante_genero" class="form-label">GÃ©nero</label>
+                            <label for="representante_genero" class="form-label">Género</label>
                             <select class="form-select" id="representante_genero" name="representante_genero">
                                 <option value="">Seleccionar...</option>
                                 <option value="masculino" <?php echo ($_POST['representante_genero'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
@@ -749,9 +749,9 @@ $documentos_requeridos = [
                     </div>
                     
                     <div class="mb-3">
-                        <label for="representante_direccion" class="form-label">DirecciÃ³n del Representante</label>
+                        <label for="representante_direccion" class="form-label">Dirección del Representante</label>
                         <textarea class="form-control" id="representante_direccion" name="representante_direccion" rows="2"
-                                  maxlength="500" placeholder="DirecciÃ³n completa del representante"><?php echo htmlspecialchars($_POST['representante_direccion'] ?? ''); ?></textarea>
+                                  maxlength="500" placeholder="Dirección completa del representante"><?php echo htmlspecialchars($_POST['representante_direccion'] ?? ''); ?></textarea>
                     </div>
                 <?php endif; ?>
             </div>
@@ -774,7 +774,7 @@ $documentos_requeridos = [
             </div>
         </div>
 
-        <!-- SecciÃ³n Datos del Estudiante -->
+        <!-- Sección Datos del Estudiante -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
@@ -784,12 +784,12 @@ $documentos_requeridos = [
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="cedula_escolar" class="form-label">CÃ©dula Escolar *</label>
+                        <label for="cedula_escolar" class="form-label">Cédula Escolar *</label>
                         <input type="text" class="form-control" id="cedula_escolar" name="cedula_escolar" data-tipo="cedula-escolar"
                                value="<?php echo htmlspecialchars($_POST['cedula_escolar'] ?? $cedula_sugerida); ?>"
                                maxlength="20" pattern="[A-Za-z0-9]+" required
-                               placeholder="Se generarÃ¡ automÃ¡ticamente">
-                        <div class="form-text">Identificador Ãºnico del estudiante</div>
+                               placeholder="Se generará automáticamente">
+                        <div class="form-text">Identificador único del estudiante</div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
@@ -806,20 +806,20 @@ $documentos_requeridos = [
                         <label for="nombre" class="form-label">Nombre *</label>
                         <input type="text" class="form-control" id="nombre" name="nombre" data-tipo="texto" required
                                value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+"
-                               placeholder="Ej: MarÃ­a">
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                               placeholder="Ej: María">
                     </div>
                     
                     <div class="col-md-4 mb-3">
                         <label for="apellido" class="form-label">Apellido *</label>
                         <input type="text" class="form-control" id="apellido" name="apellido" data-tipo="texto" required
                                value="<?php echo htmlspecialchars($_POST['apellido'] ?? ''); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+"
-                               placeholder="Ej: GonzÃ¡lez">
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                               placeholder="Ej: González">
                     </div>
                     
                     <div class="col-md-4 mb-3">
-                        <label for="genero" class="form-label">GÃ©nero</label>
+                        <label for="genero" class="form-label">Género</label>
                         <select class="form-select" id="genero" name="genero">
                             <option value="">Seleccionar...</option>
                             <option value="masculino" <?php echo ($_POST['genero'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
@@ -838,10 +838,10 @@ $documentos_requeridos = [
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label for="telefono" class="form-label">TelÃ©fono del Estudiante</label>
+                        <label for="telefono" class="form-label">Teléfono del Estudiante</label>
                         <div class="input-group">
                             <select class="form-select" name="telefono_codigo" style="max-width: 100px;">
-                                <option value="">CÃ³digo</option>
+                                <option value="">Código</option>
                                 <?php foreach ($codigos_telefonicos as $codigo): ?>
                                     <option value="<?php echo $codigo; ?>"><?php echo $codigo; ?></option>
                                 <?php endforeach; ?>
@@ -867,17 +867,17 @@ $documentos_requeridos = [
                         <input type="text" class="form-control" id="escuela_anterior" name="escuela_anterior" data-tipo="texto-largo"
                                value="<?php echo htmlspecialchars($_POST['escuela_anterior'] ?? ''); ?>"
                                maxlength="255"
-                               placeholder="Ej: Escuela BÃ¡sica Nacional">
+                               placeholder="Ej: Escuela Básica Nacional">
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label for="direccion" class="form-label">DirecciÃ³n del Estudiante</label>
+                    <label for="direccion" class="form-label">Dirección del Estudiante</label>
                     <textarea class="form-control" id="direccion" name="direccion" rows="2"
-                              maxlength="500" placeholder="DirecciÃ³n completa del estudiante"><?php echo htmlspecialchars($_POST['direccion'] ?? ''); ?></textarea>
+                              maxlength="500" placeholder="Dirección completa del estudiante"><?php echo htmlspecialchars($_POST['direccion'] ?? ''); ?></textarea>
                 </div>
 
-                <!-- InformaciÃ³n del Grupo Familiar -->
+                <!-- Información del Grupo Familiar -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="tipo_vivienda" class="form-label">Tipo de Vivienda</label>
@@ -892,7 +892,7 @@ $documentos_requeridos = [
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label for="personas_conviven" class="form-label">Personas que ConvÃ­ven en el Hogar</label>
+                        <label for="personas_conviven" class="form-label">Personas que Convíven en el Hogar</label>
                         <input type="number" class="form-control" id="personas_conviven" name="personas_conviven"
                                value="<?php echo htmlspecialchars($_POST['personas_conviven'] ?? ''); ?>"
                                min="1" max="20"
@@ -923,15 +923,15 @@ $documentos_requeridos = [
                 <div class="mb-3">
                     <label for="habilidades_especiales" class="form-label">Habilidades Especiales o Talentos</label>
                     <textarea class="form-control" id="habilidades_especiales" name="habilidades_especiales" rows="3" data-tipo="textarea"
-                              maxlength="500" placeholder="Describa cualquier habilidad especial, talento o destreza que posea el estudiante (mÃºsica, deportes, arte, etc.)"><?php echo htmlspecialchars($_POST['habilidades_especiales'] ?? ''); ?></textarea>
+                              maxlength="500" placeholder="Describa cualquier habilidad especial, talento o destreza que posea el estudiante (música, deportes, arte, etc.)"><?php echo htmlspecialchars($_POST['habilidades_especiales'] ?? ''); ?></textarea>
                 </div>
                 
-                <!-- InformaciÃ³n MÃ©dica -->
+                <!-- Información Médica -->
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="enfermedades" class="form-label">Enfermedades o Condiciones</label>
                         <textarea class="form-control" id="enfermedades" name="enfermedades" rows="2"
-                                  maxlength="500" placeholder="Enfermedades crÃ³nicas o condiciones especiales"><?php echo htmlspecialchars($_POST['enfermedades'] ?? ''); ?></textarea>
+                                  maxlength="500" placeholder="Enfermedades crónicas o condiciones especiales"><?php echo htmlspecialchars($_POST['enfermedades'] ?? ''); ?></textarea>
                     </div>
                     
                     <div class="col-md-4 mb-3">
@@ -955,10 +955,10 @@ $documentos_requeridos = [
             </div>
         </div>
 
-        <!-- Botones de acciÃ³n -->
+        <!-- Botones de acción -->
         <div class="d-flex justify-content-between">
             <button type="button" class="btn btn-secondary" onclick="volverABuscar()">
-                <i class="fas fa-arrow-left me-2"></i>Volver a BÃºsqueda
+                <i class="fas fa-arrow-left me-2"></i>Volver a Búsqueda
             </button>
             
             <div>
@@ -986,22 +986,22 @@ $documentos_requeridos = [
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3 mb-2">
-                    <label class="form-label">CÃ©dula *</label>
+                    <label class="form-label">Cédula *</label>
                     <input type="text" class="form-control" name="representantes_adicionales[][cedula]" 
                            maxlength="20" pattern="[0-9]+" required
-                           placeholder="Solo nÃºmeros">
+                           placeholder="Solo números">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label class="form-label">Nombre *</label>
                     <input type="text" class="form-control" name="representantes_adicionales[][nombre]" 
-                           maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
-                           placeholder="Ej: JosÃ©">
+                           maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
+                           placeholder="Ej: José">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label class="form-label">Apellido *</label>
                     <input type="text" class="form-control" name="representantes_adicionales[][apellido]" 
-                           maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
-                           placeholder="Ej: PÃ©rez">
+                           maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
+                           placeholder="Ej: Pérez">
                 </div>
                 <div class="col-md-3 mb-2">
                     <label class="form-label">Parentesco *</label>
@@ -1011,8 +1011,8 @@ $documentos_requeridos = [
                         <option value="padre">Padre</option>
                         <option value="abuelo">Abuelo</option>
                         <option value="abuela">Abuela</option>
-                        <option value="tio">TÃ­o</option>
-                        <option value="tia">TÃ­a</option>
+                        <option value="tio">Tío</option>
+                        <option value="tia">Tía</option>
                         <option value="hermano">Hermano</option>
                         <option value="hermana">Hermana</option>
                         <option value="otro">Otro</option>
@@ -1021,10 +1021,10 @@ $documentos_requeridos = [
             </div>
             <div class="row">
                 <div class="col-md-4 mb-2">
-                    <label class="form-label">TelÃ©fono *</label>
+                    <label class="form-label">Teléfono *</label>
                     <div class="input-group">
                         <select class="form-select" name="representantes_adicionales[][telefono_codigo]" style="max-width: 100px;" required>
-                            <option value="">CÃ³digo</option>
+                            <option value="">Código</option>
                             <?php foreach ($codigos_telefonicos as $codigo): ?>
                                 <option value="<?php echo $codigo; ?>"><?php echo $codigo; ?></option>
                             <?php endforeach; ?>
@@ -1041,10 +1041,10 @@ $documentos_requeridos = [
                            placeholder="ejemplo@email.com">
                 </div>
                 <div class="col-md-4 mb-2">
-                    <label class="form-label">DirecciÃ³n</label>
+                    <label class="form-label">Dirección</label>
                     <input type="text" class="form-control" name="representantes_adicionales[][direccion]"
                            maxlength="255"
-                           placeholder="DirecciÃ³n completa">
+                           placeholder="Dirección completa">
                 </div>
             </div>
         </div>
@@ -1052,12 +1052,12 @@ $documentos_requeridos = [
 </div>
 
 <script>
-// FunciÃ³n para volver a la bÃºsqueda inicial
+// Función para volver a la búsqueda inicial
 function volverABuscar() {
     window.location.href = 'agregar.php';
 }
 
-// FunciÃ³n para calcular edad
+// Función para calcular edad
 function calcularEdad() {
     const fechaNacimiento = document.getElementById('fecha_nacimiento').value;
     if (fechaNacimiento) {
@@ -1076,7 +1076,7 @@ function calcularEdad() {
     }
 }
 
-// FunciÃ³n para agregar representante adicional
+// Función para agregar representante adicional
 function agregarRepresentanteAdicional() {
     const container = document.getElementById('representantes_adicionales_container');
     const template = document.getElementById('template_representante_adicional');
@@ -1088,13 +1088,13 @@ function agregarRepresentanteAdicional() {
     container.appendChild(nuevoRepresentante);
 }
 
-// FunciÃ³n para remover representante adicional
+// Función para remover representante adicional
 function removerRepresentante(boton) {
     const card = boton.closest('.representante-adicional');
     card.remove();
 }
 
-// FunciÃ³n para cargar informaciÃ³n de secciones disponibles CON DATOS REALES
+// Función para cargar información de secciones disponibles CON DATOS REALES
 function cargarInfoSecciones() {
     const grado = document.getElementById('grado_inscripcion').value;
     const infoDiv = document.getElementById('info_secciones');
@@ -1114,7 +1114,7 @@ function cargarInfoSecciones() {
         </div>
     `;
     
-    // Hacer peticiÃ³n AJAX para obtener datos reales
+    // Hacer petición AJAX para obtener datos reales
     fetch(`../../includes/ajax_secciones.php?grado=${encodeURIComponent(grado)}&ano_escolar_id=<?php echo $ano_escolar_activo ? $ano_escolar_activo['id'] : ''; ?>`)
         .then(response => response.json())
         .then(data => {
@@ -1125,7 +1125,7 @@ function cargarInfoSecciones() {
                     data.secciones.forEach(seccion => {
                         const cuposDisponibles = seccion.capacidad ? 
                             (seccion.capacidad - seccion.estudiantes_inscritos) : 
-                            'Sin lÃ­mite';
+                            'Sin límite';
                             
                         const estado = (seccion.capacidad === null || cuposDisponibles > 0) ? 
                             `<span class="badge bg-success">${cuposDisponibles} ${seccion.capacidad ? 'cupos' : 'cupos ilimitados'}</span>` : 
@@ -1152,8 +1152,8 @@ function cargarInfoSecciones() {
                         <small class="text-info mt-2 d-block">
                             <i class="fas fa-info-circle"></i> 
                             ${seccionesConCupos > 0 ? 
-                                `El estudiante serÃ¡ inscrito en la primera secciÃ³n con cupos disponibles (${seccionesConCupos} secciones disponibles).` : 
-                                'Todas las secciones estÃ¡n llenas. Se crearÃ¡ una nueva secciÃ³n automÃ¡ticamente.'}
+                                `El estudiante será inscrito en la primera sección con cupos disponibles (${seccionesConCupos} secciones disponibles).` :
+                                'Todas las secciones están llenas. Se creará una nueva sección automáticamente.'}
                         </small>
                     `;
                 } else {
@@ -1161,7 +1161,7 @@ function cargarInfoSecciones() {
                         <div class="text-center text-warning">
                             <i class="fas fa-exclamation-triangle"></i>
                             <strong>No hay secciones creadas para ${grado}</strong><br>
-                            <small>Se crearÃ¡n automÃ¡ticamente cuando sea necesario.</small>
+                            <small>Se crearán automáticamente cuando sea necesario.</small>
                         </div>
                     `;
                 }
@@ -1180,21 +1180,21 @@ function cargarInfoSecciones() {
             infoDiv.innerHTML = `
                 <div class="text-center text-danger">
                     <i class="fas fa-exclamation-circle"></i>
-                    <small>Error de conexiÃ³n: ${error.message}</small>
+                    <small>Error de conexión: ${error.message}</small>
                 </div>
             `;
         });
 }
 
-// Inicializar cÃ¡lculos al cargar la pÃ¡gina
+// Inicializar cálculos al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     calcularEdad();
     
-    // Cargar informaciÃ³n de secciones cuando cambie el grado
+    // Cargar información de secciones cuando cambie el grado
     const gradoSelect = document.getElementById('grado_inscripcion');
     if (gradoSelect) {
         gradoSelect.addEventListener('change', cargarInfoSecciones);
-        // Cargar informaciÃ³n inicial si ya hay un grado seleccionado
+        // Cargar información inicial si ya hay un grado seleccionado
         if (gradoSelect.value && <?php echo $ano_escolar_activo ? 'true' : 'false'; ?>) {
             setTimeout(() => {
                 cargarInfoSecciones();
@@ -1202,11 +1202,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ValidaciÃ³n de formulario
+    // Validación de formulario
     const form = document.getElementById('formEstudiante');
     if (form) {
         form.addEventListener('submit', function(e) {
-            // Validar que al menos un documento estÃ© seleccionado
+            // Validar que al menos un documento esté seleccionado
             const documentos = document.querySelectorAll('input[name="documentos_presentados[]"]:checked');
             if (documentos.length === 0) {
                 e.preventDefault();
@@ -1214,12 +1214,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
             
-            // Validar telÃ©fonos
+            // Validar teléfonos
             const telefonos = document.querySelectorAll('input[name$="[telefono_numero]"]');
             for (let tel of telefonos) {
                 if (tel.value && !/^[0-9]{7}$/.test(tel.value)) {
                     e.preventDefault();
-                    alert('Los nÃºmeros de telÃ©fono deben tener exactamente 7 dÃ­gitos.');
+                    alert('Los números de teléfono deben tener exactamente 7 dígitos.');
                     tel.focus();
                     return false;
                 }

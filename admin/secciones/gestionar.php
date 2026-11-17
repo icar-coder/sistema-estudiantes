@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -33,7 +33,7 @@ try {
     $total_grados = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     if ($total_grados == 0) {
-        // Insertar grados base automÃ¡ticamente
+        // Insertar grados base automáticamente
         $grados_base = [
             [1, 'Primer Grado', 'primaria', 1],
             [2, 'Segundo Grado', 'primaria', 2],
@@ -52,27 +52,27 @@ try {
     error_log("Error al verificar grados: " . $e->getMessage());
 }
 
-// Procesar eliminaciÃ³n
+// Procesar eliminación
 if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     
     try {
-        // Verificar si la secciÃ³n tiene estudiantes inscritos
+        // Verificar si la sección tiene estudiantes inscritos
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM inscripciones WHERE seccion_id = ?");
         $stmt->execute([$id]);
         $tiene_estudiantes = $stmt->fetchColumn();
         
         if ($tiene_estudiantes > 0) {
-            $mensaje = "No se puede eliminar la secciÃ³n porque tiene estudiantes inscritos";
+            $mensaje = "No se puede eliminar la sección porque tiene estudiantes inscritos";
             $tipo_mensaje = "warning";
         } else {
             $stmt = $pdo->prepare("DELETE FROM secciones WHERE id = ?");
             $stmt->execute([$id]);
-            $mensaje = "SecciÃ³n eliminada correctamente";
+            $mensaje = "Sección eliminada correctamente";
             $tipo_mensaje = "success";
         }
     } catch (PDOException $e) {
-        $mensaje = "Error al eliminar secciÃ³n: " . $e->getMessage();
+        $mensaje = "Error al eliminar sección: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
@@ -85,7 +85,7 @@ try {
     $años_escolares = [];
 }
 
-// Obtener grados con sus secciones (SOLO DEL AÃ‘O ACTIVO)
+// Obtener grados con sus secciones (SOLO DEL AÑO ACTIVO)
 try {
     $stmt = $pdo->prepare("
         SELECT g.*, 
@@ -105,7 +105,7 @@ try {
     error_log("Error al cargar grados: " . $e->getMessage());
 }
 
-// Obtener lista de secciones con informaciÃ³n del año escolar
+// Obtener lista de secciones con información del año escolar
 try {
     $query = "
         SELECT s.*, 
@@ -161,7 +161,7 @@ try {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>GestiÃ³n de Secciones</h2>
+        <h2>Gestión de Secciones</h2>
         <?php if ($año_activo_id): ?>
             <div>
                 <span class="badge bg-success me-3">
@@ -169,7 +169,7 @@ try {
                     Año Activo: <?php echo htmlspecialchars($año_activo['nombre'] ?? ''); ?>
                 </span>
                 <a href="agregar.php" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Nueva SecciÃ³n
+                    <i class="fas fa-plus me-2"></i>Nueva Sección
                 </a>
             </div>
         <?php else: ?>
@@ -181,7 +181,7 @@ try {
 
     <?php if ($nueva_seccion_id): ?>
         <div class="alert alert-success d-flex justify-content-between align-items-center flex-wrap gap-2" role="alert">
-            <span><?php echo htmlspecialchars($_GET['mensaje'] ?? 'SecciÃ³n creada correctamente'); ?></span>
+            <span><?php echo htmlspecialchars($_GET['mensaje'] ?? 'Sección creada correctamente'); ?></span>
             <a href="asignar_profesores.php?id=<?php echo $nueva_seccion_id; ?>" class="btn btn-sm btn-primary">
                 <i class="fas fa-clock me-1"></i>Asignar Horario Ahora
             </a>
@@ -262,7 +262,7 @@ try {
                         <div class="d-grid gap-2">
                             <a href="agregar.php?grado_id=<?php echo $grado['id']; ?>&año_escolar_id=<?php echo $año_activo_id; ?>" 
                                class="btn btn-<?php echo getColorByGrado($grado['numero']); ?> btn-sm">
-                                <i class="fas fa-plus me-1"></i>Crear SecciÃ³n
+                                <i class="fas fa-plus me-1"></i>Crear Sección
                             </a>
                         </div>
                     </div>
@@ -357,7 +357,7 @@ try {
                                     <th>Capacidad</th>
                                     <th>Estudiantes</th>
                                     <th>Cupos Disponibles</th>
-                                    <th>OcupaciÃ³n</th>
+                                    <th>Ocupación</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -383,7 +383,7 @@ try {
                                             </span>
                                         </td>
                                         <td>
-                                            <?php echo $seccion['capacidad'] ? $seccion['capacidad'] . ' estudiantes' : '<span class="text-muted">Sin lÃ­mite</span>'; ?>
+                                            <?php echo $seccion['capacidad'] ? $seccion['capacidad'] . ' estudiantes' : '<span class="text-muted">Sin límite</span>'; ?>
                                         </td>
                                         <td>
                                             <span class="badge bg-primary"><?php echo $seccion['total_estudiantes']; ?></span>
@@ -394,7 +394,7 @@ try {
                                                     <?php echo $cupos_disponibles; ?> cupos
                                                 </span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary">Sin lÃ­mite</span>
+                                                <span class="badge bg-secondary">Sin límite</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -463,7 +463,7 @@ try {
                             <?php endif; ?>
                         </p>
                         <a href="agregar.php" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Agregar Primera SecciÃ³n
+                            <i class="fas fa-plus me-2"></i>Agregar Primera Sección
                         </a>
                     </div>
                 <?php endif; ?>
@@ -474,7 +474,7 @@ try {
 
 <script>
 function confirmarEliminacion(id, nombre) {
-    if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar la secciÃ³n "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de que deseas eliminar la sección "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
         window.location.href = `gestionar.php?eliminar=${id}`;
     }
 }
@@ -501,7 +501,7 @@ function confirmarEliminacion(id, nombre) {
 </style>
 
 <?php 
-// FunciÃ³n auxiliar para colores por grado
+// Función auxiliar para colores por grado
 function getColorByGrado($numero) {
     $colores = [
         1 => 'primary',

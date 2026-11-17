@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/areas_aprendizaje/agregar_indicador.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -9,7 +9,7 @@ $area_id = $_GET['area_id'] ?? null;
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Validar que el Ã¡rea existe
+// Validar que el área existe
 if ($area_id) {
     try {
         $stmt = $pdo->prepare("SELECT * FROM areas_aprendizaje WHERE id = ? AND estado = 'activa'");
@@ -17,19 +17,19 @@ if ($area_id) {
         $area = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$area) {
-            $_SESSION['mensaje'] = "Ãrea de aprendizaje no encontrada o inactiva";
+            $_SESSION['mensaje'] = "Área de aprendizaje no encontrada o inactiva";
             $_SESSION['tipo_mensaje'] = "danger";
             header('Location: gestionar_indicadores.php');
             exit;
         }
     } catch (PDOException $e) {
-        $_SESSION['mensaje'] = "Error al cargar el Ã¡rea: " . $e->getMessage();
+        $_SESSION['mensaje'] = "Error al cargar el área: " . $e->getMessage();
         $_SESSION['tipo_mensaje'] = "danger";
         header('Location: gestionar_indicadores.php');
         exit;
     }
 } else {
-    $_SESSION['mensaje'] = "No se especificÃ³ el Ã¡rea";
+    $_SESSION['mensaje'] = "No se especificó el área";
     $_SESSION['tipo_mensaje'] = "danger";
     header('Location: gestionar_indicadores.php');
     exit;
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (strlen($nombre) > 500) {
-        $errores[] = "El nombre del indicador es demasiado largo (mÃ¡x. 500 caracteres)";
+        $errores[] = "El nombre del indicador es demasiado largo (máx. 500 caracteres)";
     }
     
     if (empty($errores)) {
@@ -114,19 +114,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <textarea class="form-control" id="nombre" name="nombre" rows="3" 
                                       placeholder="Describa el indicador de logro..." 
                                       required maxlength="500"><?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?></textarea>
-                            <div class="form-text">Describa claramente quÃ© debe lograr el estudiante (mÃ¡x. 500 caracteres)</div>
+                            <div class="form-text">Describa claramente qué debe lograr el estudiante (máx. 500 caracteres)</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">DescripciÃ³n Adicional</label>
+                            <label for="descripcion" class="form-label">Descripción Adicional</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="2"
                                       placeholder="Detalles adicionales del indicador (opcional)..."><?php echo htmlspecialchars($_POST['descripcion'] ?? ''); ?></textarea>
-                            <div class="form-text">InformaciÃ³n complementaria sobre el indicador</div>
+                            <div class="form-text">Información complementaria sobre el indicador</div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="escala" class="form-label">Escala de EvaluaciÃ³n *</label>
+                                <label for="escala" class="form-label">Escala de Evaluación *</label>
                                 <select class="form-select" id="escala" name="escala" required>
                                     <option value="LE" <?php echo ($_POST['escala'] ?? 'L') == 'LE' ? 'selected' : ''; ?>>LE - Logrado con Excelencia</option>
                                     <option value="L" <?php echo ($_POST['escala'] ?? 'L') == 'L' ? 'selected' : ''; ?>>L - Logrado</option>
@@ -134,15 +134,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="IP" <?php echo ($_POST['escala'] ?? 'L') == 'IP' ? 'selected' : ''; ?>>IP - Iniciado en el Proceso</option>
                                     <option value="NL" <?php echo ($_POST['escala'] ?? 'L') == 'NL' ? 'selected' : ''; ?>>NL - No Logrado</option>
                                 </select>
-                                <div class="form-text">Escala de evaluaciÃ³n para este indicador</div>
+                                <div class="form-text">Escala de evaluación para este indicador</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="orden" class="form-label">Orden de VisualizaciÃ³n</label>
+                                <label for="orden" class="form-label">Orden de Visualización</label>
                                 <input type="number" class="form-control" id="orden" name="orden" 
                                        value="<?php echo htmlspecialchars($_POST['orden'] ?? '0'); ?>" 
                                        min="0" max="100">
-                                <div class="form-text">NÃºmero para ordenar los indicadores (0 = primero)</div>
+                                <div class="form-text">Número para ordenar los indicadores (0 = primero)</div>
                             </div>
                         </div>
                         
@@ -163,14 +163,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Ãrea
+                        <i class="fas fa-info-circle me-2"></i>Información del Área
                     </h6>
                 </div>
                 <div class="card-body">
                     <h6><?php echo htmlspecialchars($area['nombre']); ?></h6>
                     <p class="small text-muted mb-2"><?php echo htmlspecialchars($area['descripcion']); ?></p>
                     <div class="d-flex justify-content-between small">
-                        <span><strong>CÃ³digo:</strong> <?php echo htmlspecialchars($area['codigo']); ?></span>
+                        <span><strong>Código:</strong> <?php echo htmlspecialchars($area['codigo']); ?></span>
                         <span><strong>Nivel:</strong> <?php echo ucfirst($area['nivel']); ?></span>
                     </div>
                 </div>
@@ -179,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card mt-3">
                 <div class="card-header bg-success text-white">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>Escalas de EvaluaciÃ³n
+                        <i class="fas fa-lightbulb me-2"></i>Escalas de Evaluación
                     </h6>
                 </div>
                 <div class="card-body">
@@ -191,10 +191,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <small class="text-muted">Cumple con lo esperado</small></p>
                         
                         <p><strong>PA</strong> - Proceso Avanzado<br>
-                        <small class="text-muted">EstÃ¡ cerca de lograrlo</small></p>
+                        <small class="text-muted">Está cerca de lograrlo</small></p>
                         
                         <p><strong>IP</strong> - Iniciado en el Proceso<br>
-                        <small class="text-muted">EstÃ¡ comenzando a desarrollarlo</small></p>
+                        <small class="text-muted">Está comenzando a desarrollarlo</small></p>
                         
                         <p><strong>NL</strong> - No Logrado<br>
                         <small class="text-muted">No ha alcanzado el indicador</small></p>

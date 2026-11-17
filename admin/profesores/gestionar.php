@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -7,7 +7,7 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Procesar eliminaciÃ³n
+// Procesar eliminación
 if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     
@@ -18,7 +18,7 @@ if (isset($_GET['eliminar'])) {
         $tiene_secciones = $stmt->fetchColumn();
         
         if ($tiene_secciones > 0) {
-            $mensaje = "No se puede eliminar el profesor porque es titular de una o mÃ¡s secciones";
+            $mensaje = "No se puede eliminar el profesor porque es titular de una o más secciones";
             $tipo_mensaje = "warning";
         } else {
             $stmt = $pdo->prepare("DELETE FROM profesores WHERE id = ?");
@@ -49,7 +49,7 @@ if (isset($_GET['cambiar_estado'])) {
     }
 }
 
-// Obtener lista de profesores con informaciÃ³n de secciones
+// Obtener lista de profesores con información de secciones
 try {
     $stmt = $pdo->query("
         SELECT p.*, 
@@ -75,7 +75,7 @@ try {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>GestiÃ³n de Profesores - PRIMARIA</h2>
+        <h2>Gestión de Profesores - PRIMARIA</h2>
         <a href="agregar.php" class="btn btn-primary">
             <i class="fas fa-user-plus me-2"></i>Nuevo Profesor
         </a>
@@ -88,11 +88,11 @@ try {
         </div>
     <?php endif; ?>
 
-    <!-- Filtros rÃ¡pidos -->
+    <!-- Filtros rápidos -->
     <div class="card mb-4">
         <div class="card-header bg-light">
             <h6 class="card-title mb-0">
-                <i class="fas fa-filter me-2"></i>Filtros RÃ¡pidos
+                <i class="fas fa-filter me-2"></i>Filtros Rápidos
             </h6>
         </div>
         <div class="card-body py-2">
@@ -127,11 +127,11 @@ try {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>CÃ©dula</th>
+                                <th>Cédula</th>
                                 <th>Nombre Completo</th>
                                 <th>Especialidad</th>
                                 <th>Email</th>
-                                <th>TelÃ©fono</th>
+                                <th>Teléfono</th>
                                 <th>Secciones</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -145,7 +145,7 @@ try {
                                         <?php if ($profesor['cedula']): ?>
                                             <span class="badge bg-secondary"><?php echo htmlspecialchars($profesor['cedula']); ?></span>
                                         <?php else: ?>
-                                            <span class="text-muted">Sin cÃ©dula</span>
+                                            <span class="text-muted">Sin cédula</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -154,7 +154,7 @@ try {
                                             <br>
                                             <small class="text-success">
                                                 <i class="fas fa-chalkboard-teacher me-1"></i>
-                                                Titular de <?php echo $profesor['total_secciones']; ?> secciÃ³n(es)
+                                                Titular de <?php echo $profesor['total_secciones']; ?> sección(es)
                                             </small>
                                         <?php endif; ?>
                                     </td>
@@ -218,57 +218,57 @@ try {
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <!-- BotÃ³n Editar -->
+                                            <!-- Botón Editar -->
                                             <a href="editar.php?id=<?php echo $profesor['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             
-                                            <!-- BotÃ³n Asignar Secciones -->
+                                            <!-- Botón Asignar Secciones -->
                                             <a href="asignar.php?id=<?php echo $profesor['id']; ?>" 
                                                class="btn btn-outline-success" 
                                                title="Asignar Secciones">
                                                 <i class="fas fa-chalkboard-teacher"></i>
                                             </a>
                                             
-                                            <!-- GestiÃ³n de Estados -->
+                                            <!-- Gestión de Estados -->
                                             <?php if ($profesor['estado'] == 'activo'): ?>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $profesor['id']; ?>&estado=licencia" 
                                                    class="btn btn-outline-warning" 
                                                    title="Marcar como Licencia"
-                                                   onclick="return confirm('Â¿Cambiar estado a Licencia? El profesor mantendrÃ¡ sus secciones pero no podrÃ¡ recibir nuevas.')">
+                                                   onclick="return confirm('¿Cambiar estado a Licencia? El profesor mantendrá sus secciones pero no podrá recibir nuevas.')">
                                                     <i class="fas fa-umbrella-beach"></i>
                                                 </a>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $profesor['id']; ?>&estado=inactivo" 
                                                    class="btn btn-outline-secondary" 
                                                    title="Desactivar"
-                                                   onclick="return confirm('Â¿Desactivar profesor? Se removerÃ¡ de todas sus secciones.')">
+                                                   onclick="return confirm('¿Desactivar profesor? Se removerá de todas sus secciones.')">
                                                     <i class="fas fa-pause"></i>
                                                 </a>
                                             <?php elseif ($profesor['estado'] == 'licencia'): ?>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $profesor['id']; ?>&estado=activo" 
                                                    class="btn btn-outline-success" 
                                                    title="Reactivar de Licencia"
-                                                   onclick="return confirm('Â¿Reactivar profesor de licencia?')">
+                                                   onclick="return confirm('¿Reactivar profesor de licencia?')">
                                                     <i class="fas fa-play"></i>
                                                 </a>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $profesor['id']; ?>&estado=inactivo" 
                                                    class="btn btn-outline-secondary" 
                                                    title="Desactivar"
-                                                   onclick="return confirm('Â¿Desactivar profesor? Se removerÃ¡ de todas sus secciones.')">
+                                                   onclick="return confirm('¿Desactivar profesor? Se removerá de todas sus secciones.')">
                                                     <i class="fas fa-pause"></i>
                                                 </a>
                                             <?php else: ?>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $profesor['id']; ?>&estado=activo" 
                                                    class="btn btn-outline-success" 
                                                    title="Activar"
-                                                   onclick="return confirm('Â¿Activar profesor? PodrÃ¡ recibir asignaciones.')">
+                                                   onclick="return confirm('¿Activar profesor? Podrá recibir asignaciones.')">
                                                     <i class="fas fa-play"></i>
                                                 </a>
                                             <?php endif; ?>
                                             
-                                            <!-- BotÃ³n Eliminar -->
+                                            <!-- Botón Eliminar -->
                                             <button type="button" 
                                                     class="btn btn-outline-danger" 
                                                     title="Eliminar"
@@ -284,17 +284,17 @@ try {
                     </table>
                 </div>
                 
-                <!-- InformaciÃ³n del sistema -->
+                <!-- Información del sistema -->
                 <div class="alert alert-info mt-4">
-                    <h6><i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Sistema - PRIMARIA</h6>
+                    <h6><i class="fas fa-info-circle me-2"></i>Información del Sistema - PRIMARIA</h6>
                     <ul class="mb-0">
-                        <li><strong>Profesor Titular:</strong> Cada profesor puede ser titular de una o mÃ¡s secciones</li>
-                        <li><strong>AsignaciÃ³n AutomÃ¡tica:</strong> El profesor titular recibe TODAS las Ã¡reas de aprendizaje de su secciÃ³n</li>
-                        <li><strong>RestricciÃ³n de EliminaciÃ³n:</strong> No se pueden eliminar profesores con secciones asignadas</li>
+                        <li><strong>Profesor Titular:</strong> Cada profesor puede ser titular de una o más secciones</li>
+                        <li><strong>Asignación Automática:</strong> El profesor titular recibe TODAS las áreas de aprendizaje de su sección</li>
+                        <li><strong>Restricción de Eliminación:</strong> No se pueden eliminar profesores con secciones asignadas</li>
                         <li><strong>Estados:</strong> 
-                            <strong>Activo</strong> â†’ Puede recibir asignaciones | 
-                            <strong>Licencia</strong> â†’ Temporalmente no disponible (mantiene secciones) | 
-                            <strong>Inactivo</strong> â†’ No disponible (pierde secciones)
+                            <strong>Activo</strong> → Puede recibir asignaciones |
+                            <strong>Licencia</strong> → Temporalmente no disponible (mantiene secciones) |
+                            <strong>Inactivo</strong> → No disponible (pierde secciones)
                         </li>
                     </ul>
                 </div>
@@ -320,7 +320,7 @@ function confirmarEliminacion(id, nombre, tieneSecciones) {
         return;
     }
     
-    if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar al profesor "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de que deseas eliminar al profesor "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
         window.location.href = `gestionar.php?eliminar=${id}`;
     }
 }
@@ -372,7 +372,7 @@ function filtrarProfesores(filtro) {
 
 // Inicializar filtros
 document.addEventListener('DOMContentLoaded', function() {
-    // Activar el primer botÃ³n de filtro
+    // Activar el primer botón de filtro
     document.querySelector('.btn-group .btn').classList.add('active');
 });
 </script>

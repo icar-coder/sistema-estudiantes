@@ -1,12 +1,12 @@
-﻿<?php
+<?php
 require_once '../includes/auth.php';
 require_once '../includes/database.php';
 checkAuth();
 checkRole(['admin']);
 
-// Consultas para las estadÃ­sticas
+// Consultas para las estadísticas
 try {
-    // EstadÃ­sticas bÃ¡sicas
+    // Estadísticas básicas
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM estudiantes");
     $estudiantes_count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
@@ -19,7 +19,7 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM inscripciones WHERE status = 'activo'");
     $inscripciones_count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // EstadÃ­sticas para grÃ¡ficas
+    // Estadísticas para gráficas
     $stmt = $pdo->query("
         SELECT 
             COUNT(*) as total,
@@ -29,7 +29,7 @@ try {
     ");
     $usuarios_stats = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // DistribuciÃ³n de estudiantes por secciÃ³n
+    // Distribución de estudiantes por sección
     $stmt = $pdo->query("
         SELECT s.nombre as seccion, COUNT(i.id) as cantidad
         FROM secciones s
@@ -40,7 +40,7 @@ try {
     ");
     $estudiantes_seccion = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Ãšltimas inscripciones
+    // Últimas inscripciones
     $stmt = $pdo->query("
         SELECT e.nombre, e.apellido, s.nombre as seccion, i.fecha_inscripcion
         FROM inscripciones i
@@ -52,7 +52,7 @@ try {
     ");
     $ultimas_inscripciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // EstadÃ­sticas de asistencias (si la tabla existe)
+    // Estadísticas de asistencias (si la tabla existe)
     try {
         $stmt = $pdo->query("
             SELECT estado, COUNT(*) as cantidad
@@ -71,7 +71,7 @@ try {
     $año_activo = $stmt->fetch(PDO::FETCH_ASSOC);
     $nombre_año_activo = $año_activo ? $año_activo['nombre'] : 'No configurado';
     
-    // CHECKLIST DE CONFIGURACIÃ“N
+    // CHECKLIST DE CONFIGURACIÓN
     $checklist = [];
     
     // 1. Verificar año escolar activo
@@ -93,13 +93,13 @@ try {
         'cantidad' => $secciones_count
     ];
     
-    // 3. Verificar Ã¡reas de aprendizaje
+    // 3. Verificar áreas de aprendizaje
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM areas_aprendizaje WHERE estado = 'activa'");
     $areas_count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $checklist['areas_aprendizaje'] = [
         'completado' => $areas_count > 0,
-        'titulo' => 'Ãreas de Aprendizaje',
-        'descripcion' => 'Configurar Ã¡reas de aprendizaje',
+        'titulo' => 'Áreas de Aprendizaje',
+        'descripcion' => 'Configurar áreas de aprendizaje',
         'enlace' => 'areas_aprendizaje/gestionar.php',
         'icono' => 'fas fa-book',
         'cantidad' => $areas_count
@@ -110,8 +110,8 @@ try {
     $indicadores_count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $checklist['indicadores'] = [
         'completado' => $indicadores_count > 0,
-        'titulo' => 'Indicadores de EvaluaciÃ³n',
-        'descripcion' => 'Configurar indicadores por Ã¡rea',
+        'titulo' => 'Indicadores de Evaluación',
+        'descripcion' => 'Configurar indicadores por área',
         'enlace' => 'areas_aprendizaje/gestionar_indicadores.php',
         'icono' => 'fas fa-list-check',
         'cantidad' => $indicadores_count
@@ -184,7 +184,7 @@ try {
     $progreso_porcentaje = 0;
 }
 
-// Preparar datos para grÃ¡ficas
+// Preparar datos para gráficas
 $datos_graficas = [
     'labels_secciones' => [],
     'data_secciones' => [],
@@ -238,14 +238,14 @@ include '../includes/sidebar_admin.php';
         </div>
     </div>
 
-    <!-- Progreso de ConfiguraciÃ³n -->
+    <!-- Progreso de Configuración -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-tasks me-2"></i>Progreso de ConfiguraciÃ³n del Año Escolar
+                            <i class="fas fa-tasks me-2"></i>Progreso de Configuración del Año Escolar
                         </h5>
                         <span class="badge bg-light text-dark fs-6"><?php echo $progreso_porcentaje; ?>% Completado</span>
                     </div>
@@ -325,7 +325,7 @@ include '../includes/sidebar_admin.php';
                                 <?php else: ?>
                                     <p class="mb-0 small text-success">
                                         <i class="fas fa-check-circle me-1"></i>
-                                        <strong>Â¡Sistema completamente configurado!</strong>
+                                        <strong>¡Sistema completamente configurado!</strong>
                                     </p>
                                 <?php endif; ?>
                             </div>
@@ -336,9 +336,9 @@ include '../includes/sidebar_admin.php';
                                     <i class="fas fa-lightbulb me-2"></i>Recomendaciones
                                 </h6>
                                 <ul class="mb-0 small">
-                                    <li>Siga el orden del checklist para una configuraciÃ³n Ã³ptima</li>
-                                    <li>Configure primero el año escolar y las Ã¡reas de aprendizaje</li>
-                                    <li>Asigne horarios despuÃ©s de crear secciones y profesores</li>
+                                    <li>Siga el orden del checklist para una configuración óptima</li>
+                                    <li>Configure primero el año escolar y las áreas de aprendizaje</li>
+                                    <li>Asigne horarios después de crear secciones y profesores</li>
                                 </ul>
                             </div>
                         </div>
@@ -348,7 +348,7 @@ include '../includes/sidebar_admin.php';
         </div>
     </div>
 
-    <!-- Tarjetas de EstadÃ­sticas -->
+    <!-- Tarjetas de Estadísticas -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
             <div class="card text-white bg-estudiantes dashboard-card">
@@ -416,13 +416,13 @@ include '../includes/sidebar_admin.php';
         </div>
     </div>
 
-    <!-- GrÃ¡ficas y Contenido Principal -->
+    <!-- Gráficas y Contenido Principal -->
     <div class="row">
-        <!-- GrÃ¡fica de Estudiantes por SecciÃ³n -->
+        <!-- Gráfica de Estudiantes por Sección -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Estudiantes por SecciÃ³n</h5>
+                    <h5 class="card-title mb-0">Estudiantes por Sección</h5>
                     <a href="secciones/gestionar.php" class="btn btn-sm btn-outline-primary">Ver Todas</a>
                 </div>
                 <div class="card-body">
@@ -431,11 +431,11 @@ include '../includes/sidebar_admin.php';
             </div>
         </div>
 
-        <!-- GrÃ¡fica de Asistencias -->
+        <!-- Gráfica de Asistencias -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Asistencias (Ãšltimos 30 dÃ­as)</h5>
+                    <h5 class="card-title mb-0">Asistencias (Últimos 30 días)</h5>
                     <a href="reportes/asistencias.php" class="btn btn-sm btn-outline-primary">Ver Reporte</a>
                 </div>
                 <div class="card-body">
@@ -451,11 +451,11 @@ include '../includes/sidebar_admin.php';
             </div>
         </div>
 
-        <!-- Ãšltimas Inscripciones -->
+        <!-- Últimas Inscripciones -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Ãšltimas Inscripciones</h5>
+                    <h5 class="card-title mb-0">Últimas Inscripciones</h5>
                     <a href="inscripciones/gestionar.php" class="btn btn-sm btn-outline-primary">Ver Todas</a>
                 </div>
                 <div class="card-body">
@@ -481,11 +481,11 @@ include '../includes/sidebar_admin.php';
             </div>
         </div>
 
-        <!-- EstadÃ­sticas de Usuarios -->
+        <!-- Estadísticas de Usuarios -->
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">EstadÃ­sticas del Sistema</h5>
+                    <h5 class="card-title mb-0">Estadísticas del Sistema</h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -515,12 +515,12 @@ include '../includes/sidebar_admin.php';
         </div>
     </div>
 
-    <!-- Acciones RÃ¡pidas -->
+    <!-- Acciones Rápidas -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Acciones RÃ¡pidas</h5>
+                    <h5 class="card-title mb-0">Acciones Rápidas</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -539,7 +539,7 @@ include '../includes/sidebar_admin.php';
                         <div class="col-md-2 text-center mb-3">
                             <a href="inscripciones/inscribir.php" class="btn btn-outline-info btn-lg w-100">
                                 <i class="fas fa-user-plus fa-2x mb-2"></i><br>
-                                <small>Nueva InscripciÃ³n</small>
+                                <small>Nueva Inscripción</small>
                             </a>
                         </div>
                         <div class="col-md-2 text-center mb-3">
@@ -571,12 +571,12 @@ include '../includes/sidebar_admin.php';
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Datos para las grÃ¡ficas
+// Datos para las gráficas
 const datosGraficas = <?php echo json_encode($datos_graficas); ?>;
 
-// Inicializar grÃ¡ficas cuando el documento estÃ© listo
+// Inicializar gráficas cuando el documento esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // GrÃ¡fica de Estudiantes por SecciÃ³n
+    // Gráfica de Estudiantes por Sección
     if (datosGraficas.labels_secciones && datosGraficas.labels_secciones.length > 0) {
         const ctx1 = document.getElementById('chartEstudiantesSeccion').getContext('2d');
         new Chart(ctx1, {
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // GrÃ¡fica de Asistencias
+    // Gráfica de Asistencias
     if (datosGraficas.labels_asistencias && datosGraficas.labels_asistencias.length > 0) {
         const ctx2 = document.getElementById('chartAsistencias').getContext('2d');
         new Chart(ctx2, {

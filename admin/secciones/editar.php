@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -14,7 +14,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $seccion_id = intval($_GET['id']);
 
-// Obtener datos de la secciÃ³n actual
+// Obtener datos de la sección actual
 try {
     $stmt = $pdo->prepare("
         SELECT s.*, ae.nombre as año_escolar 
@@ -31,7 +31,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -52,7 +52,7 @@ try {
     $profesores = [];
 }
 
-// Procesar actualizaciÃ³n
+// Procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $grado = $_POST['grado'];
     $letra = $_POST['letra'];
@@ -71,19 +71,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($campos_faltantes)) {
         try {
-            // Verificar si ya existe otra secciÃ³n con el mismo nombre en el mismo año escolar
+            // Verificar si ya existe otra sección con el mismo nombre en el mismo año escolar
             $stmt = $pdo->prepare("SELECT id FROM secciones WHERE nombre = ? AND año_escolar_id = ? AND id != ?");
             $stmt->execute([$nombre, $año_escolar_id, $seccion_id]);
             
             if ($stmt->fetch()) {
-                $mensaje = "Ya existe otra secciÃ³n con el nombre '$nombre' en este año escolar";
+                $mensaje = "Ya existe otra sección con el nombre '$nombre' en este año escolar";
                 $tipo_mensaje = "warning";
             } else {
-                // Actualizar la secciÃ³n
+                // Actualizar la sección
                 $stmt = $pdo->prepare("UPDATE secciones SET nombre = ?, año_escolar_id = ?, capacidad = ?, profesor_id = ? WHERE id = ?");
                 $stmt->execute([$nombre, $año_escolar_id, $capacidad, $profesor_id, $seccion_id]);
                 
-                $mensaje = "SecciÃ³n actualizada correctamente";
+                $mensaje = "Sección actualizada correctamente";
                 $tipo_mensaje = "success";
                 
                 // Actualizar datos locales
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $seccion['profesor_id'] = $profesor_id;
             }
         } catch (PDOException $e) {
-            $mensaje = "Error al actualizar secciÃ³n: " . $e->getMessage();
+            $mensaje = "Error al actualizar sección: " . $e->getMessage();
             $tipo_mensaje = "danger";
         }
     } else {
@@ -120,7 +120,7 @@ if (!empty($seccion['nombre'])) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Editar SecciÃ³n</h2>
+        <h2>Editar Sección</h2>
         <a href="gestionar.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Volver a la lista
         </a>
@@ -136,7 +136,7 @@ if (!empty($seccion['nombre'])) {
     <div class="card">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
-                <i class="fas fa-edit me-2"></i>Editar SecciÃ³n: <?php echo htmlspecialchars($seccion['nombre']); ?>
+                <i class="fas fa-edit me-2"></i>Editar Sección: <?php echo htmlspecialchars($seccion['nombre']); ?>
             </h5>
         </div>
         <div class="card-body">
@@ -185,23 +185,23 @@ if (!empty($seccion['nombre'])) {
                     </div>
                     
                     <div class="col-md-3 mb-3">
-                        <label for="capacidad" class="form-label">Capacidad MÃ¡xima</label>
+                        <label for="capacidad" class="form-label">Capacidad Máxima</label>
                         <select class="form-select" id="capacidad" name="capacidad">
-                            <option value="">Sin lÃ­mite especÃ­fico</option>
+                            <option value="">Sin límite específico</option>
                             <?php 
                             $capacidades = [20, 25, 30, 35];
                             foreach ($capacidades as $cap): 
                             ?>
                                 <option value="<?php echo $cap; ?>" 
                                     <?php echo ($seccion['capacidad'] == $cap) ? 'selected' : ''; ?>>
-                                    MÃ¡ximo <?php echo $cap; ?> estudiantes
+                                    Máximo <?php echo $cap; ?> estudiantes
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
                 
-                <!-- SelecciÃ³n de Profesor -->
+                <!-- Selección de Profesor -->
                 <div class="card mb-4">
                     <div class="card-header bg-warning">
                         <h6 class="card-title mb-0 text-dark">
@@ -251,7 +251,7 @@ if (!empty($seccion['nombre'])) {
                 <!-- Vista previa -->
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label">Vista Previa de la SecciÃ³n</label>
+                        <label class="form-label">Vista Previa de la Sección</label>
                         <div class="form-control" style="background-color: #f8f9fa; font-weight: bold;">
                             <span id="vista-previa-nombre">
                                 <?php echo htmlspecialchars($seccion['nombre']); ?>
@@ -265,7 +265,7 @@ if (!empty($seccion['nombre'])) {
                         <i class="fas fa-times me-2"></i>Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Actualizar SecciÃ³n
+                        <i class="fas fa-save me-2"></i>Actualizar Sección
                     </button>
                 </div>
             </form>
@@ -284,7 +284,7 @@ function actualizarVistaPrevia() {
         vistaPrevia.textContent = `${grado} ${letra}`;
         vistaPrevia.className = 'text-success';
     } else {
-        vistaPrevia.textContent = 'Nombre de la secciÃ³n aparecerÃ¡ aquÃ­...';
+        vistaPrevia.textContent = 'Nombre de la sección aparecerá aquí...';
         vistaPrevia.className = 'text-muted';
     }
 }

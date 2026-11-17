@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -7,13 +7,13 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Procesar activaciÃ³n/desactivaciÃ³n
+// Procesar activación/desactivación
 if (isset($_GET['cambiar_estado'])) {
     $id = $_GET['cambiar_estado'];
     $nuevo_estado = $_GET['estado'];
     
     try {
-        // Si se activa un año, desactivar los demÃ¡s
+        // Si se activa un año, desactivar los demás
         if ($nuevo_estado == 'activo') {
             $stmt = $pdo->prepare("UPDATE años_escolares SET estado = 'inactivo' WHERE estado = 'activo'");
             $stmt->execute();
@@ -30,7 +30,7 @@ if (isset($_GET['cambiar_estado'])) {
     }
 }
 
-// Procesar eliminaciÃ³n
+// Procesar eliminación
 if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     
@@ -84,7 +84,7 @@ try {
   
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>GestiÃ³n de Años Escolares</h2>
+                <h2>Gestión de Años Escolares</h2>
                 <a href="agregar.php" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Nuevo Año Escolar
                 </a>
@@ -163,7 +163,7 @@ try {
                                                         <a href="gestionar.php?cambiar_estado=<?php echo $año['id']; ?>&estado=activo" 
                                                            class="btn btn-outline-success" 
                                                            title="Activar Año"
-                                                           onclick="return confirm('Â¿EstÃ¡s seguro de activar el año escolar <?php echo htmlspecialchars($año['nombre']); ?>?')">
+                                                           onclick="return confirm('¿Estás seguro de activar el año escolar <?php echo htmlspecialchars($año['nombre']); ?>?')">
                                                             <i class="fas fa-play"></i>
                                                         </a>
                                                     <?php endif; ?>
@@ -172,7 +172,7 @@ try {
                                                         <a href="gestionar.php?cambiar_estado=<?php echo $año['id']; ?>&estado=inactivo" 
                                                            class="btn btn-outline-warning" 
                                                            title="Desactivar Año"
-                                                           onclick="return confirm('Â¿EstÃ¡s seguro de desactivar el año escolar <?php echo htmlspecialchars($año['nombre']); ?>?')">
+                                                           onclick="return confirm('¿Estás seguro de desactivar el año escolar <?php echo htmlspecialchars($año['nombre']); ?>?')">
                                                             <i class="fas fa-pause"></i>
                                                         </a>
                                                     <?php endif; ?>
@@ -193,12 +193,12 @@ try {
                             </table>
                         </div>
                         
-                        <!-- InformaciÃ³n importante -->
+                        <!-- Información importante -->
                         <div class="alert alert-info mt-3">
-                            <h6><i class="fas fa-info-circle me-2"></i>InformaciÃ³n Importante</h6>
+                            <h6><i class="fas fa-info-circle me-2"></i>Información Importante</h6>
                             <ul class="mb-0">
                                 <li>Solo puede haber <strong>un año escolar activo</strong> a la vez</li>
-                                <li>Al activar un año escolar, los demÃ¡s se desactivan automÃ¡ticamente</li>
+                                <li>Al activar un año escolar, los demás se desactivan automáticamente</li>
                                 <li>Solo se pueden eliminar años escolares en estado <strong>"Planificado"</strong></li>
                                 <li>El año escolar activo es el que se usa para nuevas inscripciones</li>
                             </ul>
@@ -221,7 +221,7 @@ try {
 
 <script>
 function confirmarEliminacion(id, nombre) {
-    if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar el año escolar "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de que deseas eliminar el año escolar "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
         window.location.href = `gestionar.php?eliminar=${id}`;
     }
 }

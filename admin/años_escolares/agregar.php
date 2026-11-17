@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -7,7 +7,7 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Obtener el Ãºltimo año escolar para sugerencias
+// Obtener el último año escolar para sugerencias
 try {
     $stmt = $pdo->query("SELECT nombre FROM años_escolares ORDER BY id DESC LIMIT 1");
     $ultimo_ano = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -15,7 +15,7 @@ try {
     $ultimo_ano = null;
 }
 
-// Calcular sugerencias automÃ¡ticas
+// Calcular sugerencias automáticas
 $ano_actual = date('Y');
 $ano_siguiente = $ano_actual + 1;
 $ano_anterior = $ano_actual - 1;
@@ -28,7 +28,7 @@ $sugerencias = [
     "Periodo {$ano_actual}-{$ano_siguiente}"
 ];
 
-// ConfiguraciÃ³n por defecto para lapsos
+// Configuración por defecto para lapsos
 $configuracion_lapsos = [
     [
         'nombre' => 'Primer Lapso',
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fecha_fin = $_POST['fecha_fin'] ?? '';
     $estado = $_POST['estado'] ?? 'planificado';
     
-    // Si se seleccionÃ³ "personalizado", usar el campo personalizado
+    // Si se seleccionó "personalizado", usar el campo personalizado
     if ($nombre === 'personalizado') {
         $nombre = trim($_POST['nombre_personalizado'] ?? '');
     }
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errores[] = "Debe definir al menos un lapso";
     }
     
-    // Validar que las fechas de los lapsos estÃ©n dentro del rango del año escolar
+    // Validar que las fechas de los lapsos estén dentro del rango del año escolar
     if ($fecha_inicio && $fecha_fin) {
         foreach ($lapsos as $index => $lapso) {
             if ($lapso['fecha_inicio'] && $lapso['fecha_inicio'] < $fecha_inicio) {
@@ -115,17 +115,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
             
-            // Verificar si la tabla necesita reparaciÃ³n
+            // Verificar si la tabla necesita reparación
             $stmt = $pdo->query("SHOW TABLE STATUS LIKE 'años_escolares'");
             $table_status = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Si se estÃ¡ activando este año, desactivar los demÃ¡s
+            // Si se está activando este año, desactivar los demás
             if ($estado == 'activo') {
                 $stmt = $pdo->prepare("UPDATE años_escolares SET estado = 'inactivo' WHERE estado = 'activo'");
                 $stmt->execute();
             }
             
-            // SOLUCIÃ“N AL PROBLEMA: Obtener el siguiente ID manualmente
+            // SOLUCIÓN AL PROBLEMA: Obtener el siguiente ID manualmente
             $max_id_stmt = $pdo->query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM años_escolares");
             $next_id = $max_id_stmt->fetch(PDO::FETCH_ASSOC)['next_id'];
             
@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insertar lapsos y proyectos
             foreach ($lapsos as $lapso) {
-                // TambiÃ©n para lapsos: obtener siguiente ID manualmente
+                // También para lapsos: obtener siguiente ID manualmente
                 $max_lapso_stmt = $pdo->query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM lapsos");
                 $next_lapso_id = $max_lapso_stmt->fetch(PDO::FETCH_ASSOC)['next_id'];
                 
@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$next_lapso_id, $año_escolar_id, $lapso['numero'], $lapso['nombre'], $lapso['fecha_inicio'], $lapso['fecha_fin']]);
                 $lapso_id = $next_lapso_id;
                 
-                // Crear proyecto automÃ¡ticamente si es obligatorio
+                // Crear proyecto automáticamente si es obligatorio
                 if ($lapso['proyecto_obligatorio'] && $lapso_id) {
                     $max_proyecto_stmt = $pdo->query("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM proyectos_lapso");
                     $next_proyecto_id = $max_proyecto_stmt->fetch(PDO::FETCH_ASSOC)['next_id'];
@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje = "Año escolar \"$nombre\" agregado correctamente con " . count($lapsos) . " lapsos";
             $tipo_mensaje = "success";
             
-            // Redireccionar para evitar reenvÃ­o del formulario
+            // Redireccionar para evitar reenvío del formulario
             header("Location: gestionar.php?mensaje=" . urlencode($mensaje) . "&tipo=" . $tipo_mensaje);
             exit;
             
@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="nombre" class="form-label">Nombre del Año Escolar *</label>
                         <select class="form-select" id="nombre" name="nombre" required onchange="actualizarFechas()">
                             <option value="">Seleccionar o personalizar...</option>
-                            <optgroup label="Sugerencias AutomÃ¡ticas">
+                            <optgroup label="Sugerencias Automáticas">
                                 <?php foreach ($sugerencias as $sugerencia): ?>
                                     <option value="<?php echo htmlspecialchars($sugerencia); ?>" 
                                         <?php echo ($_POST['nombre'] ?? '') == $sugerencia ? 'selected' : ''; ?>>
@@ -221,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php endforeach; ?>
                             </optgroup>
                             <optgroup label="Personalizado">
-                                <option value="personalizado" <?php echo ($_POST['nombre'] ?? '') == 'personalizado' ? 'selected' : ''; ?>>â†³ Escribir nombre personalizado</option>
+                                <option value="personalizado" <?php echo ($_POST['nombre'] ?? '') == 'personalizado' ? 'selected' : ''; ?>>↳ Escribir nombre personalizado</option>
                             </optgroup>
                         </select>
                         <div class="form-text">
@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </select>
                         <div class="form-text">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            <strong>Nota:</strong> Al activar un año escolar, los demÃ¡s se desactivarÃ¡n automÃ¡ticamente
+                            <strong>Nota:</strong> Al activar un año escolar, los demás se desactivarán automáticamente
                         </div>
                     </div>
                 </div>
@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?php echo htmlspecialchars($_POST['fecha_inicio'] ?? ''); ?>">
                         <div class="form-text">
                             <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="sugerirFechaInicio()">
-                                <i class="fas fa-magic me-1"></i>Sugerir fecha tÃ­pica
+                                <i class="fas fa-magic me-1"></i>Sugerir fecha típica
                             </button>
                         </div>
                     </div>
@@ -271,25 +271,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                value="<?php echo htmlspecialchars($_POST['fecha_fin'] ?? ''); ?>">
                         <div class="form-text">
                             <button type="button" class="btn btn-sm btn-outline-secondary mt-1" onclick="sugerirFechaFin()">
-                                <i class="fas fa-magic me-1"></i>Sugerir fecha tÃ­pica
+                                <i class="fas fa-magic me-1"></i>Sugerir fecha típica
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- SecciÃ³n de Lapsos -->
+                <!-- Sección de Lapsos -->
                 <div class="card mt-4">
                     <div class="card-header bg-light">
                         <h6 class="card-title mb-0">
-                            <i class="fas fa-calendar-alt me-2"></i>ConfiguraciÃ³n de Lapsos
+                            <i class="fas fa-calendar-alt me-2"></i>Configuración de Lapsos
                         </h6>
                     </div>
                     <div class="card-body">
                         <div class="alert alert-info">
                             <small>
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>InformaciÃ³n:</strong> Configure los lapsos acadÃ©micos para este año escolar. 
-                                Los lapsos se crearÃ¡n automÃ¡ticamente al guardar el año escolar.
+                                <strong>Información:</strong> Configure los lapsos académicos para este año escolar.
+                                Los lapsos se crearán automáticamente al guardar el año escolar.
                             </small>
                         </div>
                         
@@ -301,7 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="lapso-item border rounded p-3 mb-3">
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
-                                        <label class="form-label">NÃºmero del Lapso *</label>
+                                        <label class="form-label">Número del Lapso *</label>
                                         <input type="number" class="form-control lapso-numero" name="lapsos[<?php echo $index; ?>][numero]" 
                                                value="<?php echo htmlspecialchars($lapso['numero'] ?? ($index + 1)); ?>" min="1" max="10" required>
                                     </div>
@@ -325,27 +325,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                 </div>
 
-                                <!-- SECCIÃ“N CONFIGURACIÃ“N DEL PROYECTO -->
+                                <!-- SECCIÓN CONFIGURACIÓN DEL PROYECTO -->
                                 <div class="row bg-light py-2 rounded mb-3">
                                     <div class="col-12 mb-2">
                                         <h6 class="mb-3 text-primary">
-                                            <i class="fas fa-project-diagram me-2"></i>ConfiguraciÃ³n del Proyecto
+                                            <i class="fas fa-project-diagram me-2"></i>Configuración del Proyecto
                                         </h6>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label">Â¿Requiere Proyecto? *</label>
+                                        <label class="form-label">¿Requiere Proyecto? *</label>
                                         <select class="form-select proyecto-obligatorio" name="lapsos[<?php echo $index; ?>][proyecto_obligatorio]" required onchange="toggleProyectoNombre(this)">
-                                            <option value="1" <?php echo ($lapso['proyecto_obligatorio'] ?? true) ? 'selected' : ''; ?>>SÃ­</option>
+                                            <option value="1" <?php echo ($lapso['proyecto_obligatorio'] ?? true) ? 'selected' : ''; ?>>Sí</option>
                                             <option value="0" <?php echo !($lapso['proyecto_obligatorio'] ?? true) ? 'selected' : ''; ?>>No</option>
                                         </select>
-                                        <div class="form-text">Â¿Este lapso incluye proyecto de evaluaciÃ³n?</div>
+                                        <div class="form-text">¿Este lapso incluye proyecto de evaluación?</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Nombre del Proyecto *</label>
                                         <input type="text" class="form-control proyecto-nombre" name="lapsos[<?php echo $index; ?>][nombre_proyecto]" 
                                                value="<?php echo htmlspecialchars($lapso['nombre_proyecto'] ?? 'Proyecto del ' . ($lapso['nombre'] ?? '')); ?>" 
-                                               placeholder="Ej: IndÃ­genas del Mundo, Ecosistemas Venezolanos" required>
-                                        <div class="form-text">Nombre especÃ­fico del proyecto para este lapso</div>
+                                               placeholder="Ej: Indígenas del Mundo, Ecosistemas Venezolanos" required>
+                                        <div class="form-text">Nombre específico del proyecto para este lapso</div>
                                     </div>
                                 </div>
 
@@ -377,12 +377,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- InformaciÃ³n de ayuda -->
+                <!-- Información de ayuda -->
                 <div class="alert alert-info mt-4">
-                    <h6><i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Sistema</h6>
+                    <h6><i class="fas fa-info-circle me-2"></i>Información del Sistema</h6>
                     <small>
                         <strong>Año actual:</strong> <?php echo $ano_actual; ?> | 
-                        <strong>Ãšltimo año registrado:</strong> <?php echo $ultimo_ano ? htmlspecialchars($ultimo_ano['nombre']) : 'Ninguno'; ?>
+                        <strong>Último año registrado:</strong> <?php echo $ultimo_ano ? htmlspecialchars($ultimo_ano['nombre']) : 'Ninguno'; ?>
                     </small>
                 </div>
                 
@@ -400,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
-// FunciÃ³n para actualizar fechas segÃºn la selecciÃ³n
+// Función para actualizar fechas según la selección
 function actualizarFechas() {
     const selectNombre = document.getElementById('nombre');
     const campoPersonalizado = document.getElementById('campoPersonalizado');
@@ -423,35 +423,35 @@ function actualizarFechas() {
     }
 }
 
-// FunciÃ³n para sugerir fecha de inicio tÃ­pica (Septiembre del año seleccionado)
+// Función para sugerir fecha de inicio típica (Septiembre del año seleccionado)
 function sugerirFechaInicio(ano) {
     const anoBase = ano || new Date().getFullYear();
     const fechaInicio = document.getElementById('fecha_inicio');
     
-    // Fecha tÃ­pica de inicio: 16 de Septiembre del año base
+    // Fecha típica de inicio: 16 de Septiembre del año base
     const fechaSugerida = `${anoBase}-09-16`;
     fechaInicio.value = fechaSugerida;
     
-    // Actualizar fechas de lapsos si estÃ¡n vacÃ­as
+    // Actualizar fechas de lapsos si están vacías
     actualizarFechasLapsos(anoBase);
 }
 
-// FunciÃ³n para sugerir fecha de fin tÃ­pica (Julio del año siguiente)
+// Función para sugerir fecha de fin típica (Julio del año siguiente)
 function sugerirFechaFin(ano) {
     const anoSiguiente = ano || new Date().getFullYear() + 1;
     const fechaFin = document.getElementById('fecha_fin');
     
-    // Fecha tÃ­pica de fin: 15 de Julio del año siguiente
+    // Fecha típica de fin: 15 de Julio del año siguiente
     const fechaSugerida = `${anoSiguiente}-07-15`;
     fechaFin.value = fechaSugerida;
 }
 
-// FunciÃ³n para actualizar fechas de lapsos automÃ¡ticamente
+// Función para actualizar fechas de lapsos automáticamente
 function actualizarFechasLapsos(anoBase) {
     const anoSiguiente = parseInt(anoBase) + 1;
     const lapsos = document.querySelectorAll('.lapso-item');
     
-    // Fechas tÃ­picas para lapsos en Venezuela
+    // Fechas típicas para lapsos en Venezuela
     const fechasLapsos = [
         { inicio: `${anoBase}-09-16`, fin: `${anoSiguiente}-01-13` },
         { inicio: `${anoSiguiente}-01-06`, fin: `${anoSiguiente}-04-04` },
@@ -473,7 +473,7 @@ function actualizarFechasLapsos(anoBase) {
     });
 }
 
-// FunciÃ³n para agregar nuevo lapso
+// Función para agregar nuevo lapso
 function agregarLapso() {
     const container = document.getElementById('lapsos-container');
     const lapsoCount = container.children.length;
@@ -488,7 +488,7 @@ function agregarLapso() {
     nuevoLapso.innerHTML = `
         <div class="row">
             <div class="col-md-3 mb-3">
-                <label class="form-label">NÃºmero del Lapso *</label>
+                <label class="form-label">Número del Lapso *</label>
                 <input type="number" class="form-control lapso-numero" name="lapsos[${nuevoIndex}][numero]" 
                        value="${nuevoIndex + 1}" min="1" max="10" required>
             </div>
@@ -507,33 +507,33 @@ function agregarLapso() {
             </div>
         </div>
 
-        <!-- SECCIÃ“N CONFIGURACIÃ“N DEL PROYECTO -->
+        <!-- SECCIÓN CONFIGURACIÓN DEL PROYECTO -->
         <div class="row bg-light py-2 rounded mb-3">
             <div class="col-12 mb-2">
                 <h6 class="mb-3 text-primary">
-                    <i class="fas fa-project-diagram me-2"></i>ConfiguraciÃ³n del Proyecto
+                    <i class="fas fa-project-diagram me-2"></i>Configuración del Proyecto
                 </h6>
             </div>
             <div class="col-md-6 mb-3">
-                <label class="form-label">Â¿Requiere Proyecto? *</label>
+                <label class="form-label">¿Requiere Proyecto? *</label>
                 <select class="form-select proyecto-obligatorio" name="lapsos[${nuevoIndex}][proyecto_obligatorio]" required onchange="toggleProyectoNombre(this)">
-                    <option value="1" selected>SÃ­</option>
+                    <option value="1" selected>Sí</option>
                     <option value="0">No</option>
                 </select>
-                <div class="form-text">Â¿Este lapso incluye proyecto de evaluaciÃ³n?</div>
+                <div class="form-text">¿Este lapso incluye proyecto de evaluación?</div>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">Nombre del Proyecto *</label>
                 <input type="text" class="form-control proyecto-nombre" name="lapsos[${nuevoIndex}][nombre_proyecto]" 
                        value="${nombreProyecto}" 
-                       placeholder="Ej: IndÃ­genas del Mundo, Ecosistemas Venezolanos" required>
-                <div class="form-text">Nombre especÃ­fico del proyecto para este lapso</div>
+                       placeholder="Ej: Indígenas del Mundo, Ecosistemas Venezolanos" required>
+                <div class="form-text">Nombre específico del proyecto para este lapso</div>
             </div>
             <div class="col-12">
                 <div class="alert alert-info py-2 mb-0">
                     <small>
                         <i class="fas fa-info-circle me-1"></i>
-                        <strong>InformaciÃ³n:</strong> El proyecto serÃ¡ creado automÃ¡ticamente con indicadores de evaluaciÃ³n.
+                        <strong>Información:</strong> El proyecto será creado automáticamente con indicadores de evaluación.
                     </small>
                 </div>
             </div>
@@ -564,13 +564,13 @@ function agregarLapso() {
     container.appendChild(nuevoLapso);
     actualizarContadorLapsos();
     
-    // Sugerir fechas automÃ¡ticamente para el nuevo lapso
+    // Sugerir fechas automáticamente para el nuevo lapso
     setTimeout(() => {
         sugerirFechasLapsoAutomatico(nuevoLapso, nuevoIndex);
     }, 100);
 }
 
-// FunciÃ³n auxiliar para sugerir fechas automÃ¡ticamente
+// Función auxiliar para sugerir fechas automáticamente
 function sugerirFechasLapsoAutomatico(lapsoElement, index) {
     const fechaInicioInput = lapsoElement.querySelector('.lapso-fecha-inicio');
     const fechaFinInput = lapsoElement.querySelector('.lapso-fecha-fin');
@@ -592,7 +592,7 @@ function sugerirFechasLapsoAutomatico(lapsoElement, index) {
     }
 }
 
-// FunciÃ³n para mostrar/ocultar campo de nombre de proyecto
+// Función para mostrar/ocultar campo de nombre de proyecto
 function toggleProyectoNombre(selectElement) {
     const lapsoItem = selectElement.closest('.lapso-item');
     const proyectoNombreInput = lapsoItem.querySelector('.proyecto-nombre');
@@ -607,11 +607,11 @@ function toggleProyectoNombre(selectElement) {
         proyectoNombreInput.disabled = false;
         proyectoNombreInput.required = true;
         proyectoNombreLabel.innerHTML = 'Nombre del Proyecto *';
-        proyectoNombreInput.placeholder = 'Ej: IndÃ­genas del Mundo, Ecosistemas Venezolanos';
+        proyectoNombreInput.placeholder = 'Ej: Indígenas del Mundo, Ecosistemas Venezolanos';
     }
 }
 
-// FunciÃ³n para sugerir fecha especÃ­fica de lapso
+// Función para sugerir fecha específica de lapso
 function sugerirFechaLapso(buttonElement, tipo) {
     const lapsoItem = buttonElement.closest('.lapso-item');
     const fechaInput = tipo === 'inicio' 
@@ -642,7 +642,7 @@ function sugerirFechaLapso(buttonElement, tipo) {
     fechaInput.value = fechasSugeridas[tipo][fechaIndex];
 }
 
-// FunciÃ³n para eliminar lapso
+// Función para eliminar lapso
 function eliminarLapso(boton) {
     const lapsoItem = boton.closest('.lapso-item');
     if (document.querySelectorAll('.lapso-item').length > 1) {
@@ -654,7 +654,7 @@ function eliminarLapso(boton) {
     }
 }
 
-// FunciÃ³n para reindexar lapsos despuÃ©s de eliminar
+// Función para reindexar lapsos después de eliminar
 function reindexarLapsos() {
     const lapsos = document.querySelectorAll('.lapso-item');
     lapsos.forEach((lapso, index) => {
@@ -668,7 +668,7 @@ function reindexarLapsos() {
             }
         });
         
-        // Actualizar nÃºmero del lapso
+        // Actualizar número del lapso
         const numeroInput = lapso.querySelector('.lapso-numero');
         if (numeroInput) {
             numeroInput.value = index + 1;
@@ -683,16 +683,16 @@ function reindexarLapsos() {
     });
 }
 
-// FunciÃ³n para actualizar contador de lapsos
+// Función para actualizar contador de lapsos
 function actualizarContadorLapsos() {
     const contador = document.getElementById('contador-lapsos');
     const totalLapsos = document.querySelectorAll('.lapso-item').length;
     contador.textContent = totalLapsos;
 }
 
-// FunciÃ³n para limpiar el formulario
+// Función para limpiar el formulario
 function limpiarFormulario() {
-    if (confirm('Â¿EstÃ¡ seguro de que desea limpiar todo el formulario? Se perderÃ¡n todos los datos ingresados.')) {
+    if (confirm('¿Está seguro de que desea limpiar todo el formulario? Se perderán todos los datos ingresados.')) {
         document.getElementById('formAnoEscolar').reset();
         document.getElementById('campoPersonalizado').style.display = 'none';
         
@@ -741,7 +741,7 @@ document.getElementById('formAnoEscolar').addEventListener('submit', function(e)
         return false;
     }
     
-    // Validar nÃºmeros de lapso Ãºnicos
+    // Validar números de lapso únicos
     const numerosLapsos = new Set();
     const numeroInputs = document.querySelectorAll('.lapso-numero');
     let numerosUnicos = true;
@@ -757,7 +757,7 @@ document.getElementById('formAnoEscolar').addEventListener('submit', function(e)
     
     if (!numerosUnicos) {
         e.preventDefault();
-        alert('Los nÃºmeros de lapso deben ser Ãºnicos');
+        alert('Los números de lapso deben ser únicos');
         return false;
     }
     

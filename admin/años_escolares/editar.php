@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -28,15 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             $fecha_fin = $_POST['fecha_fin'] ?: null;
             
             if (empty($nombre) || $numero < 1) {
-                echo json_encode(['success' => false, 'error' => 'Nombre y nÃºmero son obligatorios']);
+                echo json_encode(['success' => false, 'error' => 'Nombre y número son obligatorios']);
                 exit;
             }
             
-            // Verificar que el nÃºmero no estÃ© duplicado en este año
+            // Verificar que el número no esté duplicado en este año
             $stmt = $pdo->prepare("SELECT id FROM lapsos WHERE año_escolar_id = ? AND numero = ?");
             $stmt->execute([$id, $numero]);
             if ($stmt->fetch()) {
-                echo json_encode(['success' => false, 'error' => "Ya existe un lapso con el nÃºmero $numero en este año"]);
+                echo json_encode(['success' => false, 'error' => "Ya existe un lapso con el número $numero en este año"]);
                 exit;
             }
             
@@ -67,11 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
                 exit;
             }
             
-            // Verificar nÃºmero duplicado (excluyendo el mismo lapso)
+            // Verificar número duplicado (excluyendo el mismo lapso)
             $stmt = $pdo->prepare("SELECT id FROM lapsos WHERE año_escolar_id = ? AND numero = ? AND id != ?");
             $stmt->execute([$id, $numero, $lapso_id]);
             if ($stmt->fetch()) {
-                echo json_encode(['success' => false, 'error' => "Ya existe otro lapso con el nÃºmero $numero"]);
+                echo json_encode(['success' => false, 'error' => "Ya existe otro lapso con el número $numero"]);
                 exit;
             }
             
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
             exit;
         }
         
-        echo json_encode(['success' => false, 'error' => 'AcciÃ³n desconocida']);
+        echo json_encode(['success' => false, 'error' => 'Acción desconocida']);
         exit;
         
     } catch (PDOException $e) {
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
 }
 
 // ============================================================
-// CARGAR DATOS DEL AÃ‘O ESCOLAR
+// CARGAR DATOS DEL AÑO ESCOLAR
 // ============================================================
 try {
     $stmt = $pdo->prepare("SELECT * FROM años_escolares WHERE id = ?");
@@ -133,7 +133,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
     <?php endif; ?>
 
     <!-- ============================================== -->
-    <!-- CARD 1: DATOS DEL AÃ‘O ESCOLAR                  -->
+    <!-- CARD 1: DATOS DEL AÑO ESCOLAR                  -->
     <!-- ============================================== -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                         <label for="nombre" class="form-label">Nombre del Año Escolar *</label>
                         <select class="form-select" id="nombre" name="nombre" required onchange="actualizarFechas()">
                             <option value="">Seleccionar o personalizar...</option>
-                            <optgroup label="Sugerencias AutomÃ¡ticas">
+                            <optgroup label="Sugerencias Automáticas">
                                 <?php foreach ($sugerencias as $sugerencia): ?>
                                     <option value="<?php echo htmlspecialchars($sugerencia); ?>" 
                                         <?php echo $año_escolar['nombre'] == $sugerencia ? 'selected' : ''; ?>>
@@ -252,11 +252,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                             </optgroup>
                             <optgroup label="Valor Actual">
                                 <option value="<?php echo htmlspecialchars($año_escolar['nombre']); ?>" selected>
-                                    â†³ <?php echo htmlspecialchars($año_escolar['nombre']); ?> (Actual)
+                                    ↳ <?php echo htmlspecialchars($año_escolar['nombre']); ?> (Actual)
                                 </option>
                             </optgroup>
                             <optgroup label="Personalizado">
-                                <option value="personalizado">â†³ Escribir nombre personalizado</option>
+                                <option value="personalizado">↳ Escribir nombre personalizado</option>
                             </optgroup>
                         </select>
                     </div>
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                         </select>
                         <div class="form-text">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Al activar, los demÃ¡s años se desactivan
+                            Al activar, los demás años se desactivan
                         </div>
                     </div>
                 </div>
@@ -305,13 +305,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
     </div>
 
     <!-- ============================================== -->
-    <!-- CARD 2: GESTIÃ“N DE LAPSOS                      -->
+    <!-- CARD 2: GESTIÓN DE LAPSOS                      -->
     <!-- ============================================== -->
     <div class="card">
         <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
                 <i class="fas fa-calendar-check me-2"></i>
-                Lapsos AcadÃ©micos
+                Lapsos Académicos
                 <span class="badge bg-light text-dark ms-2" id="badge-total-lapsos"><?php echo count($lapsos); ?></span>
             </h5>
             <button type="button" class="btn btn-light btn-sm" onclick="mostrarFormularioNuevo()">
@@ -325,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                 <h6 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Nuevo Lapso</h6>
                 <form id="formCrearLapso" class="row g-2">
                     <div class="col-md-2">
-                        <label class="form-label small">NÃºmero *</label>
+                        <label class="form-label small">Número *</label>
                         <input type="number" class="form-control form-control-sm" name="numero" 
                                min="1" max="10" value="<?php echo count($lapsos) + 1; ?>" required>
                     </div>
@@ -383,8 +383,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                                 <tr id="fila-lapso-<?php echo $lapso['id']; ?>">
                                     <td><span class="badge bg-secondary"><?php echo $lapso['numero']; ?></span></td>
                                     <td><strong><?php echo htmlspecialchars($lapso['nombre']); ?></strong></td>
-                                    <td><?php echo $lapso['fecha_inicio'] ? date('d/m/Y', strtotime($lapso['fecha_inicio'])) : 'â€”'; ?></td>
-                                    <td><?php echo $lapso['fecha_fin'] ? date('d/m/Y', strtotime($lapso['fecha_fin'])) : 'â€”'; ?></td>
+                                    <td><?php echo $lapso['fecha_inicio'] ? date('d/m/Y', strtotime($lapso['fecha_inicio'])) : '—'; ?></td>
+                                    <td><?php echo $lapso['fecha_fin'] ? date('d/m/Y', strtotime($lapso['fecha_fin'])) : '—'; ?></td>
                                     <td>
                                         <span class="badge bg-<?php echo $lapso['estado'] == 'activo' ? 'success' : 'secondary'; ?>">
                                             <?php echo ucfirst($lapso['estado']); ?>
@@ -438,7 +438,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['ajax_action'])) {
                     <input type="hidden" name="lapso_id" id="edit_lapso_id">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">NÃºmero *</label>
+                            <label class="form-label">Número *</label>
                             <input type="number" class="form-control" name="numero" id="edit_numero" 
                                    min="1" max="10" required>
                         </div>
@@ -523,7 +523,7 @@ document.getElementById('formAnoEscolar').addEventListener('submit', function(e)
 });
 
 // ============================================================
-// GESTIÃ“N DE LAPSOS (AJAX)
+// GESTIÓN DE LAPSOS (AJAX)
 // ============================================================
 
 function mostrarFormularioNuevo() {
@@ -551,10 +551,10 @@ document.getElementById('formCrearLapso').addEventListener('submit', function(e)
                 alert('Error: ' + data.error);
             }
         })
-        .catch(err => alert('Error de conexiÃ³n: ' + err));
+        .catch(err => alert('Error de conexión: ' + err));
 });
 
-// Abrir modal de ediciÃ³n
+// Abrir modal de edición
 function editarLapso(lapso) {
     document.getElementById('edit_lapso_id').value = lapso.id;
     document.getElementById('edit_numero').value = lapso.numero;
@@ -566,7 +566,7 @@ function editarLapso(lapso) {
     new bootstrap.Modal(document.getElementById('modalEditarLapso')).show();
 }
 
-// Guardar ediciÃ³n
+// Guardar edición
 document.getElementById('formEditarLapso').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
@@ -581,12 +581,12 @@ document.getElementById('formEditarLapso').addEventListener('submit', function(e
                 alert('Error: ' + data.error);
             }
         })
-        .catch(err => alert('Error de conexiÃ³n: ' + err));
+        .catch(err => alert('Error de conexión: ' + err));
 });
 
 // Eliminar lapso
 function eliminarLapso(lapsoId, nombre) {
-    if (!confirm(`Â¿Eliminar el lapso "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar el lapso "${nombre}"?\n\nEsta acción no se puede deshacer.`)) return;
     
     const formData = new FormData();
     formData.append('ajax_action', 'eliminar_lapso');
@@ -601,14 +601,14 @@ function eliminarLapso(lapsoId, nombre) {
                 alert('Error: ' + data.error);
             }
         })
-        .catch(err => alert('Error de conexiÃ³n: ' + err));
+        .catch(err => alert('Error de conexión: ' + err));
 }
 
 // ============================================================
-// INICIALIZACIÃ“N
+// INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Detectar si el nombre actual estÃ¡ en sugerencias
+    // Detectar si el nombre actual está en sugerencias
     const nombreActual = "<?php echo htmlspecialchars($año_escolar['nombre'], ENT_QUOTES); ?>";
     const selectNombre = document.getElementById('nombre');
     let encontrado = false;

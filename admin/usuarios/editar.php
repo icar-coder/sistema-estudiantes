@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 require_once '../../includes/validaciones.php';
@@ -37,7 +37,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log('Error al cargar usuario: ' . $e->getMessage());
-    $_SESSION['usuario_mensaje'] = 'OcurriÃ³ un error al cargar el usuario.';
+    $_SESSION['usuario_mensaje'] = 'Ocurrió un error al cargar el usuario.';
     $_SESSION['usuario_tipo_mensaje'] = 'danger';
     header('Location: gestionar.php');
     exit();
@@ -59,14 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($rolActual === 'profesor') {
             $validador->texto('prof_nombre', 'Nombre del profesor', 2, 100, false);
             $validador->texto('prof_apellido', 'Apellido del profesor', 2, 100, false);
-            $validador->cedula('prof_cedula', 'CÃ©dula del profesor', 6, 20, false);
-            $validador->telefono('prof_telefono', 'TelÃ©fono', false);
+            $validador->cedula('prof_cedula', 'Cédula del profesor', 6, 20, false);
+            $validador->telefono('prof_telefono', 'Teléfono', false);
         }
 
         if ($rolActual === 'estudiante') {
             $validador->texto('est_nombre', 'Nombre del estudiante', 2, 100, false);
             $validador->texto('est_apellido', 'Apellido del estudiante', 2, 100, false);
-            $validador->cedulaEscolar('est_cedula_escolar', 'CÃ©dula escolar', false);
+            $validador->cedulaEscolar('est_cedula_escolar', 'Cédula escolar', false);
         }
 
         if ($validador->hayErrores()) {
@@ -250,7 +250,7 @@ include '../../includes/header.php';
                     </div>
                     <div class="col-md-4">
                         <label for="password" class="form-label">Nueva Contraseña</label>
-                        <input type="text" class="form-control" id="password" name="password" data-tipo="password" placeholder="Dejar vacÃ­o para mantener la actual">
+                        <input type="text" class="form-control" id="password" name="password" data-tipo="password" placeholder="Dejar vacío para mantener la actual">
                     </div>
                 </div>
 
@@ -270,10 +270,10 @@ include '../../includes/header.php';
 
                 <div id="profesorFields" style="display: none;">
                     <hr>
-                    <h5 class="mb-3">InformaciÃ³n del Profesor</h5>
+                    <h5 class="mb-3">Información del Profesor</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="prof_cedula" class="form-label">CÃ©dula</label>
+                            <label for="prof_cedula" class="form-label">Cédula</label>
                             <input type="text" class="form-control" id="prof_cedula" name="prof_cedula" data-tipo="cedula" value="<?php echo htmlspecialchars($perfil['cedula'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -293,7 +293,7 @@ include '../../includes/header.php';
                             <input type="date" class="form-control" id="fecha_nacimiento_profesor" name="prof_fecha_nacimiento" data-tipo="fecha" data-max-hoy="true" value="<?php echo htmlspecialchars($perfil['fecha_nacimiento'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="prof_telefono" class="form-label">TelÃ©fono</label>
+                            <label for="prof_telefono" class="form-label">Teléfono</label>
                             <input type="text" class="form-control" id="prof_telefono" name="prof_telefono" data-tipo="telefono" value="<?php echo htmlspecialchars($perfil['telefono'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -301,11 +301,11 @@ include '../../includes/header.php';
                             <input type="text" class="form-control" id="especialidad" name="especialidad" data-tipo="texto" value="<?php echo htmlspecialchars($perfil['especialidad'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="grado_academico" class="form-label">Grado AcadÃ©mico</label>
+                            <label for="grado_academico" class="form-label">Grado Académico</label>
                             <input type="text" class="form-control" id="grado_academico" name="grado_academico" data-tipo="texto" value="<?php echo htmlspecialchars($perfil['grado_academico'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="fecha_contratacion" class="form-label">Fecha de ContrataciÃ³n</label>
+                            <label for="fecha_contratacion" class="form-label">Fecha de Contratación</label>
                             <input type="date" class="form-control" id="fecha_contratacion" name="fecha_contratacion" data-tipo="fecha" data-max-hoy="true" value="<?php echo htmlspecialchars($perfil['fecha_contratacion'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -313,7 +313,7 @@ include '../../includes/header.php';
                             <input type="text" class="form-control" id="lugar_nacimiento" name="lugar_nacimiento" data-tipo="texto" value="<?php echo htmlspecialchars($perfil['lugar_nacimiento'] ?? ''); ?>">
                         </div>
                         <div class="col-12 mb-3">
-                            <label for="direccion" class="form-label">DirecciÃ³n</label>
+                            <label for="direccion" class="form-label">Dirección</label>
                             <textarea class="form-control" id="direccion" name="direccion" rows="2" data-tipo="textarea"><?php echo htmlspecialchars($perfil['direccion'] ?? ''); ?></textarea>
                         </div>
                     </div>
@@ -321,10 +321,10 @@ include '../../includes/header.php';
 
                 <div id="estudianteFields" style="display: none;">
                     <hr>
-                    <h5 class="mb-3">InformaciÃ³n del Estudiante</h5>
+                    <h5 class="mb-3">Información del Estudiante</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="est_cedula_escolar" class="form-label">CÃ©dula Escolar</label>
+                            <label for="est_cedula_escolar" class="form-label">Cédula Escolar</label>
                             <input type="text" class="form-control" id="est_cedula_escolar" name="est_cedula_escolar" data-tipo="cedula-escolar" value="<?php echo htmlspecialchars($perfil['cedula_escolar'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -344,7 +344,7 @@ include '../../includes/header.php';
                             <input type="date" class="form-control" id="fecha_nacimiento_estudiante" name="est_fecha_nacimiento" data-tipo="fecha" data-max-hoy="true" value="<?php echo htmlspecialchars($perfil['fecha_nacimiento'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="est_telefono" class="form-label">TelÃ©fono</label>
+                            <label for="est_telefono" class="form-label">Teléfono</label>
                             <input type="text" class="form-control" id="est_telefono" name="est_telefono" data-tipo="telefono" value="<?php echo htmlspecialchars($perfil['telefono'] ?? ''); ?>">
                         </div>
                     </div>

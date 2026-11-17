@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -96,7 +96,7 @@ if ($tabla_historial_existe) {
     }
 }
 
-// Calcular estadÃ­sticas
+// Calcular estadísticas
 $total_adelantados = count($estudiantes_adelantados);
 $total_academicos = 0;
 $total_transferencias = 0;
@@ -117,7 +117,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>ðŸŽ“ GestiÃ³n de Estudiantes Adelantados</h2>
+        <h2>🎓 Gestión de Estudiantes Adelantados</h2>
         <a href="../estudiantes/gestionar.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Volver a Inscripciones
         </a>
@@ -133,11 +133,11 @@ foreach ($estudiantes_adelantados as $estudiante) {
     <?php if (!$tabla_historial_existe): ?>
         <div class="alert alert-warning">
             <i class="fas fa-exclamation-triangle me-2"></i>
-            La tabla de historial acadÃ©mico no existe. Los estudiantes adelantados no podrÃ¡n ser gestionados hasta que se cree la tabla.
+            La tabla de historial académico no existe. Los estudiantes adelantados no podrán ser gestionados hasta que se cree la tabla.
         </div>
     <?php endif; ?>
 
-    <!-- EstadÃ­sticas rÃ¡pidas -->
+    <!-- Estadísticas rápidas -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -151,7 +151,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
             <div class="card bg-success text-white">
                 <div class="card-body text-center">
                     <h3><?php echo $total_academicos; ?></h3>
-                    <p class="mb-0">Por MÃ©rito</p>
+                    <p class="mb-0">Por Mérito</p>
                 </div>
             </div>
         </div>
@@ -177,7 +177,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
     <div class="card mb-4">
         <div class="card-header bg-light">
             <h6 class="card-title mb-0">
-                <i class="fas fa-filter me-2"></i>Filtros de BÃºsqueda
+                <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
             </h6>
         </div>
         <div class="card-body">
@@ -201,7 +201,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                         <?php for ($i = 1; $i <= 6; $i++): ?>
                             <option value="<?php echo $i; ?>" 
                                 <?php echo $filtro_grado == $i ? 'selected' : ''; ?>>
-                                <?php echo $i . 'Â° Grado'; ?>
+                                <?php echo $i . '° Grado'; ?>
                             </option>
                         <?php endfor; ?>
                     </select>
@@ -210,7 +210,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                     <label for="tipo_adelantamiento" class="form-label">Tipo de Adelantamiento</label>
                     <select class="form-select" id="tipo_adelantamiento" name="tipo_adelantamiento">
                         <option value="">Todos los tipos</option>
-                        <option value="academico" <?php echo $filtro_tipo_adelantamiento == 'academico' ? 'selected' : ''; ?>>MÃ©rito AcadÃ©mico</option>
+                        <option value="academico" <?php echo $filtro_tipo_adelantamiento == 'academico' ? 'selected' : ''; ?>>Mérito Académico</option>
                         <option value="transferencia" <?php echo $filtro_tipo_adelantamiento == 'transferencia' ? 'selected' : ''; ?>>Transferencia</option>
                         <option value="otros" <?php echo $filtro_tipo_adelantamiento == 'otros' ? 'selected' : ''; ?>>Otros Motivos</option>
                     </select>
@@ -246,9 +246,9 @@ foreach ($estudiantes_adelantados as $estudiante) {
                         <thead>
                             <tr>
                                 <th>Estudiante</th>
-                                <th>InformaciÃ³n AcadÃ©mica</th>
-                                <th>SituaciÃ³n Actual</th>
-                                <th>EvaluaciÃ³n</th>
+                                <th>Información Académica</th>
+                                <th>Situación Actual</th>
+                                <th>Evaluación</th>
                                 <th>Tipo</th>
                                 <th>Fecha</th>
                                 <th>Acciones</th>
@@ -266,7 +266,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                                 ];
                                 
                                 $tipo_texto = [
-                                    'academico' => 'MÃ©rito AcadÃ©mico',
+                                    'academico' => 'Mérito Académico',
                                     'transferencia' => 'Transferencia',
                                     'otros' => 'Otros Motivos'
                                 ];
@@ -297,7 +297,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                                                     <?php if ($edad): ?>
                                                         | <?php echo $edad; ?> años
                                                         <?php if ($estudiante['genero']): ?>
-                                                            | <?php echo $estudiante['genero'] == 'masculino' ? 'â™‚' : 'â™€'; ?>
+                                                            | <?php echo $estudiante['genero'] == 'masculino' ? '♂' : '♀'; ?>
                                                         <?php endif; ?>
                                                     <?php endif; ?>
                                                 </small>
@@ -324,7 +324,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                                                 <span class="badge bg-success"><?php echo htmlspecialchars($estudiante['grado_actual']); ?></span>
                                             </div>
                                             <div class="mb-1">
-                                                <small class="text-muted">SecciÃ³n:</small>
+                                                <small class="text-muted">Sección:</small>
                                                 <br>
                                                 <span class="badge bg-info"><?php echo htmlspecialchars($estudiante['seccion_actual']); ?></span>
                                             </div>
@@ -404,7 +404,7 @@ foreach ($estudiantes_adelantados as $estudiante) {
                         <?php if ($tabla_historial_existe): ?>
                             No se encontraron estudiantes adelantados con los filtros aplicados.
                         <?php else: ?>
-                            La tabla de historial acadÃ©mico no estÃ¡ disponible.
+                            La tabla de historial académico no está disponible.
                         <?php endif; ?>
                     </p>
                     <?php if ($tabla_historial_existe): ?>
@@ -448,14 +448,14 @@ function verDetallesAdelantamiento(historialId) {
 }
 
 // La ruta crear_tablas_historial.php no existe en el proyecto actual.
-// Las tablas ya estÃ¡n creadas o se gestionan por migraciÃ³n manual.
+// Las tablas ya están creadas o se gestionan por migración manual.
 
 document.addEventListener('DOMContentLoaded', function() {
     // Mejorar la experiencia de filtrado
     const filtros = document.querySelectorAll('#año_escolar_id, #grado, #tipo_adelantamiento');
     filtros.forEach(filtro => {
         filtro.addEventListener('change', function() {
-            // Opcional: enviar automÃ¡ticamente el formulario
+            // Opcional: enviar automáticamente el formulario
             // this.form.submit();
         });
     });

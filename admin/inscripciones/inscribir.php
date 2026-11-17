@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -7,7 +7,7 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Obtener estudiante_id si viene por GET (desde gestiÃ³n)
+// Obtener estudiante_id si viene por GET (desde gestión)
 $estudiante_pre_seleccionado = null;
 $estudiante_id_from_get = $_GET['estudiante_id'] ?? null;
 
@@ -34,7 +34,7 @@ try {
     $años_escolares = [];
 }
 
-// Obtener estudiantes sin inscripciÃ³n activa en el año escolar seleccionado
+// Obtener estudiantes sin inscripción activa en el año escolar seleccionado
 $estudiantes_sin_inscripcion = [];
 if (isset($_GET['año_escolar_id']) && !empty($_GET['año_escolar_id'])) {
     $año_escolar_id = $_GET['año_escolar_id'];
@@ -56,7 +56,7 @@ if (isset($_GET['año_escolar_id']) && !empty($_GET['año_escolar_id'])) {
     }
 }
 
-// Obtener Ã¡reas de aprendizaje para primaria
+// Obtener áreas de aprendizaje para primaria
 try {
     $stmt = $pdo->query("
         SELECT id, nombre, codigo 
@@ -70,7 +70,7 @@ try {
     $areas_aprendizaje = [];
 }
 
-// Procesar inscripciÃ³n
+// Procesar inscripción
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $estudiante_id = $_POST['estudiante_id'];
     $seccion_id = $_POST['seccion_id'];
@@ -78,15 +78,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (!empty($estudiante_id) && !empty($seccion_id) && !empty($año_escolar_id)) {
         try {
-            // Verificar si ya existe una inscripciÃ³n activa
+            // Verificar si ya existe una inscripción activa
             $stmt = $pdo->prepare("SELECT id FROM inscripciones WHERE estudiante_id = ? AND año_escolar_id = ? AND status = 'activo'");
             $stmt->execute([$estudiante_id, $año_escolar_id]);
             
             if ($stmt->fetch()) {
-                $mensaje = "El estudiante ya tiene una inscripciÃ³n activa en este año escolar";
+                $mensaje = "El estudiante ya tiene una inscripción activa en este año escolar";
                 $tipo_mensaje = "warning";
             } else {
-                // Verificar capacidad de la secciÃ³n
+                // Verificar capacidad de la sección
                 $stmt = $pdo->prepare("
                     SELECT s.capacidad, COUNT(i.id) as inscritos 
                     FROM secciones s 
@@ -98,19 +98,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $seccion_info = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($seccion_info && $seccion_info['capacidad'] && $seccion_info['inscritos'] >= $seccion_info['capacidad']) {
-                    $mensaje = "La secciÃ³n seleccionada ha alcanzado su capacidad mÃ¡xima";
+                    $mensaje = "La sección seleccionada ha alcanzado su capacidad máxima";
                     $tipo_mensaje = "warning";
                 } else {
-                    // Iniciar transacciÃ³n
+                    // Iniciar transacción
                     $pdo->beginTransaction();
                     
                     try {
-                        // 1. Crear inscripciÃ³n principal
+                        // 1. Crear inscripción principal
                         $stmt = $pdo->prepare("INSERT INTO inscripciones (estudiante_id, seccion_id, año_escolar_id, fecha_inscripcion) VALUES (?, ?, ?, CURDATE())");
                         $stmt->execute([$estudiante_id, $seccion_id, $año_escolar_id]);
                         $inscripcion_id = $pdo->lastInsertId();
                         
-                        // 2. Obtener informaciÃ³n del estudiante y secciÃ³n para el mensaje
+                        // 2. Obtener información del estudiante y sección para el mensaje
                         $stmt = $pdo->prepare("
                             SELECT e.nombre, e.apellido, s.nombre as seccion_nombre 
                             FROM estudiantes e 
@@ -120,13 +120,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([$seccion_id, $estudiante_id]);
                         $info_inscripcion = $stmt->fetch(PDO::FETCH_ASSOC);
                         
-                        $mensaje = "âœ… Estudiante <strong>{$info_inscripcion['nombre']} {$info_inscripcion['apellido']}</strong> inscrito correctamente en la secciÃ³n <strong>{$info_inscripcion['seccion_nombre']}</strong>";
+                        $mensaje = "✅ Estudiante <strong>{$info_inscripcion['nombre']} {$info_inscripcion['apellido']}</strong> inscrito correctamente en la sección <strong>{$info_inscripcion['seccion_nombre']}</strong>";
                         
                         if (count($areas_aprendizaje) > 0) {
-                            $mensaje .= " con " . count($areas_aprendizaje) . " Ã¡reas de aprendizaje";
+                            $mensaje .= " con " . count($areas_aprendizaje) . " áreas de aprendizaje";
                         }
                         
-                        // Confirmar transacciÃ³n
+                        // Confirmar transacción
                         $pdo->commit();
                         $tipo_mensaje = "success";
                         
@@ -140,11 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } catch (PDOException $e) {
-            $mensaje = "âŒ Error al inscribir estudiante: " . $e->getMessage();
+            $mensaje = "❌ Error al inscribir estudiante: " . $e->getMessage();
             $tipo_mensaje = "danger";
         }
     } else {
-        $mensaje = "âš ï¸ Por favor complete todos los campos obligatorios";
+        $mensaje = "⚠ï¸ Por favor complete todos los campos obligatorios";
         $tipo_mensaje = "warning";
     }
 }
@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="mt-3">
                     <a href="generar_constancia.php?id=<?php echo $inscripcion_id; ?>" 
                        class="btn btn-sm btn-success me-2" target="_blank">
-                        <i class="fas fa-file-pdf me-1"></i>Generar Constancia de InscripciÃ³n
+                        <i class="fas fa-file-pdf me-1"></i>Generar Constancia de Inscripción
                     </a>
                     <a href="gestionar.php" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-list me-1"></i>Ver Todas las Inscripciones
@@ -185,17 +185,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card">
         <div class="card-header bg-primary text-white">
             <h5 class="card-title mb-0">
-                <i class="fas fa-user-plus me-2"></i>Nueva InscripciÃ³n - Sistema Primaria
+                <i class="fas fa-user-plus me-2"></i>Nueva Inscripción - Sistema Primaria
             </h5>
         </div>
         <div class="card-body">
-            <!-- InformaciÃ³n del sistema -->
+            <!-- Información del sistema -->
             <div class="alert alert-info mb-4">
                 <h6><i class="fas fa-info-circle me-2"></i>Sistema de Primaria</h6>
                 <ul class="mb-0">
-                    <li><strong>Profesor Titular:</strong> Cada secciÃ³n tiene un profesor que imparte TODAS las Ã¡reas</li>
-                    <li><strong>AsignaciÃ³n AutomÃ¡tica:</strong> El estudiante recibe automÃ¡ticamente todas las Ã¡reas de aprendizaje</li>
-                    <li><strong>EvaluaciÃ³n por Proyectos:</strong> Sistema basado en proyectos por lapso con evaluaciÃ³n literal (A-E)</li>
+                    <li><strong>Profesor Titular:</strong> Cada sección tiene un profesor que imparte TODAS las áreas</li>
+                    <li><strong>Asignación Automática:</strong> El estudiante recibe automáticamente todas las áreas de aprendizaje</li>
+                    <li><strong>Evaluación por Proyectos:</strong> Sistema basado en proyectos por lapso con evaluación literal (A-E)</li>
                 </ul>
             </div>
 
@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php foreach ($estudiantes_sin_inscripcion as $estudiante): ?>
                                     <option value="<?php echo $estudiante['id']; ?>" 
                                         <?php 
-                                            // Pre-seleccionar si viene de gestiÃ³n
+                                            // Pre-seleccionar si viene de gestión
                                             if (($estudiante_pre_seleccionado && $estudiante['id'] == $estudiante_pre_seleccionado['id']) || 
                                                 ($_POST['estudiante_id'] ?? '') == $estudiante['id']) {
                                                 echo 'selected';
@@ -255,31 +255,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </select>
                             <div class="form-text">
                                 <i class="fas fa-users me-1"></i>
-                                <?php echo count($estudiantes_sin_inscripcion); ?> estudiantes disponibles para inscripciÃ³n
+                                <?php echo count($estudiantes_sin_inscripcion); ?> estudiantes disponibles para inscripción
                                 <?php if ($estudiante_pre_seleccionado): ?>
                                     <span class="text-success ms-2">
-                                        <i class="fas fa-check"></i> Estudiante pre-seleccionado desde gestiÃ³n
+                                        <i class="fas fa-check"></i> Estudiante pre-seleccionado desde gestión
                                     </span>
                                 <?php endif; ?>
                             </div>
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="seccion_id" class="form-label">Seleccionar SecciÃ³n *</label>
+                            <label for="seccion_id" class="form-label">Seleccionar Sección *</label>
                             <select class="form-select" id="seccion_id" name="seccion_id" required onchange="actualizarInfoSeccion()">
-                                <option value="">Seleccionar secciÃ³n...</option>
+                                <option value="">Seleccionar sección...</option>
                             </select>
                             <div class="form-text" id="info-capacidad">
-                                Seleccione una secciÃ³n para ver la capacidad disponible
+                                Seleccione una sección para ver la capacidad disponible
                             </div>
                         </div>
                     </div>
 
-                    <!-- InformaciÃ³n de la secciÃ³n seleccionada -->
+                    <!-- Información de la sección seleccionada -->
                     <div id="info-seccion" class="card mt-3" style="display: none;">
                         <div class="card-header bg-light">
                             <h6 class="card-title mb-0">
-                                <i class="fas fa-chalkboard-teacher me-2"></i>InformaciÃ³n de la SecciÃ³n
+                                <i class="fas fa-chalkboard-teacher me-2"></i>Información de la Sección
                             </h6>
                         </div>
                         <div class="card-body">
@@ -287,18 +287,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <!-- Ãreas de aprendizaje que se asignarÃ¡n -->
+                    <!-- Áreas de aprendizaje que se asignarán -->
                     <?php if (count($areas_aprendizaje) > 0): ?>
                     <div class="card mt-4">
                         <div class="card-header bg-success text-white">
                             <h6 class="card-title mb-0">
-                                <i class="fas fa-book me-2"></i>Ãreas de Aprendizaje que se AsignarÃ¡n
+                                <i class="fas fa-book me-2"></i>Áreas de Aprendizaje que se Asignarán
                             </h6>
                         </div>
                         <div class="card-body">
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Importante:</strong> El estudiante serÃ¡ inscrito automÃ¡ticamente en TODAS las Ã¡reas de aprendizaje bÃ¡sicas de primaria.
+                                <strong>Importante:</strong> El estudiante será inscrito automáticamente en TODAS las áreas de aprendizaje básicas de primaria.
                             </div>
                             <div class="row">
                                 <?php foreach ($areas_aprendizaje as $area): ?>
@@ -318,8 +318,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php else: ?>
                     <div class="alert alert-danger mt-4">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Advertencia:</strong> No hay Ã¡reas de aprendizaje configuradas para primaria. 
-                        <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar Ã¡reas primero</a>
+                        <strong>Advertencia:</strong> No hay áreas de aprendizaje configuradas para primaria.
+                        <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar áreas primero</a>
                     </div>
                     <?php endif; ?>
 
@@ -336,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="text-center py-4">
                     <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
                     <h5>Seleccione un año escolar</h5>
-                    <p class="text-muted">Primero debe seleccionar el año escolar para continuar con la inscripciÃ³n.</p>
+                    <p class="text-muted">Primero debe seleccionar el año escolar para continuar con la inscripción.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -347,7 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-body text-center">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5>No hay estudiantes disponibles</h5>
-                <p class="text-muted">Todos los estudiantes ya estÃ¡n inscritos en este año escolar o no hay estudiantes registrados.</p>
+                <p class="text-muted">Todos los estudiantes ya están inscritos en este año escolar o no hay estudiantes registrados.</p>
                 <a href="../estudiantes/agregar.php" class="btn btn-primary me-2">
                     <i class="fas fa-user-plus me-2"></i>Agregar Nuevo Estudiante
                 </a>
@@ -385,7 +385,7 @@ function cargarSecciones(añoEscolarId) {
         .then(data => {
             const secciones = Array.isArray(data) ? data : [];
 
-            seccionSelect.innerHTML = '<option value="">Seleccionar secciÃ³n...</option>';
+            seccionSelect.innerHTML = '<option value="">Seleccionar sección...</option>';
             
             if (!secciones.length) {
                 seccionSelect.innerHTML = '<option value="">No hay secciones disponibles</option>';
@@ -402,7 +402,7 @@ function cargarSecciones(añoEscolarId) {
                             data-capacidad="${capacidad || ''}" 
                             data-inscritos="${inscritos}"
                             data-grado="${seccion.nombre}">
-                        ${seccion.nombre} (${inscritos}/${capacidad || 'âˆž'} - ${ocupacion}% ocupado)
+                        ${seccion.nombre} (${inscritos}/${capacidad || '∞'} - ${ocupacion}% ocupado)
                     </option>
                 `;
             });
@@ -437,12 +437,12 @@ function actualizarInfoSeccion() {
         const ocupacion = capacidad ? Math.round((inscritos / capacidad) * 100) : 0;
         
         infoCapacidad.innerHTML = `
-            <strong>Capacidad:</strong> ${capacidad || 'Sin lÃ­mite'} | 
+            <strong>Capacidad:</strong> ${capacidad || 'Sin límite'} |
             <strong>Inscritos:</strong> ${inscritos} | 
             <strong>Disponible:</strong> ${disponible}
         `;
         
-        // Mostrar informaciÃ³n detallada de la secciÃ³n
+        // Mostrar información detallada de la sección
         detallesSeccion.innerHTML = `
             <div class="row">
                 <div class="col-md-4">
@@ -452,7 +452,7 @@ function actualizarInfoSeccion() {
                     <strong>Profesor Titular:</strong> ${profesor}
                 </div>
                 <div class="col-md-4">
-                    <strong>OcupaciÃ³n:</strong> 
+                    <strong>Ocupación:</strong>
                     <div class="progress mt-1" style="height: 8px;">
                         <div class="progress-bar ${ocupacion >= 90 ? 'bg-danger' : (ocupacion >= 75 ? 'bg-warning' : 'bg-success')}" 
                              style="width: ${Math.min(ocupacion, 100)}%"
@@ -465,31 +465,31 @@ function actualizarInfoSeccion() {
             ${capacidad && ocupacion >= 90 ? `
             <div class="alert alert-warning mt-2 mb-0">
                 <i class="fas fa-exclamation-triangle me-1"></i>
-                <strong>Alerta:</strong> Esta secciÃ³n estÃ¡ casi llena (${ocupacion}% ocupado)
+                <strong>Alerta:</strong> Esta sección está casi llena (${ocupacion}% ocupado)
             </div>
             ` : ''}
         `;
         
         infoSeccion.style.display = 'block';
     } else {
-        infoCapacidad.innerHTML = 'Seleccione una secciÃ³n para ver la capacidad disponible';
+        infoCapacidad.innerHTML = 'Seleccione una sección para ver la capacidad disponible';
         infoSeccion.style.display = 'none';
     }
 }
 
-// ValidaciÃ³n del formulario
+// Validación del formulario
 document.getElementById('form-inscripcion').addEventListener('submit', function(e) {
     const estudianteId = document.getElementById('estudiante_id').value;
     const seccionId = document.getElementById('seccion_id').value;
     
     if (!estudianteId || !seccionId) {
         e.preventDefault();
-        alert('âš ï¸ Por favor complete todos los campos obligatorios');
+        alert('⚠ï¸ Por favor complete todos los campos obligatorios');
         return false;
     }
     
     <?php if (count($areas_aprendizaje) === 0): ?>
-    if (!confirm('âš ï¸ ADVERTENCIA: No hay Ã¡reas de aprendizaje configuradas. Â¿Desea continuar de todos modos?')) {
+    if (!confirm('⚠ï¸ ADVERTENCIA: No hay áreas de aprendizaje configuradas. ¿Desea continuar de todos modos?')) {
         e.preventDefault();
         return false;
     }

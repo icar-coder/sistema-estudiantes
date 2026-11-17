@@ -114,9 +114,9 @@ $base = app_base_path();
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/boletas/generar_boleta.php" class="nav-link">
+                    <a href="<?php echo $base; ?>/admin/estudiantes/gestionar.php" class="nav-link">
                         <i class="fas fa-file-pdf"></i>
-                        <span>Boletas</span>
+                        <span>Boletas por estudiante</span>
                     </a>
                 </div>
             </div>
@@ -154,9 +154,21 @@ $base = app_base_path();
             </div>
             <div class="nav-section-content">
                 <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/evaluacion_literales/index.php" class="nav-link">
+                    <a href="<?php echo $base; ?>/admin/reportes/notas.php" class="nav-link">
                         <i class="fas fa-chart-bar"></i>
-                        <span>Rendimiento por Literales</span>
+                        <span>Notas y Literales</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="<?php echo $base; ?>/admin/reportes/asistencias.php" class="nav-link">
+                        <i class="fas fa-user-check"></i>
+                        <span>Asistencias</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="<?php echo $base; ?>/admin/reportes/promedios.php" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Promedios</span>
                     </a>
                 </div>
             </div>

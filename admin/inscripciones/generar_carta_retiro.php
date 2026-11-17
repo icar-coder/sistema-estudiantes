@@ -1,4 +1,4 @@
-﻿
+
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -8,8 +8,8 @@ checkRole(['admin']);
 $inscripcion_id = $_GET['id'] ?? null;
 
 if (!$inscripcion_id) {
-    error_log("Error en " . __FILE__ . ": ID de inscripciÃ³n no especificado.");
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    error_log("Error en " . __FILE__ . ": ID de inscripción no especificado.");
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $causa_retiro = $_POST['causa_retiro'];
     $observaciones = $_POST['observaciones'] ?? '';
     
-    // AquÃ­ podrÃ­as guardar esta informaciÃ³n en la base de datos si quieres
+    // Aquí podrías guardar esta información en la base de datos si quieres
     // Por ahora solo generamos la carta
     
     // Redirigir a la vista de la carta
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Obtener informaciÃ³n de la inscripciÃ³n
+// Obtener información de la inscripción
 try {
     $sql = "
         SELECT 
@@ -55,15 +55,15 @@ try {
     $inscripcion = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$inscripcion) {
-        error_log("Error en " . __FILE__ . ": InscripciÃ³n no encontrada.");
-        $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+        error_log("Error en " . __FILE__ . ": Inscripción no encontrada.");
+        $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
         header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
         exit;
     }
     
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -99,12 +99,12 @@ if ($inscripcion['fecha_nacimiento']) {
                     <strong>Estudiante:</strong> <?php echo htmlspecialchars($inscripcion['estudiante_nombre'] . ' ' . $inscripcion['estudiante_apellido']); ?>
                 </div>
                 <div class="col-md-6">
-                    <strong>CÃ©dula Escolar:</strong> <?php echo htmlspecialchars($inscripcion['cedula_escolar'] ?: 'No asignada'); ?>
+                    <strong>Cédula Escolar:</strong> <?php echo htmlspecialchars($inscripcion['cedula_escolar'] ?: 'No asignada'); ?>
                 </div>
             </div>
             <div class="row mb-4">
                 <div class="col-md-6">
-                    <strong>SecciÃ³n/Grado:</strong> <?php echo htmlspecialchars($inscripcion['seccion_nombre'] . ' - ' . ucfirst($inscripcion['nivel'])); ?>
+                    <strong>Sección/Grado:</strong> <?php echo htmlspecialchars($inscripcion['seccion_nombre'] . ' - ' . ucfirst($inscripcion['nivel'])); ?>
                 </div>
                 <div class="col-md-6">
                     <strong>Año Escolar:</strong> <?php echo htmlspecialchars($inscripcion['año_escolar']); ?>
@@ -124,12 +124,12 @@ if ($inscripcion['fecha_nacimiento']) {
                         <label for="causa_retiro" class="form-label">Causa del Retiro *</label>
                         <select class="form-select" id="causa_retiro" name="causa_retiro" required>
                             <option value="">Seleccionar causa...</option>
-                            <option value="CAMBIO DE INSTITUCION">CAMBIO DE INSTITUCIÃ“N</option>
+                            <option value="CAMBIO DE INSTITUCION">CAMBIO DE INSTITUCIÓN</option>
                             <option value="CAMBIO DE RESIDENCIA">CAMBIO DE RESIDENCIA</option>
-                            <option value="PROBLEMAS ECONOMICOS">PROBLEMAS ECONÃ“MICOS</option>
+                            <option value="PROBLEMAS ECONOMICOS">PROBLEMAS ECONÓMICOS</option>
                             <option value="PROBLEMAS DE SALUD">PROBLEMAS DE SALUD</option>
                             <option value="OTROS MOTIVOS PERSONALES">OTROS MOTIVOS PERSONALES</option>
-                            <option value="FINALIZACION DE ESTUDIOS">FINALIZACIÃ“N DE ESTUDIOS</option>
+                            <option value="FINALIZACION DE ESTUDIOS">FINALIZACIÓN DE ESTUDIOS</option>
                             <option value="OTRO">OTRO (Especificar en observaciones)</option>
                         </select>
                     </div>
@@ -158,7 +158,7 @@ if ($inscripcion['fecha_nacimiento']) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar/ocultar campo de observaciones segÃºn selecciÃ³n
+    // Mostrar/ocultar campo de observaciones según selección
     const causaSelect = document.getElementById('causa_retiro');
     const observacionesTextarea = document.getElementById('observaciones');
     

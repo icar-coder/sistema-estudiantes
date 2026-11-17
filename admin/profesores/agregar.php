@@ -1,4 +1,4 @@
-﻿
+
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -11,15 +11,15 @@ $tipo_mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $validador = new Validador($_POST);
-    $validador->cedula('cedula', 'CÃ©dula', 6, 20, false);
+    $validador->cedula('cedula', 'Cédula', 6, 20, false);
     $validador->texto('nombre', 'Nombre', 2, 100, true);
     $validador->texto('apellido', 'Apellido', 2, 100, true);
     $validador->fecha('fecha_nacimiento', 'Fecha de nacimiento', false, true);
     $validador->texto('lugar_nacimiento', 'Lugar de nacimiento', 1, 100, false);
     $validador->email('email', 'Email', false);
-    $validador->telefono('telefono', 'TelÃ©fono', false);
+    $validador->telefono('telefono', 'Teléfono', false);
     $validador->texto('especialidad', 'Especialidad', 1, 100, false);
-    $validador->texto('grado_academico', 'Grado acadÃ©mico', 1, 100, false);
+    $validador->texto('grado_academico', 'Grado académico', 1, 100, false);
     $validador->opcion('estado', 'Estado', ['activo', 'inactivo', 'licencia'], true);
 
     $cedula = trim($_POST['cedula'] ?? '');
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST = [];
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                $mensaje = "Error: La cÃ©dula ya existe en el sistema";
+                $mensaje = "Error: La cédula ya existe en el sistema";
             } else {
                 $mensaje = "Error al agregar profesor: " . $e->getMessage();
             }
@@ -105,12 +105,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST" action="">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="cedula" class="form-label">CÃ©dula de Identidad</label>
+                                <label for="cedula" class="form-label">Cédula de Identidad</label>
                                 <input type="text" class="form-control" id="cedula" name="cedula" data-tipo="cedula"
                                        value="<?php echo htmlspecialchars($_POST['cedula'] ?? ''); ?>"
                                        maxlength="10" pattern="[0-9]{6,10}"
                                        placeholder="Ej: V-12345678">
-                                <div class="form-text">NÃºmero de cÃ©dula del profesor</div>
+                                <div class="form-text">Número de cédula del profesor</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
@@ -128,14 +128,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="nombre" class="form-label">Nombre *</label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" data-tipo="texto" required
                                        value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>"
-                                       placeholder="Ej: MarÃ­a">
+                                       placeholder="Ej: María">
                             </div>
                             
                             <div class="col-md-6 mb-3">
                                 <label for="apellido" class="form-label">Apellido *</label>
                                 <input type="text" class="form-control" id="apellido" name="apellido" data-tipo="texto" required
                                        value="<?php echo htmlspecialchars($_POST['apellido'] ?? ''); ?>"
-                                       placeholder="Ej: GonzÃ¡lez">
+                                       placeholder="Ej: González">
                             </div>
                         </div>
 
@@ -150,20 +150,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="lugar_nacimiento" class="form-label">Lugar de Nacimiento</label>
                                 <input type="text" class="form-control" id="lugar_nacimiento" name="lugar_nacimiento" data-tipo="texto"
                                        value="<?php echo htmlspecialchars($_POST['lugar_nacimiento'] ?? ''); ?>"
-                                       placeholder="Ej: Municipio Infante, Estado GuÃ¡rico">
+                                       placeholder="Ej: Municipio Infante, Estado Guárico">
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Correo ElectrÃ³nico</label>
+                                <label for="email" class="form-label">Correo Electrónico</label>
                                 <input type="email" class="form-control" id="email" name="email" data-tipo="email"
                                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                                        placeholder="Ej: profesor@colegio.edu">
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="telefono" class="form-label">TelÃ©fono</label>
+                                <label for="telefono" class="form-label">Teléfono</label>
                                 <input type="text" class="form-control" id="telefono" name="telefono" data-tipo="telefono"
                                        value="<?php echo htmlspecialchars($_POST['telefono'] ?? ''); ?>"
                                        maxlength="15" pattern="[0-9+\-\s]{10,15}"
@@ -172,14 +172,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">DirecciÃ³n</label>
+                            <label for="direccion" class="form-label">Dirección</label>
                             <textarea class="form-control" id="direccion" name="direccion" rows="3" data-tipo="textarea"
-                                      placeholder="DirecciÃ³n completa del profesor"><?php echo htmlspecialchars($_POST['direccion'] ?? ''); ?></textarea>
+                                      placeholder="Dirección completa del profesor"><?php echo htmlspecialchars($_POST['direccion'] ?? ''); ?></textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="fecha_contratacion" class="form-label">Fecha de ContrataciÃ³n</label>
+                                <label for="fecha_contratacion" class="form-label">Fecha de Contratación</label>
                                 <input type="date" class="form-control" id="fecha_contratacion" name="fecha_contratacion" data-tipo="fecha" data-max-hoy="true"
                                        value="<?php echo htmlspecialchars($_POST['fecha_contratacion'] ?? ''); ?>">
                             </div>
@@ -188,15 +188,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="especialidad" class="form-label">Especialidad</label>
                                 <input type="text" class="form-control" id="especialidad" name="especialidad" data-tipo="texto"
                                        value="<?php echo htmlspecialchars($_POST['especialidad'] ?? ''); ?>"
-                                       placeholder="Ej: MatemÃ¡ticas, Lengua, Ciencias">
+                                       placeholder="Ej: Matemáticas, Lengua, Ciencias">
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="grado_academico" class="form-label">Grado AcadÃ©mico</label>
+                            <label for="grado_academico" class="form-label">Grado Académico</label>
                             <input type="text" class="form-control" id="grado_academico" name="grado_academico" data-tipo="texto"
                                    value="<?php echo htmlspecialchars($_POST['grado_academico'] ?? ''); ?>"
-                                   placeholder="Ej: Licenciado en EducaciÃ³n, Profesor">
+                                   placeholder="Ej: Licenciado en Educación, Profesor">
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -16,10 +16,10 @@ if (isset($_GET['cambiar_estado'])) {
         $stmt = $pdo->prepare("UPDATE inscripciones SET status = ? WHERE id = ?");
         $stmt->execute([$nuevo_status, $id]);
         
-        $mensaje = "Estado de inscripciÃ³n actualizado correctamente";
+        $mensaje = "Estado de inscripción actualizado correctamente";
         $tipo_mensaje = "success";
     } catch (PDOException $e) {
-        $mensaje = "Error al actualizar inscripciÃ³n: " . $e->getMessage();
+        $mensaje = "Error al actualizar inscripción: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
@@ -82,7 +82,7 @@ $sql = "
            g.numero as grado_numero
 ";
 
-// Agregar informaciÃ³n de adelantamiento si la tabla existe - CORREGIDO
+// Agregar información de adelantamiento si la tabla existe - CORREGIDO
 if ($tabla_historial_existe) {
     $sql .= ",
            (SELECT COUNT(*) FROM historial_academico ha 
@@ -161,7 +161,7 @@ try {
     $tipo_mensaje = "danger";
 }
 
-// Calcular estadÃ­sticas
+// Calcular estadísticas
 $total_activos = 0;
 $total_retirados = 0;
 $total_graduados = 0;
@@ -189,10 +189,10 @@ foreach ($inscripciones as $inscripcion) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>ðŸŽ“ GestiÃ³n de Inscripciones - PRIMARIA</h2>
+        <h2>🎓 Gestión de Inscripciones - PRIMARIA</h2>
         <div>
             <a href="inscribir.php" class="btn btn-primary me-2">
-                <i class="fas fa-user-plus me-2"></i>Nueva InscripciÃ³n
+                <i class="fas fa-user-plus me-2"></i>Nueva Inscripción
             </a>
             <?php if ($tabla_historial_existe): ?>
                 <a href="gestionar_adelantos.php" class="btn btn-outline-success">
@@ -209,7 +209,7 @@ foreach ($inscripciones as $inscripcion) {
         </div>
     <?php endif; ?>
 
-    <!-- EstadÃ­sticas rÃ¡pidas -->
+    <!-- Estadísticas rápidas -->
     <div class="row mb-4">
         <div class="col-md-2">
             <div class="card bg-primary text-white">
@@ -265,7 +265,7 @@ foreach ($inscripciones as $inscripcion) {
     <div class="card mb-4">
         <div class="card-header bg-light">
             <h6 class="card-title mb-0">
-                <i class="fas fa-filter me-2"></i>Filtros de BÃºsqueda
+                <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
             </h6>
         </div>
         <div class="card-body">
@@ -283,7 +283,7 @@ foreach ($inscripciones as $inscripcion) {
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label for="seccion_id" class="form-label">SecciÃ³n</label>
+                    <label for="seccion_id" class="form-label">Sección</label>
                     <select class="form-select" id="seccion_id" name="seccion_id">
                         <option value="">Todas las secciones</option>
                         <?php foreach ($secciones as $seccion): ?>
@@ -301,7 +301,7 @@ foreach ($inscripciones as $inscripcion) {
                         <?php for ($i = 1; $i <= 6; $i++): ?>
                             <option value="<?php echo $i; ?>" 
                                 <?php echo $filtro_grado == $i ? 'selected' : ''; ?>>
-                                <?php echo $i . 'Â° Grado'; ?>
+                                <?php echo $i . '° Grado'; ?>
                             </option>
                         <?php endfor; ?>
                     </select>
@@ -327,7 +327,7 @@ foreach ($inscripciones as $inscripcion) {
                     <label for="q" class="form-label">Buscar estudiante</label>
                     <input type="text" class="form-control" id="q" name="q"
                            value="<?php echo htmlspecialchars($filtro_busqueda); ?>"
-                           placeholder="Nombre, apellido o cÃ©dula">
+                           placeholder="Nombre, apellido o cédula">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label d-block">&nbsp;</label>
@@ -342,7 +342,7 @@ foreach ($inscripciones as $inscripcion) {
                     <?php if ($inscripciones): ?>
                         <span class="text-muted ms-2">
                             <i class="fas fa-info-circle me-1"></i>
-                            Mostrando <?php echo count($inscripciones); ?> inscripciÃ³n(es)
+                            Mostrando <?php echo count($inscripciones); ?> inscripción(es)
                             <?php if ($filtro_tipo_estudiante): ?>
                                 - Tipo: <?php echo $filtro_tipo_estudiante == 'adelantado' ? 'Adelantados' : 'Naturales'; ?>
                             <?php endif; ?>
@@ -369,8 +369,8 @@ foreach ($inscripciones as $inscripcion) {
                         <thead>
                             <tr>
                                 <th>Estudiante</th>
-                                <th>InformaciÃ³n</th>
-                                <th>SecciÃ³n/Grado</th>
+                                <th>Información</th>
+                                <th>Sección/Grado</th>
                                 <th>Profesor Titular</th>
                                 <th>Año Escolar</th>
                                 <th>Fecha</th>
@@ -423,7 +423,7 @@ foreach ($inscripciones as $inscripcion) {
                                             <small class="text-muted">
                                                 <?php echo $edad; ?> años
                                                 <?php if ($inscripcion['genero']): ?>
-                                                    | <?php echo $inscripcion['genero'] == 'masculino' ? 'â™‚' : 'â™€'; ?>
+                                                    | <?php echo $inscripcion['genero'] == 'masculino' ? '♂' : '♀'; ?>
                                                 <?php endif; ?>
                                             </small>
                                         <?php endif; ?>
@@ -434,7 +434,7 @@ foreach ($inscripciones as $inscripcion) {
                                         <small class="text-muted">
                                             <?php echo htmlspecialchars($inscripcion['grado_nombre']); ?>
                                             <br>
-                                            <?php echo $inscripcion['total_inscritos']; ?>/<?php echo $inscripcion['capacidad'] ?: 'âˆž'; ?> 
+                                            <?php echo $inscripcion['total_inscritos']; ?>/<?php echo $inscripcion['capacidad'] ?: '∞'; ?>
                                             <?php if ($inscripcion['capacidad'] > 0): ?>
                                                 <div class="progress mt-1" style="height: 5px;">
                                                     <div class="progress-bar <?php echo $ocupacion >= 90 ? 'bg-danger' : ($ocupacion >= 75 ? 'bg-warning' : 'bg-success'); ?>" 
@@ -460,7 +460,7 @@ foreach ($inscripciones as $inscripcion) {
                                         <?php echo date('d/m/Y', strtotime($inscripcion['fecha_inscripcion'])); ?>
                                     </td>
                                     <td>
-                                        <?php echo $inscripcion['capacidad'] ? $inscripcion['capacidad'] . ' est.' : 'Sin lÃ­mite'; ?>
+                                        <?php echo $inscripcion['capacidad'] ? $inscripcion['capacidad'] . ' est.' : 'Sin límite'; ?>
                                     </td>
                                     <td>
                                         <?php 
@@ -488,7 +488,7 @@ foreach ($inscripciones as $inscripcion) {
                                             </a>
                                             
                                             <?php if ($inscripcion['status'] == 'activo'): ?>
-                                                <!-- BotÃ³n para Adelantar Estudiante -->
+                                                <!-- Botón para Adelantar Estudiante -->
                                                 <a href="adelantar_estudiante.php?inscripcion_id=<?php echo $inscripcion['id']; ?>&estudiante_id=<?php echo $inscripcion['estudiante_id']; ?>" 
                                                    class="btn btn-outline-success" 
                                                    title="Adelantar Estudiante">
@@ -509,14 +509,14 @@ foreach ($inscripciones as $inscripcion) {
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $inscripcion['id']; ?>&status=retirado" 
                                                    class="btn btn-outline-danger" 
                                                    title="Marcar como Retirado"
-                                                   onclick="return confirm('Â¿EstÃ¡s seguro de marcar como RETIRADO a <?php echo htmlspecialchars($inscripcion['estudiante_nombre']); ?>?')">
+                                                   onclick="return confirm('¿Estás seguro de marcar como RETIRADO a <?php echo htmlspecialchars($inscripcion['estudiante_nombre']); ?>?')">
                                                     <i class="fas fa-sign-out-alt"></i>
                                                 </a>
                                             <?php else: ?>
                                                 <a href="gestionar.php?cambiar_estado=<?php echo $inscripcion['id']; ?>&status=activo" 
                                                    class="btn btn-outline-success" 
-                                                   title="Reactivar InscripciÃ³n"
-                                                   onclick="return confirm('Â¿EstÃ¡s seguro de REACTIVAR la inscripciÃ³n de <?php echo htmlspecialchars($inscripcion['estudiante_nombre']); ?>?')">
+                                                   title="Reactivar Inscripción"
+                                                   onclick="return confirm('¿Estás seguro de REACTIVAR la inscripción de <?php echo htmlspecialchars($inscripcion['estudiante_nombre']); ?>?')">
                                                     <i class="fas fa-redo"></i>
                                                 </a>
                                             <?php endif; ?>
@@ -533,7 +533,7 @@ foreach ($inscripciones as $inscripcion) {
                     <h5>No hay inscripciones registradas</h5>
                     <p class="text-muted">No se encontraron inscripciones con los filtros aplicados.</p>
                     <a href="inscribir.php" class="btn btn-primary me-2">
-                        <i class="fas fa-user-plus me-2"></i>Nueva InscripciÃ³n
+                        <i class="fas fa-user-plus me-2"></i>Nueva Inscripción
                     </a>
                     <a href="gestionar.php" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-2"></i>Limpiar Filtros
@@ -550,12 +550,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const filtros = document.querySelectorAll('#año_escolar_id, #seccion_id, #grado, #status, #tipo_estudiante');
     filtros.forEach(filtro => {
         filtro.addEventListener('change', function() {
-            // Opcional: enviar automÃ¡ticamente el formulario
+            // Opcional: enviar automáticamente el formulario
             // this.form.submit();
         });
     });
     
-    // Mostrar informaciÃ³n de capacidad
+    // Mostrar información de capacidad
     const progressBars = document.querySelectorAll('.progress-bar');
     progressBars.forEach(bar => {
         const width = parseInt(bar.style.width);

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/areas_aprendizaje/agregar.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -8,47 +8,47 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Ãreas de aprendizaje predefinidas para primaria en Venezuela
+// Áreas de aprendizaje predefinidas para primaria en Venezuela
 $areas_predefinidas = [
     [
         'nombre' => 'Lengua y Literatura',
         'codigo' => 'LL',
-        'descripcion' => 'Desarrollo de habilidades de lectura, escritura y comunicaciÃ³n'
+        'descripcion' => 'Desarrollo de habilidades de lectura, escritura y comunicación'
     ],
     [
-        'nombre' => 'MatemÃ¡tica',
+        'nombre' => 'Matemática',
         'codigo' => 'MAT',
-        'descripcion' => 'Pensamiento lÃ³gico-matemÃ¡tico y resoluciÃ³n de problemas'
+        'descripcion' => 'Pensamiento lógico-matemático y resolución de problemas'
     ],
     [
         'nombre' => 'Ciencias Naturales',
         'codigo' => 'CN',
-        'descripcion' => 'Conocimiento del entorno natural y cientÃ­fico'
+        'descripcion' => 'Conocimiento del entorno natural y científico'
     ],
     [
         'nombre' => 'Ciencias Sociales',
         'codigo' => 'CS',
-        'descripcion' => 'Estudio de la sociedad, historia y geografÃ­a'
+        'descripcion' => 'Estudio de la sociedad, historia y geografía'
     ],
     [
-        'nombre' => 'EducaciÃ³n FÃ­sica',
+        'nombre' => 'Educación Física',
         'codigo' => 'EF',
-        'descripcion' => 'Desarrollo fÃ­sico y deportivo'
+        'descripcion' => 'Desarrollo físico y deportivo'
     ],
     [
         'nombre' => 'Arte y Patrimonio',
         'codigo' => 'ART',
-        'descripcion' => 'ExpresiÃ³n artÃ­stica y cultural'
+        'descripcion' => 'Expresión artística y cultural'
     ],
     [
-        'nombre' => 'FormaciÃ³n Ciudadana',
+        'nombre' => 'Formación Ciudadana',
         'codigo' => 'FC',
-        'descripcion' => 'Valores, convivencia y ciudadanÃ­a'
+        'descripcion' => 'Valores, convivencia y ciudadanía'
     ],
     [
-        'nombre' => 'InglÃ©s',
+        'nombre' => 'Inglés',
         'codigo' => 'ING',
-        'descripcion' => 'Lengua extranjera - InglÃ©s'
+        'descripcion' => 'Lengua extranjera - Inglés'
     ]
 ];
 
@@ -63,27 +63,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errores = [];
     
     if (empty($nombre)) {
-        $errores[] = "El nombre del Ã¡rea es obligatorio";
+        $errores[] = "El nombre del área es obligatorio";
     }
     
     if (empty($codigo)) {
-        $errores[] = "El cÃ³digo del Ã¡rea es obligatorio";
+        $errores[] = "El código del área es obligatorio";
     }
     
     if (empty($nivel)) {
         $errores[] = "El nivel educativo es obligatorio";
     }
     
-    // Verificar si ya existe un Ã¡rea con el mismo cÃ³digo
+    // Verificar si ya existe un área con el mismo código
     if (empty($errores)) {
         try {
             $stmt = $pdo->prepare("SELECT id FROM areas_aprendizaje WHERE codigo = ?");
             $stmt->execute([$codigo]);
             if ($stmt->fetch()) {
-                $errores[] = "Ya existe un Ã¡rea de aprendizaje con el cÃ³digo '$codigo'";
+                $errores[] = "Ya existe un área de aprendizaje con el código '$codigo'";
             }
         } catch (PDOException $e) {
-            $errores[] = "Error al verificar cÃ³digo: " . $e->getMessage();
+            $errores[] = "Error al verificar código: " . $e->getMessage();
         }
     }
     
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO areas_aprendizaje (nombre, codigo, descripcion, nivel, estado) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$nombre, $codigo, $descripcion, $nivel, $estado]);
             
-            $mensaje = "Ãrea de aprendizaje '$nombre' agregada correctamente";
+            $mensaje = "Área de aprendizaje '$nombre' agregada correctamente";
             $tipo_mensaje = "success";
             
             // Limpiar campos excepto nivel y estado
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['descripcion'] = '';
             
         } catch (PDOException $e) {
-            $mensaje = "Error al agregar Ã¡rea de aprendizaje: " . $e->getMessage();
+            $mensaje = "Error al agregar área de aprendizaje: " . $e->getMessage();
             $tipo_mensaje = "danger";
         }
     } else {
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Procesar carga masiva de Ã¡reas predefinidas
+// Procesar carga masiva de áreas predefinidas
 if (isset($_GET['cargar_predefinidas'])) {
     try {
         $pdo->beginTransaction();
@@ -129,12 +129,12 @@ if (isset($_GET['cargar_predefinidas'])) {
         }
         
         $pdo->commit();
-        $mensaje = "Se cargaron $areas_agregadas Ã¡reas de aprendizaje predefinidas para primaria";
+        $mensaje = "Se cargaron $areas_agregadas áreas de aprendizaje predefinidas para primaria";
         $tipo_mensaje = "success";
         
     } catch (PDOException $e) {
         $pdo->rollBack();
-        $mensaje = "Error al cargar Ã¡reas predefinidas: " . $e->getMessage();
+        $mensaje = "Error al cargar áreas predefinidas: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
@@ -146,13 +146,13 @@ if (isset($_GET['cargar_predefinidas'])) {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Agregar Ãrea de Aprendizaje</h2>
+        <h2>Agregar Área de Aprendizaje</h2>
         <div>
             <a href="gestionar.php" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-list me-2"></i>Ver Todas
             </a>
             <a href="agregar.php?cargar_predefinidas=1" class="btn btn-success" 
-               onclick="return confirm('Â¿EstÃ¡ seguro de cargar las Ã¡reas predefinidas para primaria?')">
+               onclick="return confirm('¿Está seguro de cargar las áreas predefinidas para primaria?')">
                 <i class="fas fa-bolt me-2"></i>Cargar Predefinidas
             </a>
         </div>
@@ -166,37 +166,37 @@ if (isset($_GET['cargar_predefinidas'])) {
     <?php endif; ?>
 
     <div class="row">
-        <!-- Formulario para agregar Ã¡rea -->
+        <!-- Formulario para agregar área -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-plus-circle me-2"></i>Nueva Ãrea de Aprendizaje
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Área de Aprendizaje
                     </h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="" id="form-area">
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre del Ãrea *</label>
+                            <label for="nombre" class="form-label">Nombre del Área *</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" 
                                    value="<?php echo htmlspecialchars($_POST['nombre'] ?? ''); ?>" 
-                                   placeholder="Ej: MatemÃ¡tica, Lengua y Literatura" required>
-                            <div class="form-text">Nombre completo del Ã¡rea de aprendizaje</div>
+                                   placeholder="Ej: Matemática, Lengua y Literatura" required>
+                            <div class="form-text">Nombre completo del área de aprendizaje</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="codigo" class="form-label">CÃ³digo *</label>
+                            <label for="codigo" class="form-label">Código *</label>
                             <input type="text" class="form-control" id="codigo" name="codigo" 
                                    value="<?php echo htmlspecialchars($_POST['codigo'] ?? ''); ?>" 
                                    placeholder="Ej: MAT, LL, CN" maxlength="10" required>
-                            <div class="form-text">CÃ³digo Ãºnico abreviado (mÃ¡x. 10 caracteres)</div>
+                            <div class="form-text">Código único abreviado (máx. 10 caracteres)</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">DescripciÃ³n</label>
+                            <label for="descripcion" class="form-label">Descripción</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" 
-                                      rows="3" placeholder="Breve descripciÃ³n del Ã¡rea..."><?php echo htmlspecialchars($_POST['descripcion'] ?? ''); ?></textarea>
-                            <div class="form-text">Objetivos y contenido del Ã¡rea (opcional)</div>
+                                      rows="3" placeholder="Breve descripción del área..."><?php echo htmlspecialchars($_POST['descripcion'] ?? ''); ?></textarea>
+                            <div class="form-text">Objetivos y contenido del área (opcional)</div>
                         </div>
                         
                         <div class="row">
@@ -204,11 +204,11 @@ if (isset($_GET['cargar_predefinidas'])) {
                                 <label for="nivel" class="form-label">Nivel Educativo *</label>
                                 <select class="form-select" id="nivel" name="nivel" required>
                                     <option value="">Seleccionar nivel...</option>
-                                    <option value="inicial" <?php echo ($_POST['nivel'] ?? '') == 'inicial' ? 'selected' : ''; ?>>EducaciÃ³n Inicial</option>
+                                    <option value="inicial" <?php echo ($_POST['nivel'] ?? '') == 'inicial' ? 'selected' : ''; ?>>Educación Inicial</option>
                                     <option value="primaria" <?php echo ($_POST['nivel'] ?? 'primaria') == 'primaria' ? 'selected' : ''; ?>>Primaria</option>
                                     <option value="media" <?php echo ($_POST['nivel'] ?? '') == 'media' ? 'selected' : ''; ?>>Media General</option>
                                 </select>
-                                <div class="form-text">Nivel al que pertenece esta Ã¡rea</div>
+                                <div class="form-text">Nivel al que pertenece esta área</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
@@ -217,7 +217,7 @@ if (isset($_GET['cargar_predefinidas'])) {
                                     <option value="activa" <?php echo ($_POST['estado'] ?? 'activa') == 'activa' ? 'selected' : ''; ?>>Activa</option>
                                     <option value="inactiva" <?php echo ($_POST['estado'] ?? '') == 'inactiva' ? 'selected' : ''; ?>>Inactiva</option>
                                 </select>
-                                <div class="form-text">Las Ã¡reas inactivas no estarÃ¡n disponibles</div>
+                                <div class="form-text">Las áreas inactivas no estarán disponibles</div>
                             </div>
                         </div>
                         
@@ -226,7 +226,7 @@ if (isset($_GET['cargar_predefinidas'])) {
                                 <i class="fas fa-undo me-2"></i>Limpiar
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Guardar Ãrea
+                                <i class="fas fa-save me-2"></i>Guardar Área
                             </button>
                         </div>
                     </form>
@@ -234,19 +234,19 @@ if (isset($_GET['cargar_predefinidas'])) {
             </div>
         </div>
         
-        <!-- Ãreas predefinidas -->
+        <!-- Áreas predefinidas -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>Ãreas Predefinidas - Primaria
+                        <i class="fas fa-lightbulb me-2"></i>Áreas Predefinidas - Primaria
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
                         <small>
                             <i class="fas fa-info-circle me-1"></i>
-                            <strong>Ãreas recomendadas</strong> para el sistema de educaciÃ³n primaria en Venezuela.
+                            <strong>Áreas recomendadas</strong> para el sistema de educación primaria en Venezuela.
                         </small>
                     </div>
                     
@@ -254,9 +254,9 @@ if (isset($_GET['cargar_predefinidas'])) {
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th>CÃ³digo</th>
+                                    <th>Código</th>
                                     <th>Nombre</th>
-                                    <th>DescripciÃ³n</th>
+                                    <th>Descripción</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -273,11 +273,11 @@ if (isset($_GET['cargar_predefinidas'])) {
                     
                     <div class="mt-3">
                         <a href="agregar.php?cargar_predefinidas=1" class="btn btn-success w-100" 
-                           onclick="return confirm('Â¿EstÃ¡ seguro de cargar todas las Ã¡reas predefinidas para primaria?')">
-                            <i class="fas fa-bolt me-2"></i>Cargar Todas las Ãreas Predefinidas
+                           onclick="return confirm('¿Está seguro de cargar todas las áreas predefinidas para primaria?')">
+                            <i class="fas fa-bolt me-2"></i>Cargar Todas las Áreas Predefinidas
                         </a>
                         <div class="form-text text-center">
-                            Crea automÃ¡ticamente todas las Ã¡reas recomendadas para primaria
+                            Crea automáticamente todas las áreas recomendadas para primaria
                         </div>
                     </div>
                 </div>
@@ -287,20 +287,20 @@ if (isset($_GET['cargar_predefinidas'])) {
 </div>
 
 <script>
-// Generar cÃ³digo automÃ¡ticamente basado en el nombre
+// Generar código automáticamente basado en el nombre
 document.getElementById('nombre').addEventListener('blur', function() {
     const nombre = this.value.trim();
     const codigoInput = document.getElementById('codigo');
     
-    // Solo generar cÃ³digo si el campo cÃ³digo estÃ¡ vacÃ­o
+    // Solo generar código si el campo código está vacío
     if (nombre && !codigoInput.value) {
-        // Generar cÃ³digo a partir de las primeras letras de cada palabra
+        // Generar código a partir de las primeras letras de cada palabra
         const palabras = nombre.split(' ');
         let codigo = '';
         
         for (let palabra of palabras) {
             if (palabra.length > 0) {
-                // Tomar la primera letra en mayÃºscula
+                // Tomar la primera letra en mayúscula
                 const letra = palabra[0].toUpperCase();
                 // Si la palabra es "y", "de", "la", etc., omitir
                 if (!['Y', 'DE', 'LA', 'EL', 'LOS', 'LAS', 'DEL'].includes(letra)) {
@@ -309,12 +309,12 @@ document.getElementById('nombre').addEventListener('blur', function() {
             }
         }
         
-        // Limitar a 10 caracteres mÃ¡ximo
+        // Limitar a 10 caracteres máximo
         codigoInput.value = codigo.substring(0, 10);
     }
 });
 
-// ValidaciÃ³n del formulario
+// Validación del formulario
 document.getElementById('form-area').addEventListener('submit', function(e) {
     const nombre = document.getElementById('nombre').value.trim();
     const codigo = document.getElementById('codigo').value.trim();
@@ -326,10 +326,10 @@ document.getElementById('form-area').addEventListener('submit', function(e) {
         return false;
     }
     
-    // Validar que el cÃ³digo solo contenga letras y nÃºmeros
+    // Validar que el código solo contenga letras y números
     if (!/^[A-Z0-9]+$/.test(codigo)) {
         e.preventDefault();
-        alert('El cÃ³digo solo puede contener letras mayÃºsculas y nÃºmeros');
+        alert('El código solo puede contener letras mayúsculas y números');
         document.getElementById('codigo').focus();
         return false;
     }

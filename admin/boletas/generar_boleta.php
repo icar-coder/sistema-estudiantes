@@ -31,14 +31,14 @@ try {
             lf.literal_final,
             lf.observaciones_finales
         FROM estudiantes e
-        JOIN inscripciones i ON e.id = i.estudiante_id AND i.status = 'activo'
+        JOIN inscripciones i ON e.id = i.estudiante_id
         JOIN secciones s ON i.seccion_id = s.id
         JOIN grados g ON s.grado_id = g.id
         JOIN años_escolares ae ON i.año_escolar_id = ae.id
         LEFT JOIN profesores p ON s.profesor_id = p.id
         LEFT JOIN literales_finales lf ON i.id = lf.inscripcion_id AND lf.año_escolar_id = ae.id
         WHERE e.id = ?
-        ORDER BY i.fecha_inscripcion DESC
+        ORDER BY (i.status = 'activo') DESC, i.fecha_inscripcion DESC, i.id DESC
         LIMIT 1
     ";
     
@@ -83,7 +83,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boleta - <?php echo $estudiante['nombre'] . ' ' . $estudiante['apellido']; ?></title>
+    <title>Boleta - <?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellido'], ENT_QUOTES, 'UTF-8'); ?></title>
     <style>
         @page {
             margin: 1cm;
@@ -266,7 +266,7 @@ try {
             </div>
             <div class="info-row">
                 <div class="info-label">SECCION:</div>
-                <div class="info-value">UNICA</div>
+                <div class="info-value"><?php echo htmlspecialchars($estudiante['seccion_nombre'], ENT_QUOTES, 'UTF-8'); ?></div>
             </div>
             <div class="info-row">
                 <div class="info-label">DOCENTE:</div>

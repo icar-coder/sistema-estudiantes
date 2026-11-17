@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -7,7 +7,7 @@ checkRole(['admin']);
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Procesar eliminaciÃ³n
+// Procesar eliminación
 if (isset($_GET['eliminar'])) {
     $id = $_GET['eliminar'];
     $tipo = $_GET['tipo'] ?? 'estudiante'; // Tipo: estudiante o representante
@@ -50,7 +50,7 @@ if (isset($_GET['eliminar'])) {
     }
 }
 
-// FunciÃ³n para obtener informaciÃ³n completa del estudiante
+// Función para obtener información completa del estudiante
 function obtenerInfoEstudianteCompleta($pdo, $estudiante_id) {
     $sql = "
         SELECT 
@@ -83,7 +83,7 @@ function obtenerInfoEstudianteCompleta($pdo, $estudiante_id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para obtener representantes adicionales
+// Función para obtener representantes adicionales
 function obtenerRepresentantesAdicionales($pdo, $estudiante_id) {
     $sql = "
         SELECT 
@@ -101,7 +101,7 @@ function obtenerRepresentantesAdicionales($pdo, $estudiante_id) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para obtener estudiantes de un representante
+// Función para obtener estudiantes de un representante
 function obtenerEstudiantesPorRepresentante($pdo, $representante_id) {
     $sql = "
         SELECT 
@@ -124,32 +124,7 @@ function obtenerEstudiantesPorRepresentante($pdo, $representante_id) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// FunciÃ³n para verificar si un estudiante tiene literal final en el año actual
-function tieneLiteralFinal($pdo, $estudiante_id, $año_escolar_id) {
-    $sql = "
-        SELECT COUNT(*) as total 
-        FROM literales_finales lf
-        JOIN inscripciones i ON lf.inscripcion_id = i.id
-        WHERE i.estudiante_id = ? AND lf.año_escolar_id = ?
-    ";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$estudiante_id, $año_escolar_id]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    return $result['total'] > 0;
-}
-
-// FunciÃ³n para obtener el año escolar actual
-function obtenerAñoEscolarActual($pdo) {
-    $sql = "SELECT id FROM años_escolares WHERE estado = 'activo' LIMIT 1";
-    $stmt = $pdo->query($sql);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    return $result ? $result['id'] : null;
-}
-
-// Procesar solicitud de informaciÃ³n detallada
+// Procesar solicitud de información detallada
 if (isset($_GET['info_estudiante'])) {
     $estudiante_id = $_GET['info_estudiante'];
     $estudiante_info = obtenerInfoEstudianteCompleta($pdo, $estudiante_id);
@@ -163,7 +138,7 @@ if (isset($_GET['info_estudiante'])) {
     exit();
 }
 
-// Procesar solicitud de informaciÃ³n de representante
+// Procesar solicitud de información de representante
 if (isset($_GET['info_representante'])) {
     $representante_id = $_GET['info_representante'];
     $estudiantes = obtenerEstudiantesPorRepresentante($pdo, $representante_id);
@@ -175,10 +150,7 @@ if (isset($_GET['info_representante'])) {
     exit();
 }
 
-// Obtener año escolar actual
-$año_escolar_actual = obtenerAñoEscolarActual($pdo);
-
-// ParÃ¡metros de bÃºsqueda
+// Parámetros de búsqueda
 $busqueda = $_GET['busqueda'] ?? '';
 $filtro_tipo = $_GET['filtro_tipo'] ?? 'estudiantes'; // estudiantes o representantes
 $filtro_campo = $_GET['filtro_campo'] ?? 'nombre';
@@ -293,7 +265,7 @@ try {
     <?php include '../../includes/sidebar_admin.php'; ?>
     
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>GestiÃ³n de Estudiantes y Representantes</h2>
+        <h2>Gestión de Estudiantes y Representantes</h2>
         <div>
             <a href="agregar.php" class="btn btn-primary">
                 <i class="fas fa-user-plus me-2"></i>Nuevo Estudiante
@@ -308,11 +280,11 @@ try {
         </div>
     <?php endif; ?>
 
-    <!-- Filtros de BÃºsqueda -->
+    <!-- Filtros de Búsqueda -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-0">
-                <i class="fas fa-search me-2"></i>BÃºsqueda y Filtros
+                <i class="fas fa-search me-2"></i>Búsqueda y Filtros
             </h5>
         </div>
         <div class="card-body">
@@ -333,7 +305,7 @@ try {
                 </div>
                 
                 <div class="col-md-4">
-                    <label for="busqueda" class="form-label">TÃ©rmino de bÃºsqueda</label>
+                    <label for="busqueda" class="form-label">Término de búsqueda</label>
                     <input type="text" class="form-control" id="busqueda" name="busqueda" 
                            value="<?php echo htmlspecialchars($busqueda); ?>" 
                            placeholder="Ingrese texto para buscar...">
@@ -403,7 +375,7 @@ try {
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>CÃ©dula Escolar</th>
+                                        <th>Cédula Escolar</th>
                                         <th>Nombre Completo</th>
                                         <th>Fecha Nacimiento</th>
                                         <th>Representante</th>
@@ -415,9 +387,7 @@ try {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($estudiantes as $estudiante): 
-                                        $puede_generar_boleta = $año_escolar_actual && tieneLiteralFinal($pdo, $estudiante['id'], $año_escolar_actual);
-                                    ?>
+                                    <?php foreach ($estudiantes as $estudiante): ?>
                                         <tr>
                                             <td>
                                                 <span class="badge bg-secondary"><?php echo htmlspecialchars($estudiante['cedula_escolar']); ?></span>
@@ -456,7 +426,7 @@ try {
                                                 <div class="btn-group btn-group-sm">
                                                     <button type="button" 
                                                             class="btn btn-outline-info" 
-                                                            title="Ver InformaciÃ³n Completa"
+                                                            title="Ver Información Completa"
                                                             onclick="mostrarInfoEstudiante(<?php echo $estudiante['id']; ?>)">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
@@ -480,15 +450,15 @@ try {
                                             </td>
                                             <td>
                                                 <div class="btn-group-vertical btn-group-sm">
-                                                    <!-- BotÃ³n para Boleta -->
+                                                    <!-- Botón para Boleta -->
                                                     <button type="button" 
-                                                            class="btn <?php echo $puede_generar_boleta ? 'btn-warning' : 'btn-outline-warning'; ?>" 
+                                                            class="btn btn-warning"
                                                             title="Generar Boleta"
-                                                            onclick="generarBoleta(<?php echo $estudiante['id']; ?>, '<?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellido']); ?>', <?php echo $puede_generar_boleta ? 'true' : 'false'; ?>)">
+                                                            onclick="generarBoleta(<?php echo (int) $estudiante['id']; ?>)">
                                                         <i class="fas fa-file-alt"></i> Boleta
                                                     </button>
                                                     
-                                                    <!-- BotÃ³n para Carta de Buena Conducta -->
+                                                    <!-- Botón para Carta de Buena Conducta -->
                                                     <button type="button" 
                                                             class="btn btn-outline-success" 
                                                             title="Generar Carta de Buena Conducta"
@@ -496,7 +466,7 @@ try {
                                                         <i class="fas fa-file-contract"></i> Conducta
                                                     </button>
 
-                                                    <!-- BotÃ³n para Ficha del estudiante -->
+                                                    <!-- Botón para Ficha del estudiante -->
                                                     <button type="button" 
                                                             class="btn btn-outline-dark" 
                                                             title="Exportar Ficha del Estudiante"
@@ -504,7 +474,7 @@ try {
                                                         <i class="fas fa-id-card"></i> Ficha
                                                     </button>
                                                     
-                                                    <!-- BotÃ³n para Carta de Retiro -->
+                                                    <!-- Botón para Carta de Retiro -->
                                                     <button type="button" 
                                                             class="btn btn-outline-info" 
                                                             title="Generar Carta de Retiro"
@@ -512,7 +482,7 @@ try {
                                                         <i class="fas fa-file-export"></i> Retiro
                                                     </button>
                                                     
-                                                    <!-- BotÃ³n para Carta de Estudio -->
+                                                    <!-- Botón para Carta de Estudio -->
                                                     <button type="button" 
                                                             class="btn btn-outline-primary" 
                                                             title="Generar Carta de Estudio"
@@ -530,7 +500,7 @@ try {
                         <div class="text-center py-4">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <h5>No hay estudiantes registrados</h5>
-                            <p class="text-muted"><?php echo $busqueda ? 'No se encontraron estudiantes con los criterios de bÃºsqueda.' : 'Comienza agregando el primer estudiante al sistema.'; ?></p>
+                            <p class="text-muted"><?php echo $busqueda ? 'No se encontraron estudiantes con los criterios de búsqueda.' : 'Comienza agregando el primer estudiante al sistema.'; ?></p>
                             <?php if (!$busqueda): ?>
                                 <a href="agregar.php" class="btn btn-primary">
                                     <i class="fas fa-user-plus me-2"></i>Agregar Primer Estudiante
@@ -560,13 +530,13 @@ try {
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>CÃ©dula</th>
+                                        <th>Cédula</th>
                                         <th>Nombre Completo</th>
                                         <th>Parentesco</th>
-                                        <th>TelÃ©fonos</th>
+                                        <th>Teléfonos</th>
                                         <th>Email</th>
                                         <th>Estudiantes</th>
-                                        <th>ProfesiÃ³n</th>
+                                        <th>Profesión</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -645,7 +615,7 @@ try {
                         <div class="text-center py-4">
                             <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
                             <h5>No hay representantes registrados</h5>
-                            <p class="text-muted"><?php echo $busqueda ? 'No se encontraron representantes con los criterios de bÃºsqueda.' : 'Los representantes se crean automÃ¡ticamente al agregar estudiantes.'; ?></p>
+                            <p class="text-muted"><?php echo $busqueda ? 'No se encontraron representantes con los criterios de búsqueda.' : 'Los representantes se crean automáticamente al agregar estudiantes.'; ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -654,18 +624,18 @@ try {
     </div>
 </div>
 
-<!-- Modal para informaciÃ³n del estudiante -->
+<!-- Modal para información del estudiante -->
 <div class="modal fade" id="modalInfoEstudiante" tabindex="-1" aria-labelledby="modalInfoEstudianteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalInfoEstudianteLabel">
-                    <i class="fas fa-user-graduate me-2"></i>InformaciÃ³n Completa del Estudiante
+                    <i class="fas fa-user-graduate me-2"></i>Información Completa del Estudiante
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="contenidoInfoEstudiante">
-                <!-- Contenido se carga dinÃ¡micamente -->
+                <!-- Contenido se carga dinámicamente -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -674,7 +644,7 @@ try {
     </div>
 </div>
 
-<!-- Modal para informaciÃ³n del representante -->
+<!-- Modal para información del representante -->
 <div class="modal fade" id="modalInfoRepresentante" tabindex="-1" aria-labelledby="modalInfoRepresentanteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -685,7 +655,7 @@ try {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="contenidoInfoRepresentante">
-                <!-- Contenido se carga dinÃ¡micamente -->
+                <!-- Contenido se carga dinámicamente -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -719,7 +689,7 @@ try {
                     </div>
                     <div class="mb-3">
                         <label for="observaciones_retiro" class="form-label">Observaciones (Opcional)</label>
-                        <textarea class="form-control" id="observaciones_retiro" name="observaciones" rows="3" placeholder="Especificar si seleccionÃ³ OTRO..."></textarea>
+                        <textarea class="form-control" id="observaciones_retiro" name="observaciones" rows="3" placeholder="Especificar si seleccionó OTRO..."></textarea>
                     </div>
                 </form>
             </div>
@@ -736,7 +706,7 @@ try {
 <script>
 function confirmarEliminacion(id, nombre, tipo) {
     const tipoTexto = tipo === 'estudiante' ? 'estudiante' : 'representante';
-    if (confirm(`Â¿EstÃ¡s seguro de que deseas eliminar al ${tipoTexto} "${nombre}"?\n\nEsta acciÃ³n no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de que deseas eliminar al ${tipoTexto} "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
         window.location.href = `gestionar.php?eliminar=${id}&tipo=${tipo}`;
     }
 }
@@ -748,14 +718,14 @@ function actualizarFiltros() {
     if (tipo === 'estudiantes') {
         filtroCampo.innerHTML = `
             <option value="nombre">Nombre del estudiante</option>
-            <option value="cedula">CÃ©dula escolar</option>
+            <option value="cedula">Cédula escolar</option>
             <option value="representante">Representante</option>
         `;
     } else {
         filtroCampo.innerHTML = `
             <option value="nombre">Nombre del representante</option>
-            <option value="cedula">CÃ©dula del representante</option>
-            <option value="telefono">TelÃ©fono</option>
+            <option value="cedula">Cédula del representante</option>
+            <option value="telefono">Teléfono</option>
         `;
     }
 }
@@ -768,37 +738,32 @@ function exportarFicha(estudianteId) {
     window.open(`../../exportar_ficha.php?estudiante_id=${estudianteId}`, '_blank');
 }
 
-// FunciÃ³n para generar boleta
-function generarBoleta(estudianteId, estudianteNombre, tieneLiteral) {
-    if (!tieneLiteral) {
-        alert('No se puede generar la boleta porque el estudiante no tiene literal final registrado para el año escolar actual.');
-        return;
-    }
-    
-    // Abrir en nueva pestaña el generador de boletas
-    window.open(`../boletas/generar_boleta.php?estudiante_id=${estudianteId}`, '_blank');
+// Función para generar boleta
+function generarBoleta(estudianteId) {
+    const boletaUrl = <?php echo json_encode(app_url('admin/boletas/generar_boleta.php')); ?>;
+    window.open(`${boletaUrl}?estudiante_id=${encodeURIComponent(estudianteId)}`, '_blank');
 }
 
-// FunciÃ³n para generar carta de buena conducta
+// Función para generar carta de buena conducta
 function generarBuenaConducta(estudianteId) {
     // Abrir en nueva pestaña el generador de carta de buena conducta
     window.open(`../documentos/generar_buena_conducta.php?estudiante_id=${estudianteId}`, '_blank');
 }
 
-// FunciÃ³n para abrir modal de carta de retiro
+// Función para abrir modal de carta de retiro
 function generarCartaRetiro(estudianteId) {
     document.getElementById('estudiante_id_retiro').value = estudianteId;
     const modal = new bootstrap.Modal(document.getElementById('modalCartaRetiro'));
     modal.show();
 }
 
-// FunciÃ³n para confirmar generaciÃ³n de carta de retiro
+// Función para confirmar generación de carta de retiro
 function generarCartaRetiroConfirm() {
     const estudianteId = document.getElementById('estudiante_id_retiro').value;
     const causa = document.getElementById('causa_retiro').value;
     const observaciones = document.getElementById('observaciones_retiro').value;
     
-    // Construir URL con parÃ¡metros
+    // Construir URL con parámetros
     let url = `../documentos/generar_carta_retiro.php?estudiante_id=${estudianteId}&causa=${encodeURIComponent(causa)}`;
     if (observaciones) {
         url += `&observaciones=${encodeURIComponent(observaciones)}`;
@@ -812,13 +777,13 @@ function generarCartaRetiroConfirm() {
     window.open(url, '_blank');
 }
 
-// FunciÃ³n para generar carta de estudio
+// Función para generar carta de estudio
 function generarCartaEstudio(estudianteId) {
     // Abrir en nueva pestaña el generador de carta de estudio
     window.open(`../documentos/generar_carta_estudio.php?estudiante_id=${estudianteId}`, '_blank');
 }
 
-// FunciÃ³n para mostrar informaciÃ³n del estudiante
+// Función para mostrar información del estudiante
 function mostrarInfoEstudiante(estudianteId) {
     // Mostrar loading
     document.getElementById('contenidoInfoEstudiante').innerHTML = `
@@ -826,14 +791,14 @@ function mostrarInfoEstudiante(estudianteId) {
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Cargando...</span>
             </div>
-            <p class="mt-2">Cargando informaciÃ³n del estudiante...</p>
+            <p class="mt-2">Cargando información del estudiante...</p>
         </div>
     `;
     
     const modal = new bootstrap.Modal(document.getElementById('modalInfoEstudiante'));
     modal.show();
     
-    // Hacer peticiÃ³n AJAX para obtener informaciÃ³n
+    // Hacer petición AJAX para obtener información
     fetch(`gestionar.php?info_estudiante=${estudianteId}`)
         .then(response => response.json())
         .then(data => {
@@ -844,30 +809,30 @@ function mostrarInfoEstudiante(estudianteId) {
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="border-bottom pb-2">Datos Personales</h6>
-                        <p><strong>CÃ©dula Escolar:</strong> ${estudiante.cedula_escolar}</p>
+                        <p><strong>Cédula Escolar:</strong> ${estudiante.cedula_escolar}</p>
                         <p><strong>Nombre Completo:</strong> ${estudiante.nombre} ${estudiante.apellido}</p>
-                        <p><strong>GÃ©nero:</strong> ${estudiante.genero ? estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1) : 'No especificado'}</p>
+                        <p><strong>Género:</strong> ${estudiante.genero ? estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1) : 'No especificado'}</p>
                         <p><strong>Fecha Nacimiento:</strong> ${estudiante.fecha_nacimiento ? new Date(estudiante.fecha_nacimiento).toLocaleDateString() : 'No especificada'}</p>
                         <p><strong>Lugar Nacimiento:</strong> ${estudiante.lugar_nacimiento || 'No especificado'}</p>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="border-bottom pb-2">InformaciÃ³n de Contacto</h6>
-                        <p><strong>TelÃ©fono:</strong> ${estudiante.telefono || 'No especificado'}</p>
+                        <h6 class="border-bottom pb-2">Información de Contacto</h6>
+                        <p><strong>Teléfono:</strong> ${estudiante.telefono || 'No especificado'}</p>
                         <p><strong>Email:</strong> ${estudiante.email || 'No especificado'}</p>
-                        <p><strong>DirecciÃ³n:</strong> ${estudiante.direccion || 'No especificada'}</p>
+                        <p><strong>Dirección:</strong> ${estudiante.direccion || 'No especificada'}</p>
                         <p><strong>Escuela Anterior:</strong> ${estudiante.escuela_anterior || 'No especificada'}</p>
                     </div>
                 </div>
                 
                 <div class="row mt-3">
                     <div class="col-md-6">
-                        <h6 class="border-bottom pb-2">InformaciÃ³n Familiar</h6>
+                        <h6 class="border-bottom pb-2">Información Familiar</h6>
                         <p><strong>Tipo de Vivienda:</strong> ${estudiante.tipo_vivienda || 'No especificado'}</p>
                         <p><strong>Personas en el Hogar:</strong> ${estudiante.personas_conviven || 'No especificado'}</p>
                         <p><strong>Habilidades Especiales:</strong> ${estudiante.habilidades_especiales || 'Ninguna especificada'}</p>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="border-bottom pb-2">InformaciÃ³n MÃ©dica</h6>
+                        <h6 class="border-bottom pb-2">Información Médica</h6>
                         <p><strong>Enfermedades:</strong> ${estudiante.enfermedades || 'Ninguna'}</p>
                         <p><strong>Alergias:</strong> ${estudiante.alergias || 'Ninguna'}</p>
                         <p><strong>Medicamentos:</strong> ${estudiante.medicamentos || 'Ninguno'}</p>
@@ -875,15 +840,15 @@ function mostrarInfoEstudiante(estudianteId) {
                 </div>
             `;
             
-            // InformaciÃ³n de inscripciÃ³n
+            // Información de inscripción
             if (estudiante.seccion_nombre) {
                 contenido += `
                     <div class="row mt-3">
                         <div class="col-12">
-                            <h6 class="border-bottom pb-2">InscripciÃ³n Actual</h6>
-                            <p><strong>SecciÃ³n:</strong> ${estudiante.seccion_nombre}</p>
+                            <h6 class="border-bottom pb-2">Inscripción Actual</h6>
+                            <p><strong>Sección:</strong> ${estudiante.seccion_nombre}</p>
                             <p><strong>Año Escolar:</strong> ${estudiante.año_escolar}</p>
-                            <p><strong>Fecha InscripciÃ³n:</strong> ${new Date(estudiante.fecha_inscripcion).toLocaleDateString()}</p>
+                            <p><strong>Fecha Inscripción:</strong> ${new Date(estudiante.fecha_inscripcion).toLocaleDateString()}</p>
                             <p><strong>Estado:</strong> <span class="badge bg-success">${estudiante.inscripcion_status}</span></p>
                         </div>
                     </div>
@@ -899,11 +864,11 @@ function mostrarInfoEstudiante(estudianteId) {
                             <div class="card">
                                 <div class="card-body">
                                     <p><strong>Nombre:</strong> ${estudiante.rep_nombre} ${estudiante.rep_apellido}</p>
-                                    <p><strong>CÃ©dula:</strong> ${estudiante.rep_cedula}</p>
+                                    <p><strong>Cédula:</strong> ${estudiante.rep_cedula}</p>
                                     <p><strong>Parentesco:</strong> ${estudiante.rep_parentesco ? estudiante.rep_parentesco.charAt(0).toUpperCase() + estudiante.rep_parentesco.slice(1) : 'No especificado'}</p>
-                                    <p><strong>TelÃ©fono:</strong> ${estudiante.rep_telefono || 'No especificado'}</p>
+                                    <p><strong>Teléfono:</strong> ${estudiante.rep_telefono || 'No especificado'}</p>
                                     <p><strong>Email:</strong> ${estudiante.rep_email || 'No especificado'}</p>
-                                    <p><strong>ProfesiÃ³n:</strong> ${estudiante.rep_profesion || 'No especificada'}</p>
+                                    <p><strong>Profesión:</strong> ${estudiante.rep_profesion || 'No especificada'}</p>
                                     <p><strong>Lugar Trabajo:</strong> ${estudiante.rep_lugar_trabajo || 'No especificado'}</p>
                                 </div>
                             </div>
@@ -922,9 +887,9 @@ function mostrarInfoEstudiante(estudianteId) {
                                 <div class="card mb-2">
                                     <div class="card-body">
                                         <p><strong>Nombre:</strong> ${rep.nombre} ${rep.apellido}</p>
-                                        <p><strong>CÃ©dula:</strong> ${rep.cedula}</p>
+                                        <p><strong>Cédula:</strong> ${rep.cedula}</p>
                                         <p><strong>Parentesco:</strong> ${rep.parentesco ? rep.parentesco.charAt(0).toUpperCase() + rep.parentesco.slice(1) : 'No especificado'}</p>
-                                        <p><strong>TelÃ©fono:</strong> ${rep.telefono || 'No especificado'}</p>
+                                        <p><strong>Teléfono:</strong> ${rep.telefono || 'No especificado'}</p>
                                         <p><strong>Email:</strong> ${rep.email || 'No especificado'}</p>
                                     </div>
                                 </div>
@@ -952,13 +917,13 @@ function mostrarInfoEstudiante(estudianteId) {
             document.getElementById('contenidoInfoEstudiante').innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    Error al cargar la informaciÃ³n del estudiante: ${error.message}
+                    Error al cargar la información del estudiante: ${error.message}
                 </div>
             `;
         });
 }
 
-// FunciÃ³n para mostrar informaciÃ³n del representante
+// Función para mostrar información del representante
 function mostrarInfoRepresentante(representanteId) {
     // Mostrar loading
     document.getElementById('contenidoInfoRepresentante').innerHTML = `
@@ -966,14 +931,14 @@ function mostrarInfoRepresentante(representanteId) {
             <div class="spinner-border text-info" role="status">
                 <span class="visually-hidden">Cargando...</span>
             </div>
-            <p class="mt-2">Cargando informaciÃ³n del representante...</p>
+            <p class="mt-2">Cargando información del representante...</p>
         </div>
     `;
     
     const modal = new bootstrap.Modal(document.getElementById('modalInfoRepresentante'));
     modal.show();
     
-    // Hacer peticiÃ³n AJAX para obtener informaciÃ³n
+    // Hacer petición AJAX para obtener información
     fetch(`gestionar.php?info_representante=${representanteId}`)
         .then(response => response.json())
         .then(data => {
@@ -995,10 +960,10 @@ function mostrarInfoRepresentante(representanteId) {
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>CÃ©dula Escolar</th>
+                                <th>Cédula Escolar</th>
                                 <th>Estudiante</th>
                                 <th>Parentesco</th>
-                                <th>SecciÃ³n</th>
+                                <th>Sección</th>
                                 <th>Año Escolar</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
@@ -1024,7 +989,7 @@ function mostrarInfoRepresentante(representanteId) {
                                 <a href="editar.php?id=${estudiante.id}" class="btn btn-outline-primary" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-outline-info" title="Ver InformaciÃ³n" onclick="mostrarInfoEstudiante(${estudiante.id})">
+                                <button type="button" class="btn btn-outline-info" title="Ver Información" onclick="mostrarInfoEstudiante(${estudiante.id})">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -1048,17 +1013,17 @@ function mostrarInfoRepresentante(representanteId) {
             document.getElementById('contenidoInfoRepresentante').innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    Error al cargar la informaciÃ³n del representante: ${error.message}
+                    Error al cargar la información del representante: ${error.message}
                 </div>
             `;
         });
 }
 
-// Inicializar filtros al cargar la pÃ¡gina
+// Inicializar filtros al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     actualizarFiltros();
     
-    // Activar la pestaña correcta segÃºn el tipo de filtro
+    // Activar la pestaña correcta según el tipo de filtro
     const tipo = '<?php echo $filtro_tipo; ?>';
     if (tipo === 'representantes') {
         const tab = new bootstrap.Tab(document.getElementById('representantes-tab'));

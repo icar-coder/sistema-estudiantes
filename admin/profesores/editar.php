@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -25,7 +25,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
-                $mensaje = "Error: El cÃ³digo de materia ya existe";
+                $mensaje = "Error: El código de materia ya existe";
             } else {
                 $mensaje = "Error al actualizar materia: " . $e->getMessage();
             }
@@ -105,15 +105,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="nombre" class="form-label">Nombre de la Materia *</label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" required
                                        value="<?php echo htmlspecialchars($materia['nombre']); ?>"
-                                       placeholder="Ej: MatemÃ¡ticas, Lengua y Literatura">
+                                       placeholder="Ej: Matemáticas, Lengua y Literatura">
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="codigo" class="form-label">CÃ³digo (Opcional)</label>
+                                <label for="codigo" class="form-label">Código (Opcional)</label>
                                 <input type="text" class="form-control" id="codigo" name="codigo"
                                        value="<?php echo htmlspecialchars($materia['codigo'] ?? ''); ?>"
                                        placeholder="Ej: MAT, LL, CN">
-                                <div class="form-text">CÃ³digo corto para identificar la materia</div>
+                                <div class="form-text">Código corto para identificar la materia</div>
                             </div>
                         </div>
                         
@@ -137,9 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">DescripciÃ³n (Opcional)</label>
+                            <label for="descripcion" class="form-label">Descripción (Opcional)</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
-                                      placeholder="DescripciÃ³n detallada de la materia"><?php echo htmlspecialchars($materia['descripcion'] ?? ''); ?></textarea>
+                                      placeholder="Descripción detallada de la materia"><?php echo htmlspecialchars($materia['descripcion'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -154,10 +154,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             
-            <!-- InformaciÃ³n adicional -->
+            <!-- Información adicional -->
             <div class="card mt-4">
                 <div class="card-header">
-                    <h6 class="card-title mb-0">InformaciÃ³n del Registro</h6>
+                    <h6 class="card-title mb-0">Información del Registro</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">

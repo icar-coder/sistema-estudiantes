@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/areas_aprendizaje/editar.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -10,26 +10,26 @@ $mensaje = '';
 $tipo_mensaje = '';
 
 if (!$area_id) {
-    $_SESSION['mensaje'] = "No se especificÃ³ el Ã¡rea";
+    $_SESSION['mensaje'] = "No se especificó el área";
     $_SESSION['tipo_mensaje'] = "danger";
     header('Location: gestionar.php');
     exit;
 }
 
-// Cargar datos del Ã¡rea
+// Cargar datos del área
 try {
     $stmt = $pdo->prepare("SELECT * FROM areas_aprendizaje WHERE id = ?");
     $stmt->execute([$area_id]);
     $area = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$area) {
-        $_SESSION['mensaje'] = "Ãrea de aprendizaje no encontrada";
+        $_SESSION['mensaje'] = "Área de aprendizaje no encontrada";
         $_SESSION['tipo_mensaje'] = "danger";
         header('Location: gestionar.php');
         exit;
     }
 } catch (PDOException $e) {
-    $_SESSION['mensaje'] = "Error al cargar el Ã¡rea: " . $e->getMessage();
+    $_SESSION['mensaje'] = "Error al cargar el área: " . $e->getMessage();
     $_SESSION['tipo_mensaje'] = "danger";
     header('Location: gestionar.php');
     exit;
@@ -46,25 +46,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errores = [];
     
     if (empty($nombre)) {
-        $errores[] = "El nombre del Ã¡rea es obligatorio";
+        $errores[] = "El nombre del área es obligatorio";
     }
     if (empty($codigo)) {
-        $errores[] = "El cÃ³digo del Ã¡rea es obligatorio";
+        $errores[] = "El código del área es obligatorio";
     }
     if (empty($nivel)) {
         $errores[] = "El nivel educativo es obligatorio";
     }
     
-    // Verificar cÃ³digo duplicado (excluyendo esta Ã¡rea)
+    // Verificar código duplicado (excluyendo esta área)
     if (empty($errores)) {
         try {
             $stmt = $pdo->prepare("SELECT id FROM areas_aprendizaje WHERE codigo = ? AND id != ?");
             $stmt->execute([$codigo, $area_id]);
             if ($stmt->fetch()) {
-                $errores[] = "Ya existe otra Ã¡rea con el cÃ³digo '$codigo'";
+                $errores[] = "Ya existe otra área con el código '$codigo'";
             }
         } catch (PDOException $e) {
-            $errores[] = "Error al verificar cÃ³digo: " . $e->getMessage();
+            $errores[] = "Error al verificar código: " . $e->getMessage();
         }
     }
     
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$nombre, $codigo, $descripcion, $nivel, $estado, $area_id]);
             
-            $mensaje = "Ãrea de aprendizaje actualizada correctamente";
+            $mensaje = "Área de aprendizaje actualizada correctamente";
             $tipo_mensaje = "success";
             
             // Actualizar datos locales
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $area['estado'] = $estado;
             
         } catch (PDOException $e) {
-            $mensaje = "Error al actualizar Ã¡rea: " . $e->getMessage();
+            $mensaje = "Error al actualizar área: " . $e->getMessage();
             $tipo_mensaje = "danger";
         }
     } else {
@@ -114,7 +114,7 @@ try {
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>
-            <i class="fas fa-edit me-2"></i>Editar Ãrea de Aprendizaje
+            <i class="fas fa-edit me-2"></i>Editar Área de Aprendizaje
         </h2>
         <a href="gestionar.php" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Volver a la Lista
@@ -140,31 +140,31 @@ try {
                 <div class="card-body">
                     <form method="POST" action="" id="form-area">
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre del Ãrea *</label>
+                            <label for="nombre" class="form-label">Nombre del Área *</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" 
                                    value="<?php echo htmlspecialchars($area['nombre']); ?>" 
-                                   placeholder="Ej: MatemÃ¡tica, Lengua y Literatura" required>
+                                   placeholder="Ej: Matemática, Lengua y Literatura" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="codigo" class="form-label">CÃ³digo *</label>
+                            <label for="codigo" class="form-label">Código *</label>
                             <input type="text" class="form-control" id="codigo" name="codigo" 
                                    value="<?php echo htmlspecialchars($area['codigo']); ?>" 
                                    placeholder="Ej: MAT, LL, CN" maxlength="10" required>
-                            <div class="form-text">CÃ³digo Ãºnico (mÃ¡x. 10 caracteres, solo mayÃºsculas y nÃºmeros)</div>
+                            <div class="form-text">Código único (máx. 10 caracteres, solo mayúsculas y números)</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">DescripciÃ³n</label>
+                            <label for="descripcion" class="form-label">Descripción</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" 
-                                      rows="3" placeholder="Breve descripciÃ³n del Ã¡rea..."><?php echo htmlspecialchars($area['descripcion'] ?? ''); ?></textarea>
+                                      rows="3" placeholder="Breve descripción del área..."><?php echo htmlspecialchars($area['descripcion'] ?? ''); ?></textarea>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="nivel" class="form-label">Nivel Educativo *</label>
                                 <select class="form-select" id="nivel" name="nivel" required>
-                                    <option value="inicial" <?php echo $area['nivel'] == 'inicial' ? 'selected' : ''; ?>>EducaciÃ³n Inicial</option>
+                                    <option value="inicial" <?php echo $area['nivel'] == 'inicial' ? 'selected' : ''; ?>>Educación Inicial</option>
                                     <option value="primaria" <?php echo $area['nivel'] == 'primaria' ? 'selected' : ''; ?>>Primaria</option>
                                     <option value="media" <?php echo $area['nivel'] == 'media' ? 'selected' : ''; ?>>Media General</option>
                                 </select>
@@ -184,7 +184,7 @@ try {
                                 <i class="fas fa-times me-2"></i>Cancelar
                             </a>
                             <button type="submit" class="btn btn-warning">
-                                <i class="fas fa-save me-2"></i>Actualizar Ãrea
+                                <i class="fas fa-save me-2"></i>Actualizar Área
                             </button>
                         </div>
                     </form>
@@ -196,7 +196,7 @@ try {
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Ãrea
+                        <i class="fas fa-info-circle me-2"></i>Información del Área
                     </h6>
                 </div>
                 <div class="card-body">
@@ -250,12 +250,12 @@ document.getElementById('form-area').addEventListener('submit', function(e) {
     
     if (!/^[A-Z0-9]+$/.test(codigo)) {
         e.preventDefault();
-        alert('El cÃ³digo solo puede contener letras mayÃºsculas y nÃºmeros');
+        alert('El código solo puede contener letras mayúsculas y números');
         document.getElementById('codigo').focus();
         return false;
     }
     
-    // Auto-uppercase del cÃ³digo
+    // Auto-uppercase del código
     document.getElementById('codigo').value = codigo;
 });
 </script>

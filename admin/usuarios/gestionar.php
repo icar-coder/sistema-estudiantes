@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_estado'])) {
         $mensaje = "Estado actualizado correctamente";
         $tipo_mensaje = "success";
         
-        // Recargar la pÃ¡gina para ver los cambios
+        // Recargar la página para ver los cambios
         header("Location: gestionar.php");
         exit();
         
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_estado'])) {
 
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>GestiÃ³n de Usuarios</h2>
+                <h2>Gestión de Usuarios</h2>
                 <a href="crear.php" class="btn btn-primary">
                     <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
                 </a>
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_estado'])) {
                                     <th>Rol</th>
                                     <th>Persona Relacionada</th>
                                     <th>Estado</th>
-                                    <th>Ãšltimo Login</th>
+                                    <th>Último Login</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cambiar_estado'])) {
 
 <script>
 function confirmarEliminarUsuario(id, username) {
-    if (confirm('Â¿EstÃ¡s seguro de que deseas desactivar al usuario "' + username + '"?\n\nEsta acciÃ³n marcarÃ¡ el usuario como inactivo y no podrÃ¡ iniciar sesiÃ³n.')) {
+    if (confirm('¿Estás seguro de que deseas desactivar al usuario "' + username + '"?\n\nEsta acción marcará el usuario como inactivo y no podrá iniciar sesión.')) {
         window.location.href = 'eliminar.php?id=' + id;
     }
 }

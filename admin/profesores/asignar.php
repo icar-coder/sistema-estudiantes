@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -25,7 +25,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -60,7 +60,7 @@ try {
     $secciones = [];
 }
 
-// Obtener Ã¡reas de aprendizaje para primaria
+// Obtener áreas de aprendizaje para primaria
 try {
     $stmt = $pdo->query("
         SELECT id, nombre, codigo 
@@ -74,7 +74,7 @@ try {
     $areas_aprendizaje = [];
 }
 
-// Procesar asignaciÃ³n como profesor titular
+// Procesar asignación como profesor titular
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['asignar_titular'])) {
     $seccion_id = $_POST['seccion_id'];
     $año_escolar_id = $_POST['año_escolar_id'];
@@ -83,20 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['asignar_titular'])) {
         try {
             $pdo->beginTransaction();
             
-            // Verificar que la secciÃ³n existe y es de primaria
+            // Verificar que la sección existe y es de primaria
             $stmt = $pdo->prepare("SELECT id, nivel FROM secciones WHERE id = ? AND año_escolar_id = ?");
             $stmt->execute([$seccion_id, $año_escolar_id]);
             $seccion = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$seccion) {
-                throw new Exception("La secciÃ³n no existe o no pertenece al año escolar seleccionado");
+                throw new Exception("La sección no existe o no pertenece al año escolar seleccionado");
             }
             
             if ($seccion['nivel'] !== 'primaria') {
                 throw new Exception("Solo se pueden asignar profesores titulares a secciones de primaria");
             }
             
-            // Verificar si la secciÃ³n ya tiene profesor titular
+            // Verificar si la sección ya tiene profesor titular
             $stmt = $pdo->prepare("SELECT profesor_id, nombre FROM secciones WHERE id = ?");
             $stmt->execute([$seccion_id]);
             $seccion_actual = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -108,17 +108,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['asignar_titular'])) {
                 $profesor_actual = $stmt->fetch(PDO::FETCH_ASSOC);
                 $nombre_profesor_actual = $profesor_actual ? $profesor_actual['nombre'] . ' ' . $profesor_actual['apellido'] : 'Otro profesor';
                 
-                throw new Exception("Esta secciÃ³n ya tiene como profesor titular a: " . $nombre_profesor_actual);
+                throw new Exception("Esta sección ya tiene como profesor titular a: " . $nombre_profesor_actual);
             }
             
-            // Asignar profesor como titular de la secciÃ³n
+            // Asignar profesor como titular de la sección
             $stmt = $pdo->prepare("UPDATE secciones SET profesor_id = ? WHERE id = ?");
             $stmt->execute([$profesor_id, $seccion_id]);
             
-            // Crear horarios automÃ¡ticos con todas las Ã¡reas de aprendizaje
+            // Crear horarios automáticos con todas las áreas de aprendizaje
             if (count($areas_aprendizaje) > 0) {
-                // Horario estÃ¡ndar para primaria (lunes a viernes)
-                $dias_semana = ['lunes', 'martes', 'miÃ©rcoles', 'jueves', 'viernes'];
+                // Horario estándar para primaria (lunes a viernes)
+                $dias_semana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
                 $horarios_base = [
                     ['07:30:00', '08:15:00'],
                     ['08:15:00', '09:00:00'],
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['asignar_titular'])) {
                             }
                             
                             $area_index++;
-                            // Si llegamos al final de las Ã¡reas, reiniciamos
+                            // Si llegamos al final de las áreas, reiniciamos
                             if ($area_index >= $total_areas) {
                                 $area_index = 0;
                             }
@@ -167,26 +167,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['asignar_titular'])) {
             
             $pdo->commit();
             
-            // Obtener nombre de la secciÃ³n para el mensaje
+            // Obtener nombre de la sección para el mensaje
             $stmt = $pdo->prepare("SELECT nombre FROM secciones WHERE id = ?");
             $stmt->execute([$seccion_id]);
             $seccion_nombre = $stmt->fetch(PDO::FETCH_ASSOC)['nombre'];
             
-            $mensaje = "âœ… Profesor asignado como titular de la secciÃ³n <strong>'$seccion_nombre'</strong> con " . count($areas_aprendizaje) . " Ã¡reas de aprendizaje";
+            $mensaje = "✅ Profesor asignado como titular de la sección <strong>'$seccion_nombre'</strong> con " . count($areas_aprendizaje) . " áreas de aprendizaje";
             $tipo_mensaje = "success";
             
         } catch (Exception $e) {
             $pdo->rollBack();
-            $mensaje = "âŒ Error al asignar profesor titular: " . $e->getMessage();
+            $mensaje = "❌ Error al asignar profesor titular: " . $e->getMessage();
             $tipo_mensaje = "danger";
         }
     } else {
-        $mensaje = "âš ï¸ Por favor seleccione una secciÃ³n y año escolar";
+        $mensaje = "⚠ï¸ Por favor seleccione una sección y año escolar";
         $tipo_mensaje = "warning";
     }
 }
 
-// Procesar remociÃ³n como profesor titular
+// Procesar remoción como profesor titular
 if (isset($_GET['remover_titular'])) {
     $seccion_id = $_GET['remover_titular'];
     
@@ -199,7 +199,7 @@ if (isset($_GET['remover_titular'])) {
         $seccion = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$seccion || $seccion['profesor_id'] != $profesor_id) {
-            throw new Exception("No es posible remover esta asignaciÃ³n");
+            throw new Exception("No es posible remover esta asignación");
         }
         
         // Remover profesor como titular
@@ -208,12 +208,12 @@ if (isset($_GET['remover_titular'])) {
         
         $pdo->commit();
         
-        $mensaje = "âœ… Profesor removido como titular de la secciÃ³n <strong>'{$seccion['nombre']}'</strong>";
+        $mensaje = "✅ Profesor removido como titular de la sección <strong>'{$seccion['nombre']}'</strong>";
         $tipo_mensaje = "success";
         
     } catch (Exception $e) {
         $pdo->rollBack();
-        $mensaje = "âŒ Error al remover profesor titular: " . $e->getMessage();
+        $mensaje = "❌ Error al remover profesor titular: " . $e->getMessage();
         $tipo_mensaje = "danger";
     }
 }
@@ -249,18 +249,18 @@ try {
             </a>
         </div>
 
-        <!-- InformaciÃ³n del profesor -->
+        <!-- Información del profesor -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-chalkboard-teacher me-2"></i>InformaciÃ³n del Profesor
+                    <i class="fas fa-chalkboard-teacher me-2"></i>Información del Profesor
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-8">
                         <h4><?php echo htmlspecialchars($profesor['nombre'] . ' ' . $profesor['apellido']); ?></h4>
-                        <p class="mb-1"><strong>CÃ©dula:</strong> <?php echo htmlspecialchars($profesor['cedula'] ?? 'No especificada'); ?></p>
+                        <p class="mb-1"><strong>Cédula:</strong> <?php echo htmlspecialchars($profesor['cedula'] ?? 'No especificada'); ?></p>
                         <p class="mb-1"><strong>Especialidad:</strong> 
                             <?php if ($profesor['especialidad']): ?>
                                 <span class="badge bg-info"><?php echo htmlspecialchars($profesor['especialidad']); ?></span>
@@ -278,7 +278,7 @@ try {
                         </div>
                         <div class="text-muted">
                             <i class="fas fa-chalkboard me-1"></i>
-                            <?php echo count($secciones_titular); ?> secciÃ³n(es) como titular
+                            <?php echo count($secciones_titular); ?> sección(es) como titular
                         </div>
                     </div>
                 </div>
@@ -292,22 +292,22 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- Sistema de primaria - InformaciÃ³n -->
+        <!-- Sistema de primaria - Información -->
         <div class="alert alert-info mb-4">
             <h6><i class="fas fa-info-circle me-2"></i>Sistema de Primaria - Profesor Titular</h6>
             <ul class="mb-0">
-                <li><strong>Profesor Titular:</strong> Cada profesor puede ser titular de una o mÃ¡s secciones de primaria</li>
-                <li><strong>AsignaciÃ³n AutomÃ¡tica:</strong> Al asignar una secciÃ³n, el profesor recibe TODAS las Ã¡reas de aprendizaje automÃ¡ticamente</li>
-                <li><strong>Horario AutomÃ¡tico:</strong> Se genera un horario completo distribuyendo todas las Ã¡reas en la semana</li>
-                <li><strong>Responsabilidades:</strong> El profesor titular es responsable de todas las materias bÃ¡sicas de la secciÃ³n</li>
+                <li><strong>Profesor Titular:</strong> Cada profesor puede ser titular de una o más secciones de primaria</li>
+                <li><strong>Asignación Automática:</strong> Al asignar una sección, el profesor recibe TODAS las áreas de aprendizaje automáticamente</li>
+                <li><strong>Horario Automático:</strong> Se genera un horario completo distribuyendo todas las áreas en la semana</li>
+                <li><strong>Responsabilidades:</strong> El profesor titular es responsable de todas las materias básicas de la sección</li>
             </ul>
         </div>
 
-        <!-- Asignar nueva secciÃ³n -->
+        <!-- Asignar nueva sección -->
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-plus-circle me-2"></i>Asignar Nueva SecciÃ³n como Titular
+                    <i class="fas fa-plus-circle me-2"></i>Asignar Nueva Sección como Titular
                 </h5>
             </div>
             <div class="card-body">
@@ -328,7 +328,7 @@ try {
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="seccion_id" class="form-label">SecciÃ³n de Primaria *</label>
+                            <label for="seccion_id" class="form-label">Sección de Primaria *</label>
                             <select class="form-select" id="seccion_id" name="seccion_id" required>
                                 <option value="">Seleccionar año escolar primero</option>
                             </select>
@@ -336,10 +336,10 @@ try {
                         </div>
                     </div>
 
-                    <!-- InformaciÃ³n de Ã¡reas que se asignarÃ¡n -->
+                    <!-- Información de áreas que se asignarán -->
                     <?php if (count($areas_aprendizaje) > 0): ?>
                     <div class="alert alert-warning">
-                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Ãreas que se asignarÃ¡n automÃ¡ticamente:</h6>
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Áreas que se asignarán automáticamente:</h6>
                         <div class="row mt-2">
                             <?php foreach ($areas_aprendizaje as $area): ?>
                                 <div class="col-md-4 mb-1">
@@ -352,15 +352,15 @@ try {
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-clock me-1"></i>
-                                Se generarÃ¡ un horario automÃ¡tico distribuyendo estas Ã¡reas de lunes a viernes.
+                                Se generará un horario automático distribuyendo estas áreas de lunes a viernes.
                             </small>
                         </div>
                     </div>
                     <?php else: ?>
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Advertencia:</strong> No hay Ã¡reas de aprendizaje configuradas para primaria. 
-                        <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar Ã¡reas primero</a>
+                        <strong>Advertencia:</strong> No hay áreas de aprendizaje configuradas para primaria.
+                        <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar áreas primero</a>
                     </div>
                     <?php endif; ?>
 
@@ -387,7 +387,7 @@ try {
                             <thead>
                                 <tr>
                                     <th>Año Escolar</th>
-                                    <th>SecciÃ³n</th>
+                                    <th>Sección</th>
                                     <th>Estudiantes</th>
                                     <th>Horarios</th>
                                     <th>Estado</th>
@@ -403,7 +403,7 @@ try {
                                         <td>
                                             <strong><?php echo htmlspecialchars($seccion['nombre']); ?></strong>
                                             <br>
-                                            <small class="text-muted">Capacidad: <?php echo $seccion['capacidad'] ?: 'Sin lÃ­mite'; ?></small>
+                                            <small class="text-muted">Capacidad: <?php echo $seccion['capacidad'] ?: 'Sin límite'; ?></small>
                                         </td>
                                         <td>
                                             <span class="badge bg-<?php echo $seccion['total_estudiantes'] > 0 ? 'success' : 'secondary'; ?>">
@@ -418,7 +418,7 @@ try {
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <!-- MÃ³dulos no implementados aÃºn: ../secciones/ver.php y ../horarios/gestionar.php -->
+                                                <!-- Módulos no implementados aún: ../secciones/ver.php y ../horarios/gestionar.php -->
                                                 <button type="button" 
                                                         class="btn btn-outline-danger" 
                                                         title="Remover como Titular"
@@ -435,8 +435,8 @@ try {
                 <?php else: ?>
                     <div class="text-center py-4">
                         <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
-                        <h5>No es titular de ninguna secciÃ³n</h5>
-                        <p class="text-muted">Este profesor no estÃ¡ asignado como titular de ninguna secciÃ³n de primaria.</p>
+                        <h5>No es titular de ninguna sección</h5>
+                        <p class="text-muted">Este profesor no está asignado como titular de ninguna sección de primaria.</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -445,7 +445,7 @@ try {
 </div>
 
 <script>
-// Cargar secciones segÃºn el año escolar seleccionado
+// Cargar secciones según el año escolar seleccionado
 document.getElementById('año_escolar_id').addEventListener('change', function() {
     const añoEscolarId = this.value;
     const seccionSelect = document.getElementById('seccion_id');
@@ -456,7 +456,7 @@ document.getElementById('año_escolar_id').addEventListener('change', function()
         const seccionesDisponibles = <?php echo json_encode($secciones); ?>;
         const seccionesFiltradas = seccionesDisponibles.filter(seccion => seccion.año_escolar_id == añoEscolarId);
         
-        seccionSelect.innerHTML = '<option value="">Seleccionar secciÃ³n...</option>';
+        seccionSelect.innerHTML = '<option value="">Seleccionar sección...</option>';
         
         if (seccionesFiltradas.length > 0) {
             seccionesFiltradas.forEach(seccion => {
@@ -483,7 +483,7 @@ document.getElementById('año_escolar_id').addEventListener('change', function()
                 `;
             });
             
-            estadoTexto.innerHTML = `<i class="fas fa-info-circle"></i> ${seccionesFiltradas.length} secciÃ³n(es) encontrada(s)`;
+            estadoTexto.innerHTML = `<i class="fas fa-info-circle"></i> ${seccionesFiltradas.length} sección(es) encontrada(s)`;
         } else {
             seccionSelect.innerHTML = '<option value="">No hay secciones disponibles</option>';
             estadoTexto.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> No hay secciones de primaria disponibles para este año escolar';
@@ -494,24 +494,24 @@ document.getElementById('año_escolar_id').addEventListener('change', function()
     }
 });
 
-// Mostrar informaciÃ³n detallada de la secciÃ³n seleccionada
+// Mostrar información detallada de la sección seleccionada
 document.getElementById('seccion_id').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     const estado = selectedOption ? selectedOption.getAttribute('data-estado') : '';
     const estadoTexto = document.getElementById('estado-seccion-texto');
     
     if (estado === 'actual') {
-        estadoTexto.innerHTML = '<i class="fas fa-check-circle text-warning"></i> Ya es titular de esta secciÃ³n - Puede reasignar';
+        estadoTexto.innerHTML = '<i class="fas fa-check-circle text-warning"></i> Ya es titular de esta sección - Puede reasignar';
     } else if (estado === 'disponible') {
-        estadoTexto.innerHTML = '<i class="fas fa-check-circle text-success"></i> SecciÃ³n disponible para asignar';
+        estadoTexto.innerHTML = '<i class="fas fa-check-circle text-success"></i> Sección disponible para asignar';
     } else if (estado === 'ocupada') {
-        estadoTexto.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Esta secciÃ³n ya tiene otro profesor titular';
+        estadoTexto.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Esta sección ya tiene otro profesor titular';
     } else {
         estadoTexto.innerHTML = '';
     }
 });
 
-// ValidaciÃ³n del formulario
+// Validación del formulario
 document.getElementById('formAsignacion').addEventListener('submit', function(e) {
     const añoEscolar = document.getElementById('año_escolar_id').value;
     const seccion = document.getElementById('seccion_id').value;
@@ -520,18 +520,18 @@ document.getElementById('formAsignacion').addEventListener('submit', function(e)
     
     if (!añoEscolar || !seccion) {
         e.preventDefault();
-        alert('âš ï¸ Por favor seleccione año escolar y secciÃ³n');
+        alert('⚠ï¸ Por favor seleccione año escolar y sección');
         return false;
     }
     
     if (estado === 'ocupada') {
         e.preventDefault();
-        alert('âŒ Esta secciÃ³n ya tiene otro profesor titular. No puede ser asignada.');
+        alert('❌ Esta sección ya tiene otro profesor titular. No puede ser asignada.');
         return false;
     }
     
     <?php if (count($areas_aprendizaje) === 0): ?>
-    if (!confirm('âš ï¸ ADVERTENCIA: No hay Ã¡reas de aprendizaje configuradas. Â¿Desea continuar de todos modos?')) {
+    if (!confirm('⚠ï¸ ADVERTENCIA: No hay áreas de aprendizaje configuradas. ¿Desea continuar de todos modos?')) {
         e.preventDefault();
         return false;
     }
@@ -539,7 +539,7 @@ document.getElementById('formAsignacion').addEventListener('submit', function(e)
 });
 
 function confirmarRemocion(seccionId, seccionNombre) {
-    if (confirm(`Â¿EstÃ¡s seguro de que deseas remover a este profesor como titular de la secciÃ³n "${seccionNombre}"?\n\nEsto eliminarÃ¡ su asignaciÃ³n pero mantendrÃ¡ los horarios.`)) {
+    if (confirm(`¿Estás seguro de que deseas remover a este profesor como titular de la sección "${seccionNombre}"?\n\nEsto eliminará su asignación pero mantendrá los horarios.`)) {
         window.location.href = `asignar.php?id=<?php echo $profesor_id; ?>&remover_titular=${seccionId}`;
     }
 }

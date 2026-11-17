@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/areas_aprendizaje/editar_indicador.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
@@ -34,7 +34,7 @@ if ($indicador_id) {
         exit;
     }
 } else {
-    $_SESSION['mensaje'] = "No se especificÃ³ el indicador";
+    $_SESSION['mensaje'] = "No se especificó el indicador";
     $_SESSION['tipo_mensaje'] = "danger";
     header('Location: gestionar_indicadores.php');
     exit;
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (strlen($nombre) > 500) {
-        $errores[] = "El nombre del indicador es demasiado largo (mÃ¡x. 500 caracteres)";
+        $errores[] = "El nombre del indicador es demasiado largo (máx. 500 caracteres)";
     }
     
     if (empty($errores)) {
@@ -120,19 +120,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <textarea class="form-control" id="nombre" name="nombre" rows="3" 
                                       placeholder="Describa el indicador de logro..." 
                                       required maxlength="500"><?php echo htmlspecialchars($_POST['nombre'] ?? $indicador['nombre']); ?></textarea>
-                            <div class="form-text">Describa claramente quÃ© debe lograr el estudiante (mÃ¡x. 500 caracteres)</div>
+                            <div class="form-text">Describa claramente qué debe lograr el estudiante (máx. 500 caracteres)</div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">DescripciÃ³n Adicional</label>
+                            <label for="descripcion" class="form-label">Descripción Adicional</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="2"
                                       placeholder="Detalles adicionales del indicador (opcional)..."><?php echo htmlspecialchars($_POST['descripcion'] ?? $indicador['descripcion']); ?></textarea>
-                            <div class="form-text">InformaciÃ³n complementaria sobre el indicador</div>
+                            <div class="form-text">Información complementaria sobre el indicador</div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="escala" class="form-label">Escala de EvaluaciÃ³n *</label>
+                                <label for="escala" class="form-label">Escala de Evaluación *</label>
                                 <select class="form-select" id="escala" name="escala" required>
                                     <option value="LE" <?php echo ($_POST['escala'] ?? $indicador['escala']) == 'LE' ? 'selected' : ''; ?>>LE - Logrado con Excelencia</option>
                                     <option value="L" <?php echo ($_POST['escala'] ?? $indicador['escala']) == 'L' ? 'selected' : ''; ?>>L - Logrado</option>
@@ -140,15 +140,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="IP" <?php echo ($_POST['escala'] ?? $indicador['escala']) == 'IP' ? 'selected' : ''; ?>>IP - Iniciado en el Proceso</option>
                                     <option value="NL" <?php echo ($_POST['escala'] ?? $indicador['escala']) == 'NL' ? 'selected' : ''; ?>>NL - No Logrado</option>
                                 </select>
-                                <div class="form-text">Escala de evaluaciÃ³n para este indicador</div>
+                                <div class="form-text">Escala de evaluación para este indicador</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="orden" class="form-label">Orden de VisualizaciÃ³n</label>
+                                <label for="orden" class="form-label">Orden de Visualización</label>
                                 <input type="number" class="form-control" id="orden" name="orden" 
                                        value="<?php echo htmlspecialchars($_POST['orden'] ?? $indicador['orden']); ?>" 
                                        min="0" max="100">
-                                <div class="form-text">NÃºmero para ordenar los indicadores (0 = primero)</div>
+                                <div class="form-text">Número para ordenar los indicadores (0 = primero)</div>
                             </div>
                         </div>
                         
@@ -169,14 +169,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Ãrea
+                        <i class="fas fa-info-circle me-2"></i>Información del Área
                     </h6>
                 </div>
                 <div class="card-body">
                     <h6><?php echo htmlspecialchars($indicador['area_nombre']); ?></h6>
                     <p class="small text-muted mb-2"><?php echo htmlspecialchars($indicador['area_descripcion']); ?></p>
                     <div class="d-flex justify-content-between small">
-                        <span><strong>CÃ³digo:</strong> <?php echo htmlspecialchars($indicador['area_codigo']); ?></span>
+                        <span><strong>Código:</strong> <?php echo htmlspecialchars($indicador['area_codigo']); ?></span>
                     </div>
                 </div>
             </div>
@@ -184,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card mt-3">
                 <div class="card-header bg-success text-white">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>InformaciÃ³n del Indicador
+                        <i class="fas fa-lightbulb me-2"></i>Información del Indicador
                     </h6>
                 </div>
                 <div class="card-body">

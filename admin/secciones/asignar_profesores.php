@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -11,7 +11,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $seccion_id = intval($_GET['id']);
 
-// Obtener datos de la secciÃ³n con informaciÃ³n del profesor
+// Obtener datos de la sección con información del profesor
 try {
     $stmt = $pdo->prepare("
         SELECT s.*, 
@@ -35,15 +35,15 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
 
-// Verificar si la secciÃ³n tiene profesor asignado
+// Verificar si la sección tiene profesor asignado
 $tiene_profesor = !empty($seccion['profesor_id']);
 
-// Obtener Ã¡reas de aprendizaje
+// Obtener áreas de aprendizaje
 try {
     $stmt = $pdo->query("SELECT id, nombre, codigo FROM areas_aprendizaje WHERE estado = 'activa' ORDER BY nombre");
     $areas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -51,14 +51,14 @@ try {
     $areas = [];
 }
 
-// Colores para cada Ã¡rea
+// Colores para cada área
 $colores_areas = [
     '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', 
     '#1abc9c', '#d35400', '#c0392b', '#16a085', '#8e44ad',
     '#27ae60', '#2980b9', '#e67e22', '#f1c40f', '#34495e'
 ];
 
-// FunciÃ³n para ajustar brillo de colores
+// Función para ajustar brillo de colores
 function ajustarBrillo($hex, $factor) {
     $hex = str_replace('#', '', $hex);
     if (strlen($hex) == 3) {
@@ -77,7 +77,7 @@ function ajustarBrillo($hex, $factor) {
            .str_pad(dechex($b), 2, '0', STR_PAD_LEFT);
 }
 
-// Asignar colores a las Ã¡reas
+// Asignar colores a las áreas
 foreach ($areas as $index => &$area) {
     $area['color'] = $colores_areas[$index % count($colores_areas)];
     $area['color_claro'] = ajustarBrillo($colores_areas[$index % count($colores_areas)], 1.2);
@@ -118,12 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         $duracion = intval($input['duracion'] ?? 1);
         
         if (empty($dia) || empty($hora) || $area_id <= 0 || $profesor_id <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Datos incompletos o invÃ¡lidos']);
+            echo json_encode(['success' => false, 'error' => 'Datos incompletos o inválidos']);
             exit();
         }
         
         try {
-            // Calcular hora fin basado en la duraciÃ³n (cada slot es 45 minutos)
+            // Calcular hora fin basado en la duración (cada slot es 45 minutos)
             $hora_fin = date('H:i:s', strtotime($hora . ' +' . (45 * $duracion) . ' minutes'));
             
             // Eliminar asignaciones existentes en este rango
@@ -135,11 +135,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $duracion_exists = $column_check->fetch();
             
             if ($duracion_exists) {
-                // Insertar con duraciÃ³n
+                // Insertar con duración
                 $stmt = $pdo->prepare("INSERT INTO horarios_asignaciones (seccion_id, año_escolar_id, area_id, profesor_id, dia_semana, hora_inicio, hora_fin, duracion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$seccion_id, $seccion['año_escolar_id'], $area_id, $profesor_id, $dia, $hora, $hora_fin, $duracion]);
             } else {
-                // Insertar sin duraciÃ³n (para compatibilidad)
+                // Insertar sin duración (para compatibilidad)
                 $stmt = $pdo->prepare("INSERT INTO horarios_asignaciones (seccion_id, año_escolar_id, area_id, profesor_id, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$seccion_id, $seccion['año_escolar_id'], $area_id, $profesor_id, $dia, $hora, $hora_fin]);
             }
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         exit();
     }
     
-    // Procesar eliminaciÃ³n de horario
+    // Procesar eliminación de horario
     if (isset($input['eliminar_horario'])) {
         $dia = $input['dia'] ?? '';
         $hora = $input['hora'] ?? '';
@@ -177,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         $seccion_id_limpiar = intval($input['seccion_id'] ?? 0);
         
         if ($seccion_id_limpiar != $seccion_id) {
-            echo json_encode(['success' => false, 'error' => 'ID de secciÃ³n no coincide']);
+            echo json_encode(['success' => false, 'error' => 'ID de sección no coincide']);
             exit();
         }
         
@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         exit();
     }
     
-    echo json_encode(['success' => false, 'error' => 'AcciÃ³n no reconocida']);
+    echo json_encode(['success' => false, 'error' => 'Acción no reconocida']);
     exit();
 }
 ?>
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         padding: 1rem 1.25rem;
     }
 
-    /* Mejoras para las Ã¡reas de aprendizaje */
+    /* Mejoras para las áreas de aprendizaje */
     .area-item {
         background: white;
         cursor: grab;
@@ -306,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         animation: pulse 1.5s infinite;
     }
 
-    /* Celda que es parte de una asignaciÃ³n extendida */
+    /* Celda que es parte de una asignación extendida */
     .celda-horario.part-of-assignment {
         padding: 0 !important;
         border: 1px solid rgba(0,0,0,0.1) !important;
@@ -324,19 +324,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         opacity: 0.8;
     }
 
-    /* Primera celda de una asignaciÃ³n extendida */
+    /* Primera celda de una asignación extendida */
     .celda-horario.assignment-start {
         border-top-left-radius: 6px;
         border-bottom-left-radius: 6px;
     }
 
-    /* Ãšltima celda de una asignaciÃ³n extendida */
+    /* Última celda de una asignación extendida */
     .celda-horario.assignment-end {
         border-top-right-radius: 6px;
         border-bottom-right-radius: 6px;
     }
 
-    /* Celda intermedia de una asignaciÃ³n extendida */
+    /* Celda intermedia de una asignación extendida */
     .celda-horario.assignment-middle {
         border-left: none;
         border-right: none;
@@ -407,7 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
     }
 
     .resize-handle:after {
-        content: "â¤¢";
+        content: "⤢";
     }
 
     .resize-handle:hover {
@@ -586,7 +586,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
 
-    /* Estados vacÃ­os y mensajes */
+    /* Estados vacíos y mensajes */
     .celda-horario.vacia {
         background: repeating-linear-gradient(
             45deg,
@@ -695,22 +695,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         <?php include '../../includes/sidebar_admin.php'; ?>
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Gestionar Horario de SecciÃ³n</h2>
+            <h2>Gestionar Horario de Sección</h2>
             <a href="gestionar.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Volver a Secciones
             </a>
         </div>
 
-        <!-- InformaciÃ³n de la secciÃ³n -->
+        <!-- Información de la sección -->
         <div class="card mb-4">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-8">
-                        <h4>SecciÃ³n: <?php echo htmlspecialchars($seccion['nombre']); ?></h4>
+                        <h4>Sección: <?php echo htmlspecialchars($seccion['nombre']); ?></h4>
                         <p class="mb-1"><strong>Año Escolar:</strong> <?php echo htmlspecialchars($seccion['año_escolar']); ?></p>
-                        <p class="mb-0"><strong>Capacidad:</strong> <?php echo $seccion['capacidad'] ? $seccion['capacidad'] . ' estudiantes' : 'Sin lÃ­mite'; ?></p>
+                        <p class="mb-0"><strong>Capacidad:</strong> <?php echo $seccion['capacidad'] ? $seccion['capacidad'] . ' estudiantes' : 'Sin límite'; ?></p>
                         
-                        <!-- InformaciÃ³n del Profesor Asignado -->
+                        <!-- Información del Profesor Asignado -->
                         <?php if ($tiene_profesor): ?>
                             <div class="mt-3 p-3 bg-success text-white rounded">
                                 <h6 class="mb-2"><i class="fas fa-chalkboard-teacher me-2"></i>Profesor Titular Asignado</h6>
@@ -719,13 +719,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                     <p class="mb-1"><strong>Especialidad:</strong> <?php echo htmlspecialchars($seccion['profesor_especialidad']); ?></p>
                                 <?php endif; ?>
                                 <?php if ($seccion['profesor_cedula']): ?>
-                                    <p class="mb-0"><strong>CÃ©dula:</strong> <?php echo htmlspecialchars($seccion['profesor_cedula']); ?></p>
+                                    <p class="mb-0"><strong>Cédula:</strong> <?php echo htmlspecialchars($seccion['profesor_cedula']); ?></p>
                                 <?php endif; ?>
                             </div>
                         <?php else: ?>
                             <div class="mt-3 p-3 bg-warning text-dark rounded">
                                 <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Advertencia</h6>
-                                <p class="mb-0">Esta secciÃ³n no tiene profesor titular asignado. <a href="editar.php?id=<?php echo $seccion_id; ?>" class="alert-link">Asignar profesor</a></p>
+                                <p class="mb-0">Esta sección no tiene profesor titular asignado. <a href="editar.php?id=<?php echo $seccion_id; ?>" class="alert-link">Asignar profesor</a></p>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -735,13 +735,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>Instrucciones:</strong><br>
                                 <?php if ($tiene_profesor): ?>
-                                    1. El profesor titular estÃ¡ pre-asignado<br>
-                                    2. Arrastra un Ã¡rea al horario<br>
-                                    3. Extiende la asignaciÃ³n usando el handle â†—
+                                    1. El profesor titular está pre-asignado<br>
+                                    2. Arrastra un área al horario<br>
+                                    3. Extiende la asignación usando el handle ↗
                                 <?php else: ?>
                                     1. Primero asigne un profesor titular<br>
-                                    2. Luego podrÃ¡ gestionar el horario<br>
-                                    3. Use el botÃ³n "Asignar Profesor"
+                                    2. Luego podrá gestionar el horario<br>
+                                    3. Use el botón "Asignar Profesor"
                                 <?php endif; ?>
                             </small>
                         </div>
@@ -754,16 +754,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-calendar-alt me-2"></i>GestiÃ³n de Horario - Drag & Drop con ExtensiÃ³n
+                    <i class="fas fa-calendar-alt me-2"></i>Gestión de Horario - Drag & Drop con Extensión
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- Panel de Ãreas Disponibles -->
+                    <!-- Panel de Áreas Disponibles -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <h6 class="mb-0">Ãreas de Aprendizaje</h6>
+                                <h6 class="mb-0">Áreas de Aprendizaje</h6>
                             </div>
                             <div class="card-body p-2" id="areas-container">
                                 <?php foreach ($areas as $area): ?>
@@ -786,11 +786,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                             </div>
                         </div>
                         
-                        <!-- InformaciÃ³n del Sistema -->
+                        <!-- Información del Sistema -->
                         <div class="card mt-3">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0">
-                                    <i class="fas fa-info-circle me-2"></i>InformaciÃ³n del Sistema
+                                    <i class="fas fa-info-circle me-2"></i>Información del Sistema
                                 </h6>
                             </div>
                             <div class="card-body p-2">
@@ -806,14 +806,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                         </small>
                                     </div>
                                     <p class="small text-muted mb-0">
-                                        Todas las Ã¡reas serÃ¡n asignadas automÃ¡ticamente al profesor titular de la secciÃ³n.
+                                        Todas las áreas serán asignadas automáticamente al profesor titular de la sección.
                                     </p>
                                 <?php else: ?>
                                     <div class="alert alert-warning mb-2">
                                         <small>
                                             <i class="fas fa-exclamation-triangle me-1"></i>
                                             <strong>No hay profesor asignado</strong><br>
-                                            Para gestionar el horario, primero debe asignar un profesor titular a esta secciÃ³n.
+                                            Para gestionar el horario, primero debe asignar un profesor titular a esta sección.
                                         </small>
                                     </div>
                                     <a href="editar.php?id=<?php echo $seccion_id; ?>" class="btn btn-sm btn-warning w-100">
@@ -852,7 +852,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                         <th width="15%" class="hora-header">Hora</th>
                                         <th width="17%" class="dia-header">Lunes</th>
                                         <th width="17%" class="dia-header">Martes</th>
-                                        <th width="17%" class="dia-header">MiÃ©rcoles</th>
+                                        <th width="17%" class="dia-header">Miércoles</th>
                                         <th width="17%" class="dia-header">Jueves</th>
                                         <th width="17%" class="dia-header">Viernes</th>
                                     </tr>
@@ -882,7 +882,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                                 data-hora="<?php echo $hora; ?>"
                                                 data-hora-index="<?php echo array_search($hora, $horas); ?>">
                                                 <?php
-                                                // Mostrar asignaciÃ³n existente
+                                                // Mostrar asignación existente
                                                 $asignacion = null;
                                                 foreach ($horarios as $horario) {
                                                     if ($horario['dia_semana'] === $dia && $horario['hora_inicio'] === $hora) {
@@ -892,7 +892,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                                 }
                                                 
                                                 if ($asignacion):
-                                                    // Buscar el color del Ã¡rea
+                                                    // Buscar el color del área
                                                     $color_area = '#3498db';
                                                     foreach ($areas as $area) {
                                                         if ($area['id'] == $asignacion['area_id']) {
@@ -900,7 +900,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                                             break;
                                                         }
                                                     }
-                                                    // Si no existe duraciÃ³n en la BD, usar 1 por defecto
+                                                    // Si no existe duración en la BD, usar 1 por defecto
                                                     $duracion = isset($asignacion['duracion']) ? $asignacion['duracion'] : 1;
                                                 ?>
                                                     <div class="asignacion-horario p-1 border rounded position-relative"
@@ -914,7 +914,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                                         <small class="fw-bold d-block"><?php echo htmlspecialchars($asignacion['area_codigo']); ?></small>
                                                         <div class="small"><?php echo htmlspecialchars($asignacion['profesor_nombre'] . ' ' . $asignacion['profesor_apellido']); ?></div>
                                                         <span class="duracion-badge"><?php echo $duracion * 45; ?>min</span>
-                                                        <div class="resize-handle" title="Extender/Reducir duraciÃ³n"></div>
+                                                        <div class="resize-handle" title="Extender/Reducir duración"></div>
                                                         <button class="btn btn-sm btn-danger btn-eliminar-asignacion position-absolute" 
                                                                 style="top: 2px; right: 16px; padding: 0; width: 16px; height: 16px; font-size: 0.6rem; line-height: 1;"
                                                                 onclick="event.stopPropagation(); eliminarAsignacion('<?php echo $dia; ?>', '<?php echo $hora; ?>')">
@@ -934,7 +934,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             </div>
         </div>
 
-        <!-- BotÃ³n para guardar cambios -->
+        <!-- Botón para guardar cambios -->
         <div class="card">
             <div class="card-body text-center">
                 <button type="button" class="btn btn-success btn-lg" onclick="guardarHorario()">
@@ -946,10 +946,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
     </div>
 
     <script>
-    // Sistema de gestiÃ³n de horarios con extensiÃ³n de duraciÃ³n
+    // Sistema de gestión de horarios con extensión de duración
     class GestorHorarios {
         constructor() {
-            // Usar automÃ¡ticamente el profesor asignado a la secciÃ³n
+            // Usar automáticamente el profesor asignado a la sección
             this.profesorSeleccionado = <?php echo $tiene_profesor ? $seccion['profesor_id'] : 'null'; ?>;
             this.profesorSeleccionadoNombre = '<?php echo $tiene_profesor ? htmlspecialchars($seccion['profesor_nombre'] . ' ' . $seccion['profesor_apellido']) : ''; ?>';
             this.areaArrastrada = null;
@@ -990,7 +990,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         }
         
         configurarDragAndDrop() {
-            // Elementos arrastrables (Ã¡reas)
+            // Elementos arrastrables (áreas)
             const draggables = document.querySelectorAll('.draggable');
             draggables.forEach(draggable => {
                 draggable.addEventListener('dragstart', (e) => this.dragStart(e));
@@ -1015,7 +1015,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             document.addEventListener('keydown', (e) => {
                 // Escape para limpiar selecciones
                 if (e.key === 'Escape') {
-                    this.mostrarAlerta('AcciÃ³n cancelada', 'info');
+                    this.mostrarAlerta('Acción cancelada', 'info');
                 }
                 
                 // Ctrl + S para guardar
@@ -1125,12 +1125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             e.currentTarget.classList.remove('drag-over');
             
             if (!this.areaArrastrada) {
-                this.mostrarAlerta('Por favor arrastra un Ã¡rea de aprendizaje', 'warning');
+                this.mostrarAlerta('Por favor arrastra un área de aprendizaje', 'warning');
                 return;
             }
             
             if (this.profesorSeleccionado === null) {
-                this.mostrarAlerta('Error: Esta secciÃ³n no tiene profesor asignado. Por favor asigne un profesor titular primero.', 'danger');
+                this.mostrarAlerta('Error: Esta sección no tiene profesor asignado. Por favor asigne un profesor titular primero.', 'danger');
                 return;
             }
             
@@ -1139,7 +1139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             const hora = celda.dataset.hora;
 
             if (!this.rangoLibre(dia, hora, 1, null)) {
-                this.mostrarAlerta('Ese horario ya estÃ¡ ocupado por otra asignaciÃ³n.', 'warning');
+                this.mostrarAlerta('Ese horario ya está ocupado por otra asignación.', 'warning');
                 return;
             }
             
@@ -1166,7 +1166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 <small class="fw-bold d-block">${this.areaArrastrada.codigo}</small>
                 <div class="small">${this.profesorSeleccionadoNombre}</div>
                 <span class="duracion-badge">${duracion * 45}min</span>
-                <div class="resize-handle" title="Extender/Reducir duraciÃ³n"></div>
+                <div class="resize-handle" title="Extender/Reducir duración"></div>
                 <button class="btn btn-sm btn-danger btn-eliminar-asignacion position-absolute" 
                         style="top: 2px; right: 16px; padding: 0; width: 16px; height: 16px; font-size: 0.6rem; line-height: 1;"
                         onclick="event.stopPropagation(); gestorHorarios.eliminarAsignacion('${dia}', '${hora}')">
@@ -1217,7 +1217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     celda.innerHTML = '';
                     celda.appendChild(asignacion);
                 } else {
-                    const label = asignacion.querySelector('small') ? asignacion.querySelector('small').textContent : 'Ãrea';
+                    const label = asignacion.querySelector('small') ? asignacion.querySelector('small').textContent : 'Área';
                     celda.innerHTML = `<div class="assignment-fill">${label}</div>`;
                 }
             }
@@ -1317,7 +1317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 this.asignacionResizing = null;
                 document.body.style.userSelect = '';
                 
-                this.mostrarAlerta(`DuraciÃ³n ajustada a ${duracion * 45} minutos`, 'success');
+                this.mostrarAlerta(`Duración ajustada a ${duracion * 45} minutos`, 'success');
             }
         }
         
@@ -1333,7 +1333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     try {
                         const data = JSON.parse(xhr.responseText);
                         if (data.success) {
-                            console.log('AsignaciÃ³n guardada correctamente');
+                            console.log('Asignación guardada correctamente');
                         } else {
                             this.mostrarAlerta('Error al guardar: ' + data.error, 'danger');
                         }
@@ -1341,7 +1341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         this.mostrarAlerta('Error en la respuesta del servidor', 'danger');
                     }
                 } else {
-                    this.mostrarAlerta('Error de conexiÃ³n', 'danger');
+                    this.mostrarAlerta('Error de conexión', 'danger');
                 }
             };
             
@@ -1360,7 +1360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         }
         
         eliminarAsignacion(dia, hora) {
-            if (!confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta asignaciÃ³n?')) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta asignación?')) {
                 return;
             }
             
@@ -1375,7 +1375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         const data = JSON.parse(xhr.responseText);
                         if (data.success) {
                             this.eliminarAsignacionVisual(dia, hora);
-                            this.mostrarAlerta('AsignaciÃ³n eliminada', 'success');
+                            this.mostrarAlerta('Asignación eliminada', 'success');
                         } else {
                             this.mostrarAlerta('Error al eliminar: ' + data.error, 'danger');
                         }
@@ -1383,7 +1383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         this.mostrarAlerta('Error en la respuesta', 'danger');
                     }
                 } else {
-                    this.mostrarAlerta('Error de conexiÃ³n', 'danger');
+                    this.mostrarAlerta('Error de conexión', 'danger');
                 }
             };
             
@@ -1405,7 +1405,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         }
         
         limpiarHorario() {
-            if (!confirm('Â¿EstÃ¡s seguro de que deseas limpiar todo el horario? Esta acciÃ³n no se puede deshacer.')) {
+            if (!confirm('¿Estás seguro de que deseas limpiar todo el horario? Esta acción no se puede deshacer.')) {
                 return;
             }
             
@@ -1439,7 +1439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         this.mostrarAlerta('Error en la respuesta', 'danger');
                     }
                 } else {
-                    this.mostrarAlerta('Error de conexiÃ³n', 'danger');
+                    this.mostrarAlerta('Error de conexión', 'danger');
                 }
             };
             
@@ -1493,7 +1493,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 totalMinutos += duracion * 45;
             });
             
-            this.mostrarAlerta(`âœ“ Horario validado: ${asignaciones.length} asignaciones, ${totalMinutos} minutos totales`, 'success');
+            this.mostrarAlerta(`✓ Horario validado: ${asignaciones.length} asignaciones, ${totalMinutos} minutos totales`, 'success');
         }
         
         guardarHorario() {
@@ -1505,7 +1505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             } else {
                 mensajeDiv.innerHTML = `<div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
-                    Â¡Todo listo! ${totalAsignaciones} asignaciones guardadas.
+                    ¡Todo listo! ${totalAsignaciones} asignaciones guardadas.
                 </div>`;
             }
             
@@ -1515,7 +1515,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         }
     }
 
-    // Inicializar el gestor cuando el DOM estÃ© listo
+    // Inicializar el gestor cuando el DOM esté listo
     let gestorHorarios;
     document.addEventListener('DOMContentLoaded', function() {
         gestorHorarios = new GestorHorarios();

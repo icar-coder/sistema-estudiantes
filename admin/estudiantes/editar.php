@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
@@ -13,7 +13,7 @@ $id = $_GET['id'];
 $mensaje = '';
 $tipo_mensaje = '';
 
-// Obtener datos del estudiante con informaciÃ³n del representante
+// Obtener datos del estudiante con información del representante
 try {
     $stmt = $pdo->prepare("
         SELECT e.*, r.*, r.id as representante_id
@@ -30,7 +30,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Error en " . __FILE__ . ": " . $e->getMessage());
-    $_SESSION['error_sistema'] = "OcurriÃ³ un error al procesar la solicitud. El equipo tÃ©cnico fue notificado.";
+    $_SESSION['error_sistema'] = "Ocurrió un error al procesar la solicitud. El equipo técnico fue notificado.";
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? app_url()));
     exit;
 }
@@ -57,16 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // Validar formato de cÃ©dula del representante
+        // Validar formato de cédula del representante
         $cedula_rep = trim($_POST['representante_cedula']);
         if (!preg_match('/^[0-9]{6,20}$/', $cedula_rep)) {
-            throw new Exception("La cÃ©dula del representante debe contener solo nÃºmeros (6-20 dÃ­gitos)");
+            throw new Exception("La cédula del representante debe contener solo números (6-20 dígitos)");
         }
         
-        // Validar telÃ©fono del representante
+        // Validar teléfono del representante
         $telefono_rep = trim($_POST['representante_telefono']);
         if (!preg_match('/^[0-9+\-\s]{10,20}$/', $telefono_rep)) {
-            throw new Exception("El telÃ©fono del representante debe tener entre 10 y 20 caracteres");
+            throw new Exception("El teléfono del representante debe tener entre 10 y 20 caracteres");
         }
         
         // Actualizar representante
@@ -98,17 +98,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("El nombre y apellido del estudiante son obligatorios");
         }
         
-        // Validar formato de cÃ©dula escolar
+        // Validar formato de cédula escolar
         $cedula_escolar = trim($_POST['cedula_escolar']);
         if (!preg_match('/^[A-Z0-9]{3,20}$/', $cedula_escolar)) {
-            throw new Exception("La cÃ©dula escolar debe contener solo letras y nÃºmeros (3-20 caracteres)");
+            throw new Exception("La cédula escolar debe contener solo letras y números (3-20 caracteres)");
         }
         
-        // Verificar si la cÃ©dula escolar ya existe (excluyendo el estudiante actual)
+        // Verificar si la cédula escolar ya existe (excluyendo el estudiante actual)
         $stmt = $pdo->prepare("SELECT id FROM estudiantes WHERE cedula_escolar = ? AND id != ?");
         $stmt->execute([$cedula_escolar, $id]);
         if ($stmt->fetch()) {
-            throw new Exception("La cÃ©dula escolar ya existe. Por favor use otra.");
+            throw new Exception("La cédula escolar ya existe. Por favor use otra.");
         }
         
         // Actualizar estudiante
@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="POST" action="" id="formEstudiante">
-        <!-- SecciÃ³n Datos del Representante -->
+        <!-- Sección Datos del Representante -->
         <div class="card mb-4">
             <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">
@@ -210,12 +210,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="representante_cedula" class="form-label">CÃ©dula del Representante *</label>
+                        <label for="representante_cedula" class="form-label">Cédula del Representante *</label>
                         <input type="text" class="form-control" id="representante_cedula" name="representante_cedula"
                                value="<?php echo htmlspecialchars($estudiante['cedula'] ?? ''); ?>"
                                maxlength="20" pattern="[0-9]+" required
                                placeholder="Ej: 12345678">
-                        <div class="form-text">Solo nÃºmeros, sin puntos ni espacios</div>
+                        <div class="form-text">Solo números, sin puntos ni espacios</div>
                     </div>
                     
                     <div class="col-md-4 mb-3">
@@ -226,8 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="padre" <?php echo ($estudiante['parentesco'] ?? '') == 'padre' ? 'selected' : ''; ?>>Padre</option>
                             <option value="abuelo" <?php echo ($estudiante['parentesco'] ?? '') == 'abuelo' ? 'selected' : ''; ?>>Abuelo</option>
                             <option value="abuela" <?php echo ($estudiante['parentesco'] ?? '') == 'abuela' ? 'selected' : ''; ?>>Abuela</option>
-                            <option value="tio" <?php echo ($estudiante['parentesco'] ?? '') == 'tio' ? 'selected' : ''; ?>>TÃ­o</option>
-                            <option value="tia" <?php echo ($estudiante['parentesco'] ?? '') == 'tia' ? 'selected' : ''; ?>>TÃ­a</option>
+                            <option value="tio" <?php echo ($estudiante['parentesco'] ?? '') == 'tio' ? 'selected' : ''; ?>>Tío</option>
+                            <option value="tia" <?php echo ($estudiante['parentesco'] ?? '') == 'tia' ? 'selected' : ''; ?>>Tía</option>
                             <option value="hermano" <?php echo ($estudiante['parentesco'] ?? '') == 'hermano' ? 'selected' : ''; ?>>Hermano</option>
                             <option value="hermana" <?php echo ($estudiante['parentesco'] ?? '') == 'hermana' ? 'selected' : ''; ?>>Hermana</option>
                             <option value="otro" <?php echo ($estudiante['parentesco'] ?? '') == 'otro' ? 'selected' : ''; ?>>Otro</option>
@@ -235,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="col-md-4 mb-3">
-                        <label for="representante_telefono" class="form-label">TelÃ©fono Principal *</label>
+                        <label for="representante_telefono" class="form-label">Teléfono Principal *</label>
                         <input type="tel" class="form-control" id="representante_telefono" name="representante_telefono"
                                value="<?php echo htmlspecialchars($estudiante['telefono'] ?? ''); ?>"
                                maxlength="20" pattern="[0-9+\-\s]+" required
@@ -248,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="representante_nombre" class="form-label">Nombre del Representante *</label>
                         <input type="text" class="form-control" id="representante_nombre" name="representante_nombre"
                                value="<?php echo htmlspecialchars($estudiante['representante_nombre'] ?? $estudiante['nombre'] ?? ''); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
                                placeholder="Ej: Carmen">
                     </div>
                     
@@ -256,12 +256,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="representante_apellido" class="form-label">Apellido del Representante *</label>
                         <input type="text" class="form-control" id="representante_apellido" name="representante_apellido"
                                value="<?php echo htmlspecialchars($estudiante['representante_apellido'] ?? $estudiante['apellido'] ?? ''); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+" required
-                               placeholder="Ej: RodrÃ­guez">
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" required
+                               placeholder="Ej: Rodríguez">
                     </div>
                     
                     <div class="col-md-4 mb-3">
-                        <label for="representante_genero" class="form-label">GÃ©nero</label>
+                        <label for="representante_genero" class="form-label">Género</label>
                         <select class="form-select" id="representante_genero" name="representante_genero">
                             <option value="">Seleccionar...</option>
                             <option value="masculino" <?php echo ($estudiante['genero'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
@@ -272,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="representante_profesion" class="form-label">ProfesiÃ³n</label>
+                        <label for="representante_profesion" class="form-label">Profesión</label>
                         <input type="text" class="form-control" id="representante_profesion" name="representante_profesion"
                                value="<?php echo htmlspecialchars($estudiante['profesion'] ?? ''); ?>"
                                maxlength="100"
@@ -290,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="representante_telefono_alternativo" class="form-label">TelÃ©fono Alternativo</label>
+                        <label for="representante_telefono_alternativo" class="form-label">Teléfono Alternativo</label>
                         <input type="tel" class="form-control" id="representante_telefono_alternativo" name="representante_telefono_alternativo"
                                value="<?php echo htmlspecialchars($estudiante['telefono_alternativo'] ?? ''); ?>"
                                maxlength="20" pattern="[0-9+\-\s]+"
@@ -307,9 +307,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="mb-3">
-                    <label for="representante_direccion" class="form-label">DirecciÃ³n del Representante</label>
+                    <label for="representante_direccion" class="form-label">Dirección del Representante</label>
                     <textarea class="form-control" id="representante_direccion" name="representante_direccion" rows="2"
-                              maxlength="500" placeholder="DirecciÃ³n completa del representante"><?php echo htmlspecialchars($estudiante['direccion'] ?? ''); ?></textarea>
+                              maxlength="500" placeholder="Dirección completa del representante"><?php echo htmlspecialchars($estudiante['direccion'] ?? ''); ?></textarea>
                 </div>
                 
                 <div class="row">
@@ -322,7 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <!-- SecciÃ³n Datos del Estudiante -->
+        <!-- Sección Datos del Estudiante -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
@@ -333,12 +333,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="cedula_escolar" class="form-label">CÃ©dula Escolar *</label>
+                        <label for="cedula_escolar" class="form-label">Cédula Escolar *</label>
                         <input type="text" class="form-control" id="cedula_escolar" name="cedula_escolar"
                                value="<?php echo htmlspecialchars($estudiante['cedula_escolar'] ?? ''); ?>"
                                maxlength="20" pattern="[A-Za-z0-9]+" required
-                               placeholder="Identificador Ãºnico">
-                        <div class="form-text">Identificador Ãºnico del estudiante</div>
+                               placeholder="Identificador único">
+                        <div class="form-text">Identificador único del estudiante</div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
@@ -364,20 +364,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="nombre" class="form-label">Nombre *</label>
                         <input type="text" class="form-control" id="nombre" name="nombre" required
                                value="<?php echo htmlspecialchars($estudiante['nombre']); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+"
-                               placeholder="Ej: MarÃ­a">
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                               placeholder="Ej: María">
                     </div>
                     
                     <div class="col-md-4 mb-3">
                         <label for="apellido" class="form-label">Apellido *</label>
                         <input type="text" class="form-control" id="apellido" name="apellido" required
                                value="<?php echo htmlspecialchars($estudiante['apellido']); ?>"
-                               maxlength="100" pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]+"
-                               placeholder="Ej: GonzÃ¡lez">
+                               maxlength="100" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                               placeholder="Ej: González">
                     </div>
                     
                     <div class="col-md-4 mb-3">
-                        <label for="genero" class="form-label">GÃ©nero</label>
+                        <label for="genero" class="form-label">Género</label>
                         <select class="form-select" id="genero" name="genero">
                             <option value="">Seleccionar...</option>
                             <option value="masculino" <?php echo ($estudiante['genero'] ?? '') == 'masculino' ? 'selected' : ''; ?>>Masculino</option>
@@ -396,7 +396,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label for="telefono" class="form-label">TelÃ©fono del Estudiante</label>
+                        <label for="telefono" class="form-label">Teléfono del Estudiante</label>
                         <input type="tel" class="form-control" id="telefono" name="telefono"
                                value="<?php echo htmlspecialchars($estudiante['telefono'] ?? ''); ?>"
                                maxlength="20" pattern="[0-9+\-\s]+"
@@ -418,21 +418,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="text" class="form-control" id="escuela_anterior" name="escuela_anterior"
                                value="<?php echo htmlspecialchars($estudiante['escuela_anterior'] ?? ''); ?>"
                                maxlength="255"
-                               placeholder="Ej: Escuela BÃ¡sica Nacional">
+                               placeholder="Ej: Escuela Básica Nacional">
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label for="direccion" class="form-label">DirecciÃ³n del Estudiante</label>
+                    <label for="direccion" class="form-label">Dirección del Estudiante</label>
                     <textarea class="form-control" id="direccion" name="direccion" rows="2"
-                              maxlength="500" placeholder="DirecciÃ³n completa del estudiante"><?php echo htmlspecialchars($estudiante['direccion'] ?? ''); ?></textarea>
+                              maxlength="500" placeholder="Dirección completa del estudiante"><?php echo htmlspecialchars($estudiante['direccion'] ?? ''); ?></textarea>
                 </div>
                 
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="enfermedades" class="form-label">Enfermedades/Condiciones</label>
                         <textarea class="form-control" id="enfermedades" name="enfermedades" rows="2"
-                                  maxlength="500" placeholder="Enfermedades crÃ³nicas o condiciones especiales"><?php echo htmlspecialchars($estudiante['enfermedades'] ?? ''); ?></textarea>
+                                  maxlength="500" placeholder="Enfermedades crónicas o condiciones especiales"><?php echo htmlspecialchars($estudiante['enfermedades'] ?? ''); ?></textarea>
                     </div>
                     
                     <div class="col-md-4 mb-3">
@@ -466,10 +466,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </form>
     
-    <!-- InformaciÃ³n adicional -->
+    <!-- Información adicional -->
     <div class="card mt-4">
         <div class="card-header">
-            <h6 class="card-title mb-0">InformaciÃ³n del Registro</h6>
+            <h6 class="card-title mb-0">Información del Registro</h6>
         </div>
         <div class="card-body">
             <div class="row">
@@ -480,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <strong>Fecha de Registro:</strong> <?php echo date('d/m/Y H:i', strtotime($estudiante['created_at'])); ?>
                 </div>
                 <div class="col-md-4">
-                    <strong>Ãšltima ActualizaciÃ³n:</strong> 
+                    <strong>Última Actualización:</strong>
                     <?php echo $estudiante['updated_at'] ? date('d/m/Y H:i', strtotime($estudiante['updated_at'])) : 'No actualizado'; ?>
                 </div>
             </div>
@@ -510,14 +510,14 @@ function calcularEdad() {
 // Validaciones en tiempo real
 document.addEventListener('DOMContentLoaded', function() {
     // Validar solo letras en campos de nombre
-    const camposTexto = document.querySelectorAll('input[pattern="[A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\\s]+"]');
+    const camposTexto = document.querySelectorAll('input[pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]+"]');
     camposTexto.forEach(campo => {
         campo.addEventListener('input', function() {
-            this.value = this.value.replace(/[^A-Za-zÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³ÃºÃ‘ñ\s]/g, '');
+            this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
         });
     });
 
-    // Validar solo nÃºmeros en campos de cÃ©dula
+    // Validar solo números en campos de cédula
     const camposCedula = document.querySelectorAll('input[pattern="[0-9]+"]');
     camposCedula.forEach(campo => {
         campo.addEventListener('input', function() {
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Validar telÃ©fonos
+    // Validar teléfonos
     const camposTelefono = document.querySelectorAll('input[pattern="[0-9+\\-\\s]+"]');
     camposTelefono.forEach(campo => {
         campo.addEventListener('input', function() {
@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Validar cÃ©dula escolar (solo letras y nÃºmeros)
+    // Validar cédula escolar (solo letras y números)
     document.getElementById('cedula_escolar').addEventListener('input', function() {
         this.value = this.value.replace(/[^A-Za-z0-9]/g, '');
     });
