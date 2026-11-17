@@ -16,6 +16,10 @@ Los archivos SQL y respaldos actuales pueden contener datos personales de estudi
 
 El proyecto incluye `migracion_reset_password.sql` para una migración concreta; revisa su contenido y compatibilidad con la base de datos antes de ejecutarla.
 
+## Respaldos de base de datos
+
+El panel de respaldos crea un archivo SQL descargable y restaura archivos SQL usando la conexión PDO configurada; no requiere los ejecutables locales de XAMPP. Guarda los respaldos descargados en un lugar privado. La importación reemplaza tablas y puede dejar una restauración parcial si el SQL falla; crea y conserva un respaldo de los datos actuales antes de restaurar.
+
 ## Correo de recuperación
 
 El envío de recuperación usa Gmail SMTP mediante PHPMailer. Instala la dependencia con `composer install --no-dev --optimize-autoloader` y despliega también la carpeta `vendor/`.

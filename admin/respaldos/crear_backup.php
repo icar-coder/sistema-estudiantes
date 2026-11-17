@@ -1,27 +1,36 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/database_backup.php';
 checkAuth();
 checkRole(['admin']);
 
-$backupDir = __DIR__ . '/backups';
-if (!is_dir($backupDir) && !@mkdir($backupDir, 0775, true) && !is_dir($backupDir)) {
-    $_SESSION['mensaje_backup'] = 'No se pudo crear la carpeta de respaldos.';
-    $_SESSION['tipo_mensaje_backup'] = 'danger';
-    header('Location: index.php');
+try {
+    $backupFile = tempnam(sys_get_temp_dir(), 'sistema_backup_');
+    if ($backupFile === false) {
+        throw new RuntimeException('No se pudo crear un archivo temporal para el respaldo.');
+    }
+
+    writeBackupContents($pdo, $backupFile);
+    if (filesize($backupFile) === 0) {
+        throw new RuntimeException('El archivo de respaldo quedó vacío.');
+    }
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/sql; charset=utf-8');
+    header('Content-Disposition: attachment; filename="sistema_estudiantes_' . date('Ymd_His') . '.sql"');
+    header('Content-Length: ' . filesize($backupFile));
+    readfile($backupFile);
+    unlink($backupFile);
     exit;
-}
-
-$backupFile = $backupDir . '/sistema_estudiantes_' . date('Ymd_His') . '.sql';
-
-$command = '"C:\\xampp\\mysql\\bin\\mysqldump.exe" --user=root --host=localhost --databases sistema_estudiantes > "' . str_replace('\\', '/', $backupFile) . '" 2>&1';
-exec($command, $output, $exitCode);
-
-if ($exitCode === 0 && file_exists($backupFile) && filesize($backupFile) > 0) {
-    $_SESSION['mensaje_backup'] = 'El respaldo se creó correctamente. Archivo: ' . basename($backupFile);
-    $_SESSION['tipo_mensaje_backup'] = 'success';
-} else {
-    $_SESSION['mensaje_backup'] = 'No se pudo crear el respaldo. Verifica que MySQL Dump esté disponible en XAMPP.';
+} catch (Throwable $e) {
+    if (isset($backupFile) && is_string($backupFile) && is_file($backupFile)) {
+        unlink($backupFile);
+    }
+    error_log('Error al crear respaldo de base de datos: ' . $e->getMessage());
+    $_SESSION['mensaje_backup'] = 'No se pudo crear el respaldo. Revisa los registros del servidor.';
     $_SESSION['tipo_mensaje_backup'] = 'danger';
 }
 
