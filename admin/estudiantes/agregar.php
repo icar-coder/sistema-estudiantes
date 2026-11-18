@@ -3,6 +3,7 @@
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 require_once '../../includes/validaciones.php';
+require_once '../../includes/functions_secciones.php';
 checkAuth();
 checkRole(['admin']);
 
@@ -37,57 +38,13 @@ function obtenerAnoEscolarActivo($pdo) {
 }
 
 // Función para obtener secciones disponibles para un grado
-function obtenerSeccionesDisponibles($pdo, $ano_escolar_id, $grado) {
-    $stmt = $pdo->prepare("
-        SELECT s.id, s.nombre, s.capacidad, 
-               COUNT(i.id) as estudiantes_inscritos,
-               (s.capacidad - COUNT(i.id)) as cupos_disponibles,
-               p.nombre as profesor_nombre, p.apellido as profesor_apellido
-        FROM secciones s 
-        LEFT JOIN inscripciones i ON s.id = i.seccion_id AND i.status = 'activo'
-        LEFT JOIN profesores p ON s.profesor_id = p.id
-        WHERE s.año_escolar_id = ? 
-        AND s.nombre LIKE ? 
-        AND s.nivel = 'primaria'
-        GROUP BY s.id
-        HAVING cupos_disponibles > 0 OR s.capacidad IS NULL
-        ORDER BY s.nombre
-    ");
-    
-    $likeGrado = $grado . '%';
-    $stmt->execute([$ano_escolar_id, $likeGrado]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+function obtenerSeccionesDisponibles($pdo, $ano_escolar_id, $grado_id) {
+    return obtenerSeccionesPorGrado($pdo, (int) $ano_escolar_id, (int) $grado_id, true);
 }
 
 // Función para crear nueva sección automáticamente
-function crearNuevaSeccion($pdo, $ano_escolar_id, $grado, $profesor_default_id = null) {
+function crearNuevaSeccion($pdo, $ano_escolar_id, $grado_id, $profesor_default_id = null) {
     try {
-        // Obtener la última letra usada para este grado
-        $stmt = $pdo->prepare("
-            SELECT nombre FROM secciones 
-            WHERE año_escolar_id = ? AND nombre LIKE ?
-            ORDER BY nombre DESC LIMIT 1
-        ");
-        $likeGrado = $grado . '%';
-        $stmt->execute([$ano_escolar_id, $likeGrado]);
-        $ultimaSeccion = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Determinar nueva letra
-        $nuevaLetra = 'A';
-        if ($ultimaSeccion) {
-            $partes = explode(' ', $ultimaSeccion['nombre']);
-            $ultimaLetra = end($partes);
-            if (strlen($ultimaLetra) === 1 && ctype_alpha($ultimaLetra)) {
-                $nuevaLetra = chr(ord($ultimaLetra) + 1);
-                if ($nuevaLetra > 'Z') {
-                    $nuevaLetra = 'A'; // Volver al inicio si se pasa de Z
-                }
-            }
-        }
-        
-        $nombreSeccion = $grado . ' ' . $nuevaLetra;
-        $capacidad = 25; // Capacidad por defecto
-        
         // Buscar profesor disponible si no se proporciona uno
         if (!$profesor_default_id) {
             $stmt = $pdo->prepare("
@@ -101,23 +58,17 @@ function crearNuevaSeccion($pdo, $ano_escolar_id, $grado, $profesor_default_id =
             $profesor_default_id = $profesor ? $profesor['id'] : null;
         }
         
-        // Crear nueva sección
-        $stmt = $pdo->prepare("
-            INSERT INTO secciones 
-            (nombre, año_escolar_id, capacidad, nivel, tipo_grado, profesor_id) 
-            VALUES (?, ?, ?, 'primaria', 'grado', ?)
-        ");
-        
-        $stmt->execute([$nombreSeccion, $ano_escolar_id, $capacidad, $profesor_default_id]);
-        $nuevaSeccionId = $pdo->lastInsertId();
-        
-        return [
-            'id' => $nuevaSeccionId,
-            'nombre' => $nombreSeccion,
-            'capacidad' => $capacidad,
-            'cupos_disponibles' => $capacidad,
-            'nueva' => true
-        ];
+        $seccion = crearSiguienteSeccion(
+            $pdo,
+            (int) $ano_escolar_id,
+            (int) $grado_id,
+            25,
+            $profesor_default_id ? (int) $profesor_default_id : null
+        );
+        $seccion['cupos_disponibles'] = $seccion['capacidad'];
+        $seccion['nueva'] = true;
+
+        return $seccion;
         
     } catch (Exception $e) {
         throw new Exception("Error al crear nueva sección: " . $e->getMessage());
@@ -316,7 +267,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_estudiante'])
         $estudiante_id = $pdo->lastInsertId();
         
         // PROCESAR INSCRIPCIÓN AUTOMÁTICA EN SECCIÓN
-        $grado_seleccionado = $_POST['grado_inscripcion'] ?? '1er Grado';
+        $grado_seleccionado = filter_var($_POST['grado_inscripcion'] ?? null, FILTER_VALIDATE_INT);
+        if ($grado_seleccionado === false || $grado_seleccionado < 1) {
+            throw new Exception('Seleccione un grado válido para la inscripción.');
+        }
         $ano_escolar_activo = obtenerAnoEscolarActivo($pdo);
         
         if (!$ano_escolar_activo) {
@@ -439,7 +393,13 @@ $ano_escolar_activo = obtenerAnoEscolarActivo($pdo);
 // Opciones predefinidas para comboboxes
 $codigos_telefonicos = ['0412', '0414', '0416', '0424', '0426'];
 $tipos_vivienda = ['Propia', 'Alquilada', 'Familiar', 'Otro'];
-$grados_disponibles = ['1er Grado', '2do Grado', '3er Grado', '4to Grado', '5to Grado', '6to Grado'];
+$grados_disponibles = $pdo->query("
+    SELECT id, nombre
+    FROM grados
+    WHERE estado = 'activo' AND nivel = 'primaria'
+    ORDER BY orden
+")->fetchAll(PDO::FETCH_ASSOC);
+$grado_preseleccionado = $_POST['grado_inscripcion'] ?? ($grados_disponibles[0]['id'] ?? '');
 $documentos_requeridos = [
     'acta_nacimiento' => 'Acta de Nacimiento',
     'cedula_representante' => 'Cédula del Representante',
@@ -540,9 +500,9 @@ $documentos_requeridos = [
                             <select class="form-select" id="grado_inscripcion" name="grado_inscripcion" required>
                                 <option value="">Seleccionar grado...</option>
                                 <?php foreach ($grados_disponibles as $grado): ?>
-                                    <option value="<?php echo $grado; ?>" 
-                                        <?php echo ($_POST['grado_inscripcion'] ?? '1er Grado') == $grado ? 'selected' : ''; ?>>
-                                        <?php echo $grado; ?>
+                                    <option value="<?php echo (int) $grado['id']; ?>"
+                                        <?php echo (int) $grado_preseleccionado === (int) $grado['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($grado['nombre']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -1096,10 +1056,12 @@ function removerRepresentante(boton) {
 
 // Función para cargar información de secciones disponibles CON DATOS REALES
 function cargarInfoSecciones() {
-    const grado = document.getElementById('grado_inscripcion').value;
+    const gradoSelect = document.getElementById('grado_inscripcion');
+    const gradoId = gradoSelect.value;
+    const gradoNombre = gradoSelect.options[gradoSelect.selectedIndex].text;
     const infoDiv = document.getElementById('info_secciones');
     
-    if (!grado) {
+    if (!gradoId) {
         infoDiv.innerHTML = '<small class="text-muted">Seleccione un grado para ver las secciones disponibles...</small>';
         return;
     }
@@ -1110,16 +1072,16 @@ function cargarInfoSecciones() {
             <div class="spinner-border spinner-border-sm" role="status">
                 <span class="visually-hidden">Cargando...</span>
             </div>
-            <small class="ms-2">Buscando secciones disponibles para ${grado}...</small>
+            <small class="ms-2">Buscando secciones disponibles para ${gradoNombre}...</small>
         </div>
     `;
     
     // Hacer petición AJAX para obtener datos reales
-    fetch(`../../includes/ajax_secciones.php?grado=${encodeURIComponent(grado)}&ano_escolar_id=<?php echo $ano_escolar_activo ? $ano_escolar_activo['id'] : ''; ?>`)
+    fetch(`../../includes/ajax_secciones.php?grado_id=${encodeURIComponent(gradoId)}&año_escolar_id=<?php echo $ano_escolar_activo ? $ano_escolar_activo['id'] : ''; ?>`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                let html = `<strong>Secciones disponibles para ${grado}:</strong><br>`;
+                let html = `<strong>Secciones disponibles para ${gradoNombre}:</strong><br>`;
                 
                 if (data.secciones.length > 0) {
                     data.secciones.forEach(seccion => {
@@ -1160,7 +1122,7 @@ function cargarInfoSecciones() {
                     html = `
                         <div class="text-center text-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>No hay secciones creadas para ${grado}</strong><br>
+                            <strong>No hay secciones creadas para ${gradoNombre}</strong><br>
                             <small>Se crearán automáticamente cuando sea necesario.</small>
                         </div>
                     `;

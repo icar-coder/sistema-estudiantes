@@ -1,6 +1,7 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/functions_secciones.php';
 checkAuth();
 checkRole(['admin']);
 
@@ -33,7 +34,7 @@ try {
 
 // Obtener grados activos desde la base de datos
 try {
-    $stmt = $pdo->query("SELECT id, numero, nombre FROM grados WHERE estado = 'activo' ORDER BY orden");
+    $stmt = $pdo->query("SELECT id, numero, nombre, nivel FROM grados WHERE estado = 'activo' AND nivel = 'primaria' ORDER BY orden");
     $grados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $grados = [];
@@ -78,19 +79,24 @@ try {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Si viene de un grado específico, usar ese grado_id, sino usar el del formulario
-    $grado_id = $grado_id_preseleccionado ?: $_POST['grado_id'];
-    $letra = $_POST['letra'];
-    $año_escolar_id = $_POST['año_escolar_id'];
-    $capacidad = $_POST['capacidad'] ?: null;
-    $profesor_id = $_POST['profesor_id'] ?? null;
-    $nivel = 'primaria';
+    $grado_id = filter_var($grado_id_preseleccionado ?: ($_POST['grado_id'] ?? null), FILTER_VALIDATE_INT);
+    $letra = strtoupper(trim($_POST['letra'] ?? ''));
+    $año_escolar_id = filter_var($_POST['año_escolar_id'] ?? null, FILTER_VALIDATE_INT);
+    $capacidad = isset($_POST['capacidad']) && $_POST['capacidad'] !== ''
+        ? filter_var($_POST['capacidad'], FILTER_VALIDATE_INT)
+        : null;
+    $profesor_id = isset($_POST['profesor_id']) && $_POST['profesor_id'] !== ''
+        ? filter_var($_POST['profesor_id'], FILTER_VALIDATE_INT)
+        : null;
+    $nivel = '';
     $tipo_grado = 'grado';
     
     // Obtener nombre del grado para construir el nombre de la sección
     $nombre_grado = '';
     foreach ($grados as $grado) {
-        if ($grado['id'] == $grado_id) {
+        if ($grado_id !== false && (int) $grado['id'] === $grado_id) {
             $nombre_grado = $grado['nombre'];
+            $nivel = $grado['nivel'];
             break;
         }
     }
@@ -110,10 +116,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validar campos obligatorios con más detalle
     $campos_faltantes = [];
-    if (empty($grado_id)) $campos_faltantes[] = "Grado";
-    if (empty($letra)) $campos_faltantes[] = "Letra";
-    if (empty($año_escolar_id)) $campos_faltantes[] = "Año Escolar";
-    if (empty($profesor_id)) $campos_faltantes[] = "Profesor Titular";
+    if ($grado_id === false || $grado_id < 1) $campos_faltantes[] = "Grado";
+    if (empty($nombre_grado) || empty($nivel)) $campos_faltantes[] = "Grado válido";
+    if (!preg_match('/^[A-Z]$/', $letra)) $campos_faltantes[] = "Letra";
+    if ($año_escolar_id === false || $año_escolar_id < 1) $campos_faltantes[] = "Año Escolar";
+    if ($capacidad === false || ($capacidad !== null && $capacidad < 1)) $campos_faltantes[] = "Capacidad";
+    if ($profesor_id === false || ($profesor_id !== null && $profesor_id < 1)) $campos_faltantes[] = "Profesor Titular";
+    if ($profesor_id === null) $campos_faltantes[] = "Profesor Titular";
     
     if (empty($campos_faltantes)) {
         try {
@@ -127,9 +136,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tipo_mensaje = "warning";
             } else {
                 // Incluir grado_id en el INSERT
-                $stmt = $pdo->prepare("INSERT INTO secciones (nombre, año_escolar_id, grado_id, capacidad, nivel, tipo_grado, profesor_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$nombre, $año_escolar_id, $grado_id, $capacidad, $nivel, $tipo_grado, $profesor_id]);
-                $seccion_id = $pdo->lastInsertId();
+                $seccion_id = insertarSeccion($pdo, [
+                    'nombre' => $nombre,
+                    'año_escolar_id' => $año_escolar_id,
+                    'grado_id' => $grado_id,
+                    'capacidad' => $capacidad,
+                    'nivel' => $nivel,
+                    'tipo_grado' => $tipo_grado,
+                    'profesor_id' => $profesor_id,
+                ]);
                 
                 error_log("DEBUG - Sección creada con ID: " . $seccion_id);
                 

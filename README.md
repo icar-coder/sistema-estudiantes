@@ -14,11 +14,19 @@ Configura la conexión usando las variables de entorno `DB_HOST`, `DB_NAME`, `DB
 
 Los archivos SQL y respaldos actuales pueden contener datos personales de estudiantes. Se conservan en el equipo, pero están excluidos de Git y bloqueados para descarga directa desde Apache. Antes de preparar un repositorio, crea un esquema de instalación limpio y anonimizado si hace falta compartirlo.
 
-El proyecto incluye `migracion_reset_password.sql` para una migración concreta; revisa su contenido y compatibilidad con la base de datos antes de ejecutarla.
+El proyecto incluye `migracion_reset_password.sql` para una migración concreta y `migracion_unificar_secciones.sql` para ampliar el nombre de sección a 50 caracteres. Revisa cada migración y su compatibilidad con la base de datos, conserva un respaldo y ejecútala manualmente; la aplicación no las aplica automáticamente.
 
 ## Respaldos de base de datos
 
 El panel de respaldos crea un archivo SQL descargable y restaura archivos SQL usando la conexión PDO configurada; no requiere los ejecutables locales de XAMPP. Guarda los respaldos descargados en un lugar privado. La importación reemplaza tablas y puede dejar una restauración parcial si el SQL falla; crea y conserva un respaldo de los datos actuales antes de restaurar.
+
+## Receptor de sincronización
+
+`api_sync.php` recibe lotes JSON autenticados con `Authorization: Bearer ...`. Antes de habilitarlo, revisa y aplica manualmente `migracion_sync_receiver.sql` y `migracion_unificar_secciones.sql`, con respaldo previo. Configura `SYNC_TOKEN` como variable de entorno en cada instalación, con al menos 32 caracteres aleatorios; no guardes el token en Git. La instalación local de pruebas y producción deben usar tokens distintos. El cliente debe enviar el token correspondiente al servidor de destino y usar HTTPS en producción.
+
+El cuerpo tiene el formato `{"records":{"años_escolares":[{"uuid":"...","nombre":"2025-2026"}]}}`. Se aceptan solo las tablas y columnas explícitamente permitidas en `includes/sync_receiver.php`, hasta 50 registros por tabla y 2 MiB por solicitud. Las claves foráneas se envían como `uuid_<nombre_columna>`; el servidor resuelve esos UUID antes de guardar. `usuarios` no se sincroniza, aunque se pueden referenciar usuarios que ya existan en el servidor. Cada solicitud es transaccional: una referencia inexistente o una colisión de índices únicos cancela el lote y devuelve un error; una colisión única secundaria responde HTTP 409.
+
+El receptor procesa padres antes que hijos, identifica registros por UUID y actualiza el registro existente si vuelve a recibir el mismo UUID. La política elegida es **última recepción en el servidor gana**: una sincronización que llega después puede sobrescribir cambios previos, aunque se hayan editado antes en otro dispositivo; las solicitudes más antiguas que se procesen después se ignoran. `sincronizado` se marca en 1 y la respuesta incluye el ID remoto para actualizar el mapa local. La migración del receptor añade el marcador de recepción y evita que solicitudes concurrentes antiguas reemplacen solicitudes posteriores. La migración de secciones amplía `secciones.nombre`, que el esquema previo limita a 10 caracteres.
 
 ## Correo de recuperación
 

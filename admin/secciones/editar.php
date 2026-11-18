@@ -44,6 +44,13 @@ try {
     $años_escolares = [];
 }
 
+try {
+    $stmt = $pdo->query("SELECT id, nombre, nivel FROM grados WHERE estado = 'activo' ORDER BY orden");
+    $grados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $grados = [];
+}
+
 // Obtener profesores activos
 try {
     $stmt = $pdo->query("SELECT id, cedula, nombre, apellido, especialidad FROM profesores WHERE estado = 'activo' ORDER BY nombre, apellido");
@@ -54,20 +61,35 @@ try {
 
 // Procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $grado = $_POST['grado'];
-    $letra = $_POST['letra'];
-    $año_escolar_id = $_POST['año_escolar_id'];
-    $capacidad = $_POST['capacidad'] ?: null;
-    $profesor_id = $_POST['profesor_id'] ?: null;
-    
-    $nombre = $grado . ' ' . $letra;
+    $grado_id = filter_var($_POST['grado_id'] ?? null, FILTER_VALIDATE_INT);
+    $letra = strtoupper(trim($_POST['letra'] ?? ''));
+    $año_escolar_id = filter_var($_POST['año_escolar_id'] ?? null, FILTER_VALIDATE_INT);
+    $capacidad = isset($_POST['capacidad']) && $_POST['capacidad'] !== ''
+        ? filter_var($_POST['capacidad'], FILTER_VALIDATE_INT)
+        : null;
+    $profesor_id = isset($_POST['profesor_id']) && $_POST['profesor_id'] !== ''
+        ? filter_var($_POST['profesor_id'], FILTER_VALIDATE_INT)
+        : null;
+
+    $grado_seleccionado = null;
+    foreach ($grados as $grado) {
+        if ((int) $grado['id'] === (int) $grado_id) {
+            $grado_seleccionado = $grado;
+            break;
+        }
+    }
+
+    $nombre = $grado_seleccionado
+        ? $grado_seleccionado['nombre'] . ' ' . $letra
+        : '';
     
     // Validar campos obligatorios
     $campos_faltantes = [];
-    if (empty($grado)) $campos_faltantes[] = "Grado";
-    if (empty($letra)) $campos_faltantes[] = "Letra";
-    if (empty($año_escolar_id)) $campos_faltantes[] = "Año Escolar";
-    if (empty($profesor_id)) $campos_faltantes[] = "Profesor Titular";
+    if ($grado_id === false || $grado_id < 1 || !$grado_seleccionado) $campos_faltantes[] = "Grado";
+    if (!preg_match('/^[A-Z]$/', $letra)) $campos_faltantes[] = "Letra";
+    if ($año_escolar_id === false || $año_escolar_id < 1) $campos_faltantes[] = "Año Escolar";
+    if ($capacidad === false || ($capacidad !== null && $capacidad < 1)) $campos_faltantes[] = "Capacidad";
+    if ($profesor_id === false || $profesor_id === null || $profesor_id < 1) $campos_faltantes[] = "Profesor Titular";
     
     if (empty($campos_faltantes)) {
         try {
@@ -80,8 +102,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tipo_mensaje = "warning";
             } else {
                 // Actualizar la sección
-                $stmt = $pdo->prepare("UPDATE secciones SET nombre = ?, año_escolar_id = ?, capacidad = ?, profesor_id = ? WHERE id = ?");
-                $stmt->execute([$nombre, $año_escolar_id, $capacidad, $profesor_id, $seccion_id]);
+                $stmt = $pdo->prepare("UPDATE secciones SET nombre = ?, año_escolar_id = ?, grado_id = ?, nivel = ?, capacidad = ?, profesor_id = ? WHERE id = ?");
+                $stmt->execute([
+                    $nombre,
+                    $año_escolar_id,
+                    $grado_id,
+                    $grado_seleccionado['nivel'],
+                    $capacidad,
+                    $profesor_id,
+                    $seccion_id,
+                ]);
                 
                 $mensaje = "Sección actualizada correctamente";
                 $tipo_mensaje = "success";
@@ -89,6 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Actualizar datos locales
                 $seccion['nombre'] = $nombre;
                 $seccion['año_escolar_id'] = $año_escolar_id;
+                $seccion['grado_id'] = $grado_id;
+                $seccion['nivel'] = $grado_seleccionado['nivel'];
                 $seccion['capacidad'] = $capacidad;
                 $seccion['profesor_id'] = $profesor_id;
             }
@@ -103,13 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Extraer grado y letra del nombre actual
-$grado_actual = '';
 $letra_actual = '';
 if (!empty($seccion['nombre'])) {
-    $partes = explode(' ', $seccion['nombre']);
-    if (count($partes) >= 2) {
-        $grado_actual = $partes[0] . ' ' . $partes[1]; // "1er Grado"
-        $letra_actual = end($partes); // "A"
+    if (preg_match('/\s+([A-Z])$/', $seccion['nombre'], $coincidencias)) {
+        $letra_actual = $coincidencias[1];
     }
 }
 ?>
@@ -144,14 +173,14 @@ if (!empty($seccion['nombre'])) {
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="grado" class="form-label">Grado *</label>
-                        <select class="form-select" id="grado" name="grado" required>
+                        <select class="form-select" id="grado" name="grado_id" required>
                             <option value="">Seleccionar grado...</option>
-                            <option value="1er Grado" <?php echo ($grado_actual == '1er Grado') ? 'selected' : ''; ?>>1er Grado</option>
-                            <option value="2do Grado" <?php echo ($grado_actual == '2do Grado') ? 'selected' : ''; ?>>2do Grado</option>
-                            <option value="3er Grado" <?php echo ($grado_actual == '3er Grado') ? 'selected' : ''; ?>>3er Grado</option>
-                            <option value="4to Grado" <?php echo ($grado_actual == '4to Grado') ? 'selected' : ''; ?>>4to Grado</option>
-                            <option value="5to Grado" <?php echo ($grado_actual == '5to Grado') ? 'selected' : ''; ?>>5to Grado</option>
-                            <option value="6to Grado" <?php echo ($grado_actual == '6to Grado') ? 'selected' : ''; ?>>6to Grado</option>
+                            <?php foreach ($grados as $grado): ?>
+                                <option value="<?php echo (int) $grado['id']; ?>"
+                                    <?php echo (int) $seccion['grado_id'] === (int) $grado['id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($grado['nombre']); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     
@@ -253,9 +282,7 @@ if (!empty($seccion['nombre'])) {
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Vista Previa de la Sección</label>
                         <div class="form-control" style="background-color: #f8f9fa; font-weight: bold;">
-                            <span id="vista-previa-nombre">
-                                <?php echo htmlspecialchars($seccion['nombre']); ?>
-                            </span>
+                            <span id="vista-previa-nombre"><?php echo htmlspecialchars($seccion['nombre']); ?></span>
                         </div>
                     </div>
                 </div>
@@ -276,7 +303,8 @@ if (!empty($seccion['nombre'])) {
 <script>
 // Actualizar vista previa en tiempo real
 function actualizarVistaPrevia() {
-    const grado = document.getElementById('grado').value;
+    const gradoSelect = document.getElementById('grado');
+    const grado = gradoSelect.value ? gradoSelect.options[gradoSelect.selectedIndex].text : '';
     const letra = document.getElementById('letra').value;
     const vistaPrevia = document.getElementById('vista-previa-nombre');
     

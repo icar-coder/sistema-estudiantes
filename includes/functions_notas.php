@@ -1,5 +1,6 @@
 <?php
 require_once 'database.php';
+require_once __DIR__ . '/functions_secciones.php';
 
 function tablaExiste($nombreTabla) {
     global $pdo;
@@ -437,28 +438,24 @@ function determinarNuevaSeccionConGrados($grado_actual_id, $orden_actual, $numer
             return null;
         }
         
-        // Buscar secciones disponibles para el siguiente grado en el año destino
-        $stmt_secciones = $pdo->prepare("
-            SELECT id, nombre, capacidad
-            FROM secciones 
-            WHERE grado_id = ? AND año_escolar_id = ?
-            AND (capacidad IS NULL OR capacidad > (
-                SELECT COUNT(*) FROM inscripciones i 
-                WHERE i.seccion_id = secciones.id AND i.status = 'activo'
-            ))
-            ORDER BY nombre ASC
-            LIMIT 1
-        ");
-        $stmt_secciones->execute([$siguiente_grado['id'], $año_destino_id]);
-        $seccion_disponible = $stmt_secciones->fetch(PDO::FETCH_ASSOC);
+        $secciones_disponibles = obtenerSeccionesPorGrado(
+            $pdo,
+            (int) $año_destino_id,
+            (int) $siguiente_grado['id'],
+            true
+        );
+        $seccion_disponible = $secciones_disponibles[0] ?? null;
         
         if ($seccion_disponible) {
             return $seccion_disponible;
         }
         
         // Si no hay secciones disponibles, crear una nueva
-        $nueva_seccion_nombre = $siguiente_grado['nombre'] . ' A';
-        return crearNuevaSeccion($nueva_seccion_nombre, $siguiente_grado['id'], $año_destino_id);
+        return crearSiguienteSeccion(
+            $pdo,
+            (int) $año_destino_id,
+            (int) $siguiente_grado['id']
+        );
         
     } catch (PDOException $e) {
         error_log("Error determinando nueva sección: " . $e->getMessage());
@@ -473,28 +470,16 @@ function crearNuevaSeccion($nombre, $grado_id, $año_escolar_id) {
     global $pdo;
     
     try {
-        // Obtener información del grado para determinar nivel
-        $stmt_grado = $pdo->prepare("SELECT nivel FROM grados WHERE id = ?");
-        $stmt_grado->execute([$grado_id]);
-        $grado = $stmt_grado->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$grado) {
-            return null;
-        }
-        
-        $stmt_insert = $pdo->prepare("
-            INSERT INTO secciones 
-            (nombre, año_escolar_id, grado_id, nivel, tipo_grado, capacidad)
-            VALUES (?, ?, ?, ?, 'grado', 25)
-        ");
-        $stmt_insert->execute([
-            $nombre,
-            $año_escolar_id,
-            $grado_id,
-            $grado['nivel']
+        $grado = obtenerGradoSeccion($pdo, (int) $grado_id);
+        $seccion_id = insertarSeccion($pdo, [
+            'nombre' => $nombre,
+            'año_escolar_id' => $año_escolar_id,
+            'grado_id' => $grado_id,
+            'capacidad' => 25,
+            'nivel' => $grado['nivel'],
+            'tipo_grado' => 'grado',
+            'profesor_id' => null,
         ]);
-        
-        $seccion_id = $pdo->lastInsertId();
         
         return [
             'id' => $seccion_id,
@@ -604,7 +589,7 @@ function getSufijoGrado($numero) {
 /**
  * Obtiene o crea una sección en el nuevo año escolar
  */
-function obtenerOCrearSeccion($nombre_seccion, $año_escolar_id, $nivel, $tipo_grado) {
+function obtenerOCrearSeccion($nombre_seccion, $año_escolar_id, $nivel, $tipo_grado, $grado_id = null) {
     global $pdo;
     
     // Buscar si ya existe la sección
@@ -620,13 +605,17 @@ function obtenerOCrearSeccion($nombre_seccion, $año_escolar_id, $nivel, $tipo_g
     }
     
     // Crear nueva sección
-    $stmt_insert = $pdo->prepare("
-        INSERT INTO secciones (nombre, año_escolar_id, nivel, tipo_grado, capacidad)
-        VALUES (?, ?, ?, ?, 30)
-    ");
-    $stmt_insert->execute([$nombre_seccion, $año_escolar_id, $nivel, $tipo_grado]);
-    
-    return $pdo->lastInsertId();
+    $seccion_id = insertarSeccion($pdo, [
+        'nombre' => $nombre_seccion,
+        'año_escolar_id' => $año_escolar_id,
+        'grado_id' => $grado_id,
+        'capacidad' => 30,
+        'nivel' => $nivel,
+        'tipo_grado' => $tipo_grado,
+        'profesor_id' => null,
+    ]);
+
+    return $seccion_id;
 }
 
 /**
