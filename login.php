@@ -74,7 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($error === '') {
                 $credencialesValidas = $usuario && $usuario['estado'] === 'activo' && password_verify($password, $usuario['password']);
 
-                if ($credencialesValidas) {
+                if ($credencialesValidas && isSqliteDatabase($pdo) && $usuario['rol'] !== 'admin') {
+                    $error = 'En el modo offline solo están habilitadas las cuentas administrativas.';
+                } elseif ($credencialesValidas) {
                     $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL, ultimo_login = NOW() WHERE id = ?');
                     $stmt->execute([$usuario['id']]);
 
@@ -109,8 +111,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $maxIntentos = 5;
 
                     if ($nuevosIntentos >= $maxIntentos) {
-                        $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 15 MINUTE), ultimo_intento = NOW() WHERE id = ?');
-                        $stmt->execute([$nuevosIntentos, $usuario['id']]);
+                        if (isSqliteDatabase($pdo)) {
+                            $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = ?, ultimo_intento = NOW() WHERE id = ?');
+                            $stmt->execute([
+                                $nuevosIntentos,
+                                date('Y-m-d H:i:s', time() + 15 * 60),
+                                $usuario['id'],
+                            ]);
+                        } else {
+                            $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 15 MINUTE), ultimo_intento = NOW() WHERE id = ?');
+                            $stmt->execute([$nuevosIntentos, $usuario['id']]);
+                        }
                         $error = 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.';
                         error_log('Cuenta bloqueada por intentos fallidos: user=' . $username);
                     } else {

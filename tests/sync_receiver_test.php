@@ -29,7 +29,8 @@ $pdo->exec(
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
         representante_id INTEGER NOT NULL,
-        sincronizado INTEGER NOT NULL DEFAULT 0
+        sincronizado INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (representante_id) REFERENCES representantes(id) ON DELETE RESTRICT
     )'
 );
 $pdo->exec(
@@ -139,6 +140,39 @@ try {
 assertSyncReceiverTest(
     (int) $pdo->query('SELECT COUNT(*) FROM `representantes`')->fetchColumn() === 1,
     'Un error no revirtió la transacción completa.'
+);
+
+$deleteResults = syncProcessRecords($pdo, [], '2025-01-04 10:00:00.000000', [
+    'representantes' => ['11111111-1111-4111-8111-111111111111'],
+    'estudiantes' => ['22222222-2222-4222-8222-222222222222'],
+]);
+assertSyncReceiverTest(
+    $deleteResults[0]['tabla'] === 'estudiantes' &&
+        $deleteResults[0]['operacion'] === 'deleted' &&
+        $deleteResults[1]['tabla'] === 'representantes' &&
+        $deleteResults[1]['operacion'] === 'deleted',
+    'Los borrados deben procesarse de hijos a padres.'
+);
+assertSyncReceiverTest(
+    (int) $pdo->query('SELECT COUNT(*) FROM `representantes`')->fetchColumn() === 0 &&
+        (int) $pdo->query('SELECT COUNT(*) FROM `estudiantes`')->fetchColumn() === 0,
+    'No se borraron los registros remotos.'
+);
+$repeatDeleteResults = syncProcessRecords($pdo, [], '2025-01-05 10:00:00.000000', [
+    'estudiantes' => ['22222222-2222-4222-8222-222222222222'],
+    'representantes' => ['11111111-1111-4111-8111-111111111111'],
+]);
+assertSyncReceiverTest(
+    $repeatDeleteResults[0]['operacion'] === 'already_deleted' &&
+        $repeatDeleteResults[1]['operacion'] === 'already_deleted',
+    'Reintentar un borrado confirmado debe ser idempotente.'
+);
+$staleDeleteResults = syncProcessRecords($pdo, [], '2025-01-03 10:00:00.000000', [
+    'estudiantes' => ['22222222-2222-4222-8222-222222222222'],
+]);
+assertSyncReceiverTest(
+    $staleDeleteResults[0]['operacion'] === 'ignored_stale',
+    'Un borrado atrasado no debe invalidar una recepción posterior.'
 );
 
 echo "sync receiver tests passed\n";

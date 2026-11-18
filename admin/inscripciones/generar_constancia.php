@@ -57,8 +57,7 @@ try {
     }
     
     // Obtener materias inscritas
-    $stmt_tabla = $pdo->query("SHOW TABLES LIKE 'inscripciones_materias'");
-    $tabla_existe = $stmt_tabla && $stmt_tabla->fetch(PDO::FETCH_ASSOC);
+    $tabla_existe = databaseTableExists($pdo, 'inscripciones_materias');
 
     if ($tabla_existe) {
         $sql_materias = "

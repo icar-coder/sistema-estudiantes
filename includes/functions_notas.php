@@ -5,12 +5,7 @@ require_once __DIR__ . '/functions_secciones.php';
 function tablaExiste($nombreTabla) {
     global $pdo;
 
-    try {
-        $stmt = $pdo->query("SHOW TABLES LIKE '" . str_replace("'", "''", $nombreTabla) . "'");
-        return $stmt !== false && $stmt->fetch(PDO::FETCH_ASSOC) !== false;
-    } catch (PDOException $e) {
-        return false;
-    }
+    return databaseTableExists($pdo, $nombreTabla);
 }
 
 function verificarEsquemaReportes(array $tablasRequeridas = ['notas', 'lapsos', 'inscripciones', 'años_escolares']) {

@@ -56,8 +56,7 @@ try {
 // Verificar si existe la tabla historial_academico para identificar estudiantes adelantados
 $tabla_historial_existe = false;
 try {
-    $stmt = $pdo->query("SHOW TABLES LIKE 'historial_academico'");
-    $tabla_historial_existe = $stmt->rowCount() > 0;
+    $tabla_historial_existe = databaseTableExists($pdo, 'historial_academico');
 } catch (PDOException $e) {
     $tabla_historial_existe = false;
 }

@@ -1,7 +1,7 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/includes/sync_receiver.php';
@@ -23,7 +23,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 }
 
 $expectedToken = getenv('SYNC_TOKEN');
-if ($expectedToken === false || strlen($expectedToken) < 32) {
+if ($expectedToken === false || $expectedToken === '') {
+    $localConfigPath = __DIR__ . '/includes/config.local.php';
+    $localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
+    $expectedToken = is_array($localConfig) ? ($localConfig['sync']['token'] ?? false) : false;
+}
+
+if (!is_string($expectedToken) || strlen($expectedToken) < 32) {
     error_log('SYNC_TOKEN debe configurarse con al menos 32 caracteres.');
     syncRespond(500, ['error' => 'sync_not_configured']);
 }
@@ -53,20 +59,27 @@ if ($rawBody === false || strlen($rawBody) > $maxRequestSize) {
 
 $payload = json_decode($rawBody, true);
 if (json_last_error() !== JSON_ERROR_NONE || !is_array($payload) ||
-    !array_key_exists('records', $payload) || count($payload) !== 1 ||
-    !is_array($payload['records'])) {
+    !array_key_exists('records', $payload) || count($payload) < 1 || count($payload) > 2 ||
+    array_diff(array_keys($payload), ['records', 'deletions']) !== [] ||
+    !is_array($payload['records']) ||
+    (array_key_exists('deletions', $payload) && !is_array($payload['deletions']))) {
     syncRespond(400, ['error' => 'invalid_json_payload']);
 }
 
 try {
-    require_once __DIR__ . '/includes/database.php';
+    require_once __DIR__ . '/includes/database_mysql.php';
     $lockName = 'sistema_est_sync_' . substr(hash('sha256', DB_NAME), 0, 40);
     if (!syncAcquireReceiverLock($pdo, $lockName)) {
         syncRespond(503, ['error' => 'sync_temporarily_unavailable']);
     }
 
     try {
-        $results = syncProcessRecords($pdo, $payload['records'], $requestReceivedAt);
+        $results = syncProcessRecords(
+            $pdo,
+            $payload['records'],
+            $requestReceivedAt,
+            $payload['deletions'] ?? []
+        );
     } finally {
         syncReleaseReceiverLock($pdo, $lockName);
     }

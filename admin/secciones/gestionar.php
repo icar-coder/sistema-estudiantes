@@ -87,10 +87,13 @@ try {
 
 // Obtener grados con sus secciones (SOLO DEL AÑO ACTIVO)
 try {
+    $seccionesInfoSql = isSqliteDatabase($pdo)
+        ? "GROUP_CONCAT(CONCAT(s.nombre, '|', s.id, '|', ae.nombre), ';;')"
+        : "GROUP_CONCAT(CONCAT(s.nombre, '|', s.id, '|', ae.nombre) SEPARATOR ';;')";
     $stmt = $pdo->prepare("
         SELECT g.*, 
                COUNT(s.id) as total_secciones,
-               GROUP_CONCAT(CONCAT(s.nombre, '|', s.id, '|', ae.nombre) SEPARATOR ';;') as secciones_info
+               {$seccionesInfoSql} as secciones_info
         FROM grados g
         LEFT JOIN secciones s ON g.id = s.grado_id AND s.año_escolar_id = ?
         LEFT JOIN años_escolares ae ON s.año_escolar_id = ae.id

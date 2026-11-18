@@ -2,6 +2,9 @@
 includes/config.local.php
 vendor/
 logs/
+database/*.sqlite
+database/*.sqlite-*
+database/*.db
 admin/respaldos/backups/
 sistema_estudiantes (8).sql
 *.zip

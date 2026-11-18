@@ -157,14 +157,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_evaluacion'])
     
     if (!empty($literal)) {
         try {
+            $upsertClause = databaseUpsertClause(
+                $pdo,
+                ['inscripcion_id', 'lapso_id'],
+                ['literal', 'observaciones', 'evaluado_por', 'fecha_evaluacion']
+            );
             $stmt = $pdo->prepare("
                 INSERT INTO literales_lapso (inscripcion_id, lapso_id, literal, observaciones, evaluado_por, fecha_evaluacion) 
                 VALUES (?, ?, ?, ?, ?, CURDATE())
-                ON DUPLICATE KEY UPDATE 
-                    literal = VALUES(literal),
-                    observaciones = VALUES(observaciones),
-                    evaluado_por = VALUES(evaluado_por),
-                    fecha_evaluacion = VALUES(fecha_evaluacion)
+                {$upsertClause}
             ");
             
             $stmt->execute([

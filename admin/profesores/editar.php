@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'La edición de materias');
 
 if (!isset($_GET['id'])) {
     header('Location: gestionar.php');

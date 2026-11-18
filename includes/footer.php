@@ -48,6 +48,94 @@
     })();
     </script>
     <?php endif; ?>
+    <?php if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite' &&
+        ($_SESSION['rol'] ?? null) === 'admin'): ?>
+    <?php
+    if (!isset($_SESSION['csrf_offline_sync'])) {
+        $_SESSION['csrf_offline_sync'] = bin2hex(random_bytes(32));
+    }
+    ?>
+    <div id="offline-sync-status" class="alert alert-info position-fixed shadow"
+         role="status" aria-live="polite" hidden
+         style="right: 1rem; bottom: 1rem; z-index: 1100; max-width: 24rem;"></div>
+    <script>
+    (function() {
+        const endpoint = <?php echo json_encode(app_url('admin/sincronizar.php')); ?>;
+        const csrfToken = <?php echo json_encode($_SESSION['csrf_offline_sync']); ?>;
+        const status = document.getElementById('offline-sync-status');
+        let sincronizando = false;
+
+        const mostrarEstado = function(message, className) {
+            status.textContent = message;
+            status.className = 'alert ' + className + ' position-fixed shadow';
+            status.hidden = false;
+        };
+
+        const sincronizar = async function() {
+            if (sincronizando) {
+                return;
+            }
+            if (!navigator.onLine) {
+                mostrarEstado('Sin conexión. Los cambios se guardan en este dispositivo.', 'alert-warning');
+                return;
+            }
+
+            sincronizando = true;
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: '{}'
+                });
+                if (response.status === 202) {
+                    return;
+                }
+
+                const data = await response.json();
+                if (!response.ok || !data.summary) {
+                    throw new Error('sync_failed');
+                }
+
+                const summary = data.summary;
+                if (summary.blocked > 0) {
+                    mostrarEstado(
+                        'La sincronización requiere revisar ' + summary.blocked + ' conflicto(s).',
+                        'alert-danger'
+                    );
+                } else if (summary.pending > 0) {
+                    mostrarEstado(
+                        'Quedan ' + summary.pending + ' cambio(s) pendientes de enviar.',
+                        'alert-warning'
+                    );
+                } else if (summary.requests > 0) {
+                    mostrarEstado('Sincronización completada.', 'alert-success');
+                } else {
+                    status.hidden = true;
+                }
+            } catch (error) {
+                mostrarEstado(
+                    'No se pudo sincronizar. Los cambios siguen guardados localmente.',
+                    'alert-warning'
+                );
+            } finally {
+                sincronizando = false;
+            }
+        };
+
+        window.addEventListener('online', sincronizar);
+        window.addEventListener('offline', function() {
+            mostrarEstado('Sin conexión. Los cambios se guardan en este dispositivo.', 'alert-warning');
+        });
+        sincronizar();
+        window.setInterval(sincronizar, 30000);
+    })();
+    </script>
+    <?php endif; ?>
 </body>
 </html>
 <style>

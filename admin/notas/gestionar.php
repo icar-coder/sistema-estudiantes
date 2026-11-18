@@ -4,6 +4,7 @@ require_once '../../includes/database.php';
 require_once '../../includes/functions_notas.php'; // <-- AGREGAR ESTA LÍNEA
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'El módulo de notas y materias');
 
 $mensaje = '';
 $tipo_mensaje = '';
@@ -132,16 +133,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_notas'])) {
                     
                     // Convertir a letras (opcional)
                     $valor_letra = convertirNotaLetras($valor_decimal);
+                    $upsertClause = databaseUpsertClause(
+                        $pdo,
+                        ['inscripcion_id', 'materia_id', 'lapso_id', 'tipo_evaluacion_id'],
+                        ['valor_decimal', 'valor_letra', 'comentario'],
+                        ['fecha_registro']
+                    );
                     
                     // Insertar o actualizar nota
                     $stmt = $pdo->prepare("
                         INSERT INTO notas (inscripcion_id, materia_id, lapso_id, tipo_evaluacion_id, valor_decimal, valor_letra, comentario) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                        ON DUPLICATE KEY UPDATE 
-                            valor_decimal = VALUES(valor_decimal),
-                            valor_letra = VALUES(valor_letra),
-                            comentario = VALUES(comentario),
-                            fecha_registro = CURRENT_TIMESTAMP
+                        {$upsertClause}
                     ");
                     $stmt->execute([
                         $inscripcion_id, 

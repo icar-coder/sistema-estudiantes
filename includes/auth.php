@@ -94,6 +94,11 @@ function checkAuth() {
 function checkRole($allowed_roles) {
     iniciarSesionSegura();
 
+    if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite' && ($_SESSION['rol'] ?? null) !== 'admin') {
+        header('Location: ' . app_url('acceso-denegado.php'));
+        exit();
+    }
+
     if (!isset($_SESSION['rol']) || !in_array($_SESSION['rol'], $allowed_roles, true)) {
         header('Location: ' . app_url('acceso-denegado.php'));
         exit();

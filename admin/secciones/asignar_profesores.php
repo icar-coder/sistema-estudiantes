@@ -131,8 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $stmt->execute([$seccion_id, $dia, $hora, $hora_fin]);
             
             // Verificar si la columna duracion existe, si no, usar valor por defecto
-            $column_check = $pdo->query("SHOW COLUMNS FROM horarios_asignaciones LIKE 'duracion'");
-            $duracion_exists = $column_check->fetch();
+            $duracion_exists = databaseColumnExists($pdo, 'horarios_asignaciones', 'duracion');
             
             if ($duracion_exists) {
                 // Insertar con duración

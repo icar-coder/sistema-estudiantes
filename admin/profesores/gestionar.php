@@ -51,10 +51,13 @@ if (isset($_GET['cambiar_estado'])) {
 
 // Obtener lista de profesores con información de secciones
 try {
+    $seccionesAsignadasSql = isSqliteDatabase($pdo)
+        ? "GROUP_CONCAT(DISTINCT CONCAT(s.nombre, ' (', ae.nombre, ')'))"
+        : "GROUP_CONCAT(DISTINCT CONCAT(s.nombre, ' (', ae.nombre, ')') SEPARATOR ', ')";
     $stmt = $pdo->query("
         SELECT p.*, 
                COUNT(DISTINCT s.id) as total_secciones,
-               GROUP_CONCAT(DISTINCT CONCAT(s.nombre, ' (', ae.nombre, ')') SEPARATOR ', ') as secciones_asignadas
+               {$seccionesAsignadasSql} as secciones_asignadas
         FROM profesores p 
         LEFT JOIN secciones s ON p.id = s.profesor_id 
         LEFT JOIN años_escolares ae ON s.año_escolar_id = ae.id

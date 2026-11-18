@@ -4,6 +4,7 @@ require_once '../../includes/database.php';
 require_once '../../includes/functions_notas.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'El reporte de asistencias por materia');
 
 $esquema_faltante = verificarEsquemaReportes(['asistencias', 'inscripciones', 'años_escolares', 'secciones']);
 

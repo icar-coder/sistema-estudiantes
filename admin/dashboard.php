@@ -3,6 +3,8 @@ require_once '../includes/auth.php';
 require_once '../includes/database.php';
 checkAuth();
 checkRole(['admin']);
+$offlineFeatureNotice = $_SESSION['offline_feature_notice'] ?? '';
+unset($_SESSION['offline_feature_notice']);
 
 // Consultas para las estadísticas
 try {
@@ -54,12 +56,22 @@ try {
     
     // Estadísticas de asistencias (si la tabla existe)
     try {
-        $stmt = $pdo->query("
-            SELECT estado, COUNT(*) as cantidad
-            FROM asistencias 
-            WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            GROUP BY estado
-        ");
+        if (isSqliteDatabase($pdo)) {
+            $stmt = $pdo->prepare("
+                SELECT estado, COUNT(*) as cantidad
+                FROM asistencias
+                WHERE fecha >= ?
+                GROUP BY estado
+            ");
+            $stmt->execute([date('Y-m-d', strtotime('-30 days'))]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT estado, COUNT(*) as cantidad
+                FROM asistencias
+                WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                GROUP BY estado
+            ");
+        }
         $asistencias_stats = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         $asistencias_stats = [];
@@ -217,6 +229,12 @@ foreach ($asistencias_stats as $asistencia) {
 include '../includes/header.php'; 
 include '../includes/sidebar_admin.php'; 
 ?>
+
+<?php if ($offlineFeatureNotice !== ''): ?>
+    <div class="alert alert-warning" role="alert">
+        <?php echo htmlspecialchars($offlineFeatureNotice, ENT_QUOTES, 'UTF-8'); ?>
+    </div>
+<?php endif; ?>
 
 <div class="content-wrapper" style="padding: 20px;">
     <!-- Header -->
@@ -436,7 +454,9 @@ include '../includes/sidebar_admin.php';
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Asistencias (Últimos 30 días)</h5>
-                    <a href="reportes/asistencias.php" class="btn btn-sm btn-outline-primary">Ver Reporte</a>
+                    <?php if (!isSqliteDatabase($pdo)): ?>
+                        <a href="reportes/asistencias.php" class="btn btn-sm btn-outline-primary">Ver Reporte</a>
+                    <?php endif; ?>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($asistencias_stats)): ?>

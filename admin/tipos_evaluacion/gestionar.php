@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'La configuración de tipos de evaluación');
 
 $mensaje = '';
 $tipo_mensaje = '';

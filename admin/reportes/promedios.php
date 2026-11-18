@@ -4,6 +4,7 @@ require_once '../../includes/database.php';
 require_once '../../includes/functions_notas.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'El reporte de promedios');
 
 $esquema_faltante = verificarEsquemaReportes(['notas', 'lapsos', 'inscripciones', 'años_escolares']);
 

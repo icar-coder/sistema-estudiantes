@@ -214,14 +214,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($literal_calculado) {
                 try {
+                    $upsertClause = databaseUpsertClause(
+                        $pdo,
+                        ['inscripcion_id', 'año_escolar_id'],
+                        ['literal_final', 'observaciones_finales', 'evaluado_por', 'fecha_evaluacion']
+                    );
                     $stmt = $pdo->prepare("
                         INSERT INTO literales_finales (inscripcion_id, año_escolar_id, literal_final, observaciones_finales, evaluado_por, fecha_evaluacion) 
                         VALUES (?, ?, ?, ?, ?, CURDATE())
-                        ON DUPLICATE KEY UPDATE 
-                            literal_final = VALUES(literal_final),
-                            observaciones_finales = VALUES(observaciones_finales),
-                            evaluado_por = VALUES(evaluado_por),
-                            fecha_evaluacion = VALUES(fecha_evaluacion)
+                        {$upsertClause}
                     ");
                     
                     $observaciones = "Calculado automáticamente basado en el promedio de literales de los lapsos.";
@@ -253,14 +254,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!empty($literal)) {
             try {
+                $upsertClause = databaseUpsertClause(
+                    $pdo,
+                    ['inscripcion_id', 'año_escolar_id'],
+                    ['literal_final', 'observaciones_finales', 'evaluado_por', 'fecha_evaluacion']
+                );
                 $stmt = $pdo->prepare("
                     INSERT INTO literales_finales (inscripcion_id, año_escolar_id, literal_final, observaciones_finales, evaluado_por, fecha_evaluacion) 
                     VALUES (?, ?, ?, ?, ?, CURDATE())
-                    ON DUPLICATE KEY UPDATE 
-                        literal_final = VALUES(literal_final),
-                        observaciones_finales = VALUES(observaciones_finales),
-                        evaluado_por = VALUES(evaluado_por),
-                        fecha_evaluacion = VALUES(fecha_evaluacion)
+                    {$upsertClause}
                 ");
                 
                 $stmt->execute([

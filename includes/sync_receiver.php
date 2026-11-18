@@ -301,6 +301,47 @@ function syncValidateRecords(array $records): array
     return $validated;
 }
 
+function syncValidateDeletions(array $deletions): array
+{
+    $schema = syncReceiverSchema();
+    $order = array_reverse(syncReceiverOrder());
+    if ($deletions !== [] && syncIsList($deletions)) {
+        throw new SyncPayloadException('deletions debe ser un objeto con una lista de UUID por tabla.');
+    }
+
+    foreach ($deletions as $table => $uuids) {
+        if (!is_string($table) || !isset($schema[$table])) {
+            throw new SyncPayloadException('La solicitud contiene una tabla no permitida para borrar.');
+        }
+        if (!is_array($uuids) || !syncIsList($uuids) || count($uuids) > 50) {
+            throw new SyncPayloadException('Cada lista de borrados admite como máximo 50 UUID.');
+        }
+    }
+
+    $validated = [];
+    foreach ($order as $table) {
+        if (!array_key_exists($table, $deletions)) {
+            continue;
+        }
+
+        $seenUuids = [];
+        foreach ($deletions[$table] as $uuid) {
+            if (!is_string($uuid) ||
+                !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid)) {
+                throw new SyncPayloadException('Cada borrado debe incluir un UUID válido.');
+            }
+            $uuid = strtolower($uuid);
+            if (isset($seenUuids[$uuid])) {
+                throw new SyncPayloadException('Un lote no puede repetir UUID dentro de la misma tabla.');
+            }
+            $seenUuids[$uuid] = true;
+            $validated[$table][] = $uuid;
+        }
+    }
+
+    return $validated;
+}
+
 function syncQuoteIdentifier(string $identifier): string
 {
     return '`' . str_replace('`', '``', $identifier) . '`';
@@ -408,9 +449,23 @@ function syncPersistMap(PDO $pdo, string $uuid, string $table, int $remoteId, st
     $statement->execute();
 }
 
-function syncProcessRecords(PDO $pdo, array $records, string $receivedAt): array
+function syncProcessRecords(
+    PDO $pdo,
+    array $records,
+    string $receivedAt,
+    array $deletions = []
+): array
 {
     $validated = syncValidateRecords($records);
+    $validatedDeletions = syncValidateDeletions($deletions);
+    foreach ($validated as $table => $rows) {
+        $deleteUuids = $validatedDeletions[$table] ?? [];
+        foreach ($rows as $row) {
+            if (in_array($row['uuid'], $deleteUuids, true)) {
+                throw new SyncPayloadException('Un UUID no puede actualizarse y borrarse en el mismo lote.');
+            }
+        }
+    }
     $results = [];
 
     if (!$pdo->inTransaction()) {
@@ -491,6 +546,55 @@ function syncProcessRecords(PDO $pdo, array $records, string $receivedAt): array
                 $results[] = [
                     'tabla' => $table,
                     'uuid' => $row['uuid'],
+                    'id_remoto' => $remoteId,
+                    'operacion' => $operation,
+                ];
+            }
+        }
+
+        foreach ($validatedDeletions as $table => $uuids) {
+            $quotedTable = syncQuoteIdentifier($table);
+            foreach ($uuids as $uuid) {
+                $mapStatement = $pdo->prepare(
+                    'SELECT `id_remoto`, `last_received_at` FROM `sync_map`
+                     WHERE `uuid` = :uuid AND `tabla` = :tabla LIMIT 1'
+                );
+                $mapStatement->execute(['uuid' => $uuid, 'tabla' => $table]);
+                $map = $mapStatement->fetch(PDO::FETCH_ASSOC);
+
+                if ($map && $map['last_received_at'] !== null &&
+                    strcmp($map['last_received_at'], $receivedAt) > 0) {
+                    $results[] = [
+                        'tabla' => $table,
+                        'uuid' => $uuid,
+                        'id_remoto' => (int) $map['id_remoto'],
+                        'operacion' => 'ignored_stale',
+                    ];
+                    continue;
+                }
+
+                $statement = $pdo->prepare(
+                    "SELECT `id` FROM {$quotedTable} WHERE `uuid` = :uuid LIMIT 1"
+                );
+                $statement->execute(['uuid' => $uuid]);
+                $remoteId = $statement->fetchColumn();
+                if ($remoteId === false && !$map) {
+                    throw new SyncPayloadException('No se encontró el registro remoto que se solicitó borrar.');
+                }
+                if ($remoteId === false) {
+                    $remoteId = (int) $map['id_remoto'];
+                    $operation = 'already_deleted';
+                } else {
+                    $remoteId = (int) $remoteId;
+                    $delete = $pdo->prepare("DELETE FROM {$quotedTable} WHERE `uuid` = :uuid");
+                    $delete->execute(['uuid' => $uuid]);
+                    $operation = $delete->rowCount() > 0 ? 'deleted' : 'already_deleted';
+                }
+
+                syncPersistMap($pdo, $uuid, $table, $remoteId, $receivedAt);
+                $results[] = [
+                    'tabla' => $table,
+                    'uuid' => $uuid,
                     'id_remoto' => $remoteId,
                     'operacion' => $operation,
                 ];

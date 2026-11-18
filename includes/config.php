@@ -12,15 +12,6 @@ define('APP_ENV', getenv('APP_ENV') ?: 'production');
 define('BASE_URL', $scheme . '://' . $base_host . $base_path);
 define('SITE_NAME', 'Sistema de Gestión Estudiantil');
 
-// Configuración de la base de datos
-require_once __DIR__ . '/database_config.php';
-$dbConfig = getDatabaseConfig();
-define('DB_HOST', $dbConfig['host']);
-define('DB_NAME', $dbConfig['name']);
-define('DB_USER', $dbConfig['user']);
-define('DB_PASS', $dbConfig['pass']);
-define('DB_CHARSET', $dbConfig['charset']);
-
 // Configuración de sesión
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

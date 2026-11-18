@@ -5,6 +5,7 @@
 $current_page = basename($_SERVER['PHP_SELF']);
 $current_path = str_replace('\\', '/', $_SERVER['PHP_SELF']);
 $base = app_base_path();
+$offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
 ?>
 
 <!-- Botón hamburguesa (solo visible en móvil) -->
@@ -146,6 +147,7 @@ $base = app_base_path();
             </div>
         </div>
 
+        <?php if (!$offlineMode): ?>
         <!-- Reportes -->
         <div class="nav-section">
             <div class="nav-section-header" onclick="toggleSection(this)">
@@ -174,6 +176,7 @@ $base = app_base_path();
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="nav-item">
             <a href="<?php echo $base; ?>/admin/respaldos/index.php" class="nav-link">
