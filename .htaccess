@@ -13,3 +13,4 @@ Options -Indexes
 <Files ".env">
     Require all denied
 </Files>
+SetEnv SYNC_TOKEN "b481d30b0bf4f391e36d84decfbf0e83ac468eee355c31a006319c35f8b8184e"
