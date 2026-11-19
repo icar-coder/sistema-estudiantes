@@ -359,14 +359,53 @@ function sqliteBootstrapExpectedUuidTriggers(): array
     ];
 }
 
-function sqliteBootstrapValidateTriggers(array $triggers): void
+function sqliteBootstrapNormalizeTriggerStatement(string $statement): string
+{
+    $statement = strtoupper(str_replace('`', '', $statement));
+    $statement = preg_replace('/\s+/', '', $statement);
+    return rtrim((string) $statement, ';');
+}
+
+function sqliteBootstrapExpectedPullTriggers(PDO $source): array
+{
+    if (!function_exists('syncPullTriggerStatements')) {
+        throw new RuntimeException('No se pudo validar la configuración de los disparadores pull.');
+    }
+
+    $expected = [];
+    foreach (syncPullTriggerStatements($source) as $createStatement) {
+        if (!preg_match(
+            '/^CREATE TRIGGER `([^`]+)` AFTER (INSERT|UPDATE|DELETE) ON `([^`]+)` FOR EACH ROW (.+)$/s',
+            $createStatement,
+            $matches
+        )) {
+            throw new RuntimeException('No se pudo validar un disparador pull generado.');
+        }
+
+        $expected[$matches[1]] = [
+            'table' => str_replace('``', '`', $matches[3]),
+            'timing' => 'AFTER',
+            'event' => $matches[2],
+            'statement' => sqliteBootstrapNormalizeTriggerStatement($matches[4]),
+        ];
+    }
+
+    return $expected;
+}
+
+function sqliteBootstrapValidateTriggers(array $triggers, ?PDO $source = null): void
 {
     if ($triggers === []) {
         return;
     }
 
-    $expectedTriggers = sqliteBootstrapExpectedUuidTriggers();
-    if (count($triggers) !== count($expectedTriggers)) {
+    $expectedUuidTriggers = sqliteBootstrapExpectedUuidTriggers();
+    $expectedPullTriggers = $source instanceof PDO
+        ? sqliteBootstrapExpectedPullTriggers($source)
+        : [];
+    $uuidTriggerCount = count($expectedUuidTriggers);
+    $hasPullTriggers = count($triggers) === $uuidTriggerCount + count($expectedPullTriggers);
+    if (count($triggers) !== $uuidTriggerCount && !$hasPullTriggers) {
         throw new RuntimeException(
             'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
         );
@@ -379,14 +418,28 @@ function sqliteBootstrapValidateTriggers(array $triggers): void
         $table = (string) ($trigger['Table'] ?? '');
         $timing = strtoupper((string) ($trigger['Timing'] ?? ''));
         $event = strtoupper((string) ($trigger['Event'] ?? ''));
-        $statement = strtoupper((string) ($trigger['Statement'] ?? ''));
-        $statement = str_replace('`', '', $statement);
-        $statement = preg_replace('/\s+/', '', $statement);
-        $statement = rtrim((string) $statement, ';');
+        $statement = sqliteBootstrapNormalizeTriggerStatement(
+            (string) ($trigger['Statement'] ?? '')
+        );
 
-        if (!isset($expectedTriggers[$name]) || $expectedTriggers[$name] !== $table ||
-            $timing !== 'BEFORE' || $event !== 'INSERT' ||
-            $statement !== $expectedStatement || isset($found[$name])) {
+        if (isset($expectedUuidTriggers[$name])) {
+            $isExpectedUuidTrigger = $expectedUuidTriggers[$name] === $table &&
+                $timing === 'BEFORE' && $event === 'INSERT' &&
+                $statement === $expectedStatement;
+            $isExpectedPullTrigger = false;
+        } elseif ($hasPullTriggers && isset($expectedPullTriggers[$name])) {
+            $expectedPullTrigger = $expectedPullTriggers[$name];
+            $isExpectedUuidTrigger = false;
+            $isExpectedPullTrigger = $expectedPullTrigger['table'] === $table &&
+                $expectedPullTrigger['timing'] === $timing &&
+                $expectedPullTrigger['event'] === $event &&
+                $expectedPullTrigger['statement'] === $statement;
+        } else {
+            $isExpectedUuidTrigger = false;
+            $isExpectedPullTrigger = false;
+        }
+
+        if ((!$isExpectedUuidTrigger && !$isExpectedPullTrigger) || isset($found[$name])) {
             throw new RuntimeException(
                 'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
             );
@@ -394,7 +447,9 @@ function sqliteBootstrapValidateTriggers(array $triggers): void
         $found[$name] = true;
     }
 
-    if (count($found) !== count($expectedTriggers)) {
+    $expectedTriggerCount = $uuidTriggerCount +
+        ($hasPullTriggers ? count($expectedPullTriggers) : 0);
+    if (count($found) !== $expectedTriggerCount) {
         throw new RuntimeException(
             'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
         );
@@ -415,7 +470,7 @@ function sqliteBootstrapExport(PDO $source, PDO $target): array
 
     try {
     $triggersStatement = $source->query('SHOW TRIGGERS');
-    sqliteBootstrapValidateTriggers($triggersStatement->fetchAll(PDO::FETCH_ASSOC));
+    sqliteBootstrapValidateTriggers($triggersStatement->fetchAll(PDO::FETCH_ASSOC), $source);
 
     $tablesStatement = $source->query('SHOW FULL TABLES');
     $tables = [];

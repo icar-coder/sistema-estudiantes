@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/includes/sqlite_bootstrap.php';
+require_once dirname(__DIR__) . '/includes/sync_receiver.php';
 
 function assertSqliteBootstrapTest(bool $condition, string $message): void
 {
@@ -91,6 +92,38 @@ foreach (sqliteBootstrapExpectedUuidTriggers() as $name => $table) {
 }
 sqliteBootstrapValidateTriggers([]);
 sqliteBootstrapValidateTriggers($expectedTriggers);
+
+$expectedPullTriggers = [];
+foreach (syncPullTriggerStatements($pdo) as $createStatement) {
+    preg_match(
+        '/^CREATE TRIGGER `([^`]+)` AFTER (INSERT|UPDATE|DELETE) ON `([^`]+)` FOR EACH ROW (.+)$/s',
+        $createStatement,
+        $matches
+    );
+    $expectedPullTriggers[] = [
+        'Trigger' => $matches[1],
+        'Table' => str_replace('``', '`', $matches[3]),
+        'Timing' => 'AFTER',
+        'Event' => $matches[2],
+        'Statement' => $matches[4],
+    ];
+}
+$uuidAndPullTriggers = array_merge($expectedTriggers, $expectedPullTriggers);
+sqliteBootstrapValidateTriggers($uuidAndPullTriggers, $pdo);
+
+$partialPullTriggersRejected = false;
+try {
+    sqliteBootstrapValidateTriggers(
+        array_slice($uuidAndPullTriggers, 0, -1),
+        $pdo
+    );
+} catch (RuntimeException $exception) {
+    $partialPullTriggersRejected = true;
+}
+assertSqliteBootstrapTest(
+    $partialPullTriggersRejected,
+    'No se aceptó una instalación pull incompleta.'
+);
 
 $unexpectedTriggerRejected = false;
 try {
