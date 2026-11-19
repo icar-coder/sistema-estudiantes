@@ -36,7 +36,7 @@ Para preparar la copia inicial sincronizable, primero aplica las migraciones ind
 
 ## Paquete portable para Windows
 
-Se puede generar una carpeta para USB con PHP y SQLite incluidos, servidor limitado a `127.0.0.1` y los recursos visuales locales; no necesita XAMPP, MySQL ni Internet al ejecutarse. El enrutador local bloquea el acceso web a la base, configuración, sesiones y logs. Para la copia exclusivamente portable, primero prepara `database/datos_locales.sqlite` con `php exportar_sqlite.php --confirmar-datos-privados --portable-sin-sincronizacion`; esta opción añade los UUID necesarios solo a la copia SQLite y no modifica MySQL. Instala las dependencias de Composer y usa un runtime PHP de Windows que incluya `pdo_sqlite`, `sqlite3`, `mbstring` y `openssl`. Desde PowerShell ejecuta:
+Se puede generar una carpeta para USB con PHP y SQLite incluidos, servidor limitado a `127.0.0.1` y los recursos visuales locales; no necesita XAMPP, MySQL ni Internet al ejecutarse. El enrutador local bloquea el acceso web a la base, configuración, sesiones y logs. Para la copia exclusivamente portable, primero prepara `database/datos_locales.sqlite` con `php exportar_sqlite.php --confirmar-datos-privados --portable-sin-sincronizacion`; esta opción añade los UUID necesarios solo a la copia SQLite y no modifica MySQL. Instala las dependencias de Composer y usa un runtime PHP de Windows que incluya `pdo_sqlite`, `sqlite3`, `mbstring`, `openssl` y `curl` (este último es necesario para sincronizar). Los paquetes sincronizables también incluyen un archivo de certificados CA para validar HTTPS. Desde PowerShell ejecuta:
 
 ```powershell
 .\tools\crear_paquete_portable.ps1 `

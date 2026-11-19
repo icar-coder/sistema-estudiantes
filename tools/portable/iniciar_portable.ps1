@@ -3,6 +3,7 @@ $appRoot = $PSScriptRoot
 $phpDirectory = Join-Path $appRoot 'php'
 $phpExecutable = Join-Path $phpDirectory 'php.exe'
 $phpIni = Join-Path $phpDirectory 'php.ini'
+$caBundle = Join-Path $phpDirectory 'curl-ca-bundle.crt'
 $database = Join-Path $appRoot 'database\datos_locales.sqlite'
 $router = Join-Path $appRoot 'router.php'
 $sessionDirectory = Join-Path $appRoot 'tmp'
@@ -21,7 +22,7 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw 'El runtime PHP no pudo cargar las extensiones requeridas.'
     }
-    foreach ($extension in @('pdo_sqlite', 'sqlite3', 'mbstring', 'openssl')) {
+    foreach ($extension in @('pdo_sqlite', 'sqlite3', 'mbstring', 'openssl', 'curl')) {
         if ($modules -notcontains $extension) {
             throw "Falta la extensión PHP requerida: $extension."
         }
@@ -39,19 +40,26 @@ $stdout = Join-Path $appRoot 'logs\servidor-salida.log'
 $stderr = Join-Path $appRoot 'logs\servidor-errores.log'
 $server = $null
 
+$phpArguments = @(
+    '-c',
+    ('"' + $phpIni + '"'),
+    '-d',
+    ('"session.save_path=' + $sessionDirectory + '"')
+)
+if (Test-Path -LiteralPath $caBundle -PathType Leaf) {
+    $phpArguments += @('-d', ('"curl.cainfo=' + $caBundle + '"'))
+}
+$phpArguments += @(
+    '-S',
+    "127.0.0.1:$port",
+    '-t',
+    ('"' + $appRoot + '"'),
+    ('"' + $router + '"')
+)
+
 try {
     $server = Start-Process -FilePath $phpExecutable `
-        -ArgumentList @(
-            '-c',
-            ('"' + $phpIni + '"'),
-            '-d',
-            ('"session.save_path=' + $sessionDirectory + '"'),
-            '-S',
-            "127.0.0.1:$port",
-            '-t',
-            ('"' + $appRoot + '"'),
-            ('"' + $router + '"')
-        ) `
+        -ArgumentList $phpArguments `
         -WorkingDirectory $phpDirectory `
         -PassThru `
         -NoNewWindow `

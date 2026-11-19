@@ -22,11 +22,19 @@ $extensionDirectory = Join-Path $runtimeRoot 'ext'
 if (!(Test-Path -LiteralPath $phpExecutable -PathType Leaf)) {
     throw "No se encontró php.exe en '$runtimeRoot'."
 }
-foreach ($extension in @('php_pdo_sqlite.dll', 'php_sqlite3.dll', 'php_mbstring.dll', 'php_openssl.dll')) {
+foreach ($extension in @('php_pdo_sqlite.dll', 'php_sqlite3.dll', 'php_mbstring.dll', 'php_openssl.dll', 'php_curl.dll')) {
     if (!(Test-Path -LiteralPath (Join-Path $extensionDirectory $extension) -PathType Leaf)) {
         throw "El runtime PHP no incluye la extensión requerida $extension."
     }
 }
+$caBundleCandidates = @(
+    (Join-Path $runtimeRoot 'curl-ca-bundle.crt'),
+    (Join-Path $runtimeRoot 'extras\ssl\cacert.pem'),
+    (Join-Path $runtimeRoot '..\apache\bin\curl-ca-bundle.crt')
+)
+$caBundleSource = $caBundleCandidates |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -First 1
 if (!(Test-Path -LiteralPath (Join-Path $sourceRoot 'vendor\autoload.php') -PathType Leaf)) {
     throw 'Falta vendor\autoload.php. Ejecuta composer install antes de crear el paquete.'
 }
@@ -49,6 +57,9 @@ if ($EnableSync) {
     if (!$syncUri.IsAbsoluteUri -or $syncUri.Scheme -ne 'https' -or
         $syncUri.UserInfo -ne '' -or $syncUri.Fragment -ne '') {
         throw 'SYNC_ENDPOINT debe ser una URL HTTPS válida, sin credenciales ni fragmento.'
+    }
+    if (!$caBundleSource) {
+        throw 'El runtime PHP no incluye un paquete de certificados CA para validar HTTPS.'
     }
 }
 
@@ -230,6 +241,10 @@ function Download-PortableAsset {
 
 Copy-AppTree -Source $sourceRoot -Destination $outputFullPath
 Copy-PhpRuntime -Source $runtimeRoot -Destination (Join-Path $outputFullPath 'php')
+if ($caBundleSource) {
+    Copy-Item -LiteralPath $caBundleSource `
+        -Destination (Join-Path $outputFullPath 'php\curl-ca-bundle.crt')
+}
 New-Item -ItemType Directory -Path (Join-Path $outputFullPath 'database') -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $outputFullPath 'tmp') -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $outputFullPath 'logs') -Force | Out-Null
@@ -333,6 +348,7 @@ extension=pdo_sqlite
 extension=sqlite3
 extension=mbstring
 extension=openssl
+extension=curl
 date.timezone = America/Santo_Domingo
 default_charset = "UTF-8"
 display_errors = Off
