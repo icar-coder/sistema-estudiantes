@@ -100,6 +100,51 @@ assertAdminAttendanceTest(
     'Volver a guardar debe actualizar el registro existente, no duplicarlo.'
 );
 
+$pdo->exec("INSERT INTO `asistencias`
+    (`inscripcion_id`, `fecha`, `estado`, `observaciones`)
+    VALUES (12, '2026-11-18', 'presente', ''),
+           (12, '2026-11-20', 'presente', ''),
+           (14, '2026-11-20', 'justificado', '')");
+$registrosRango = obtenerAsistenciasAdminEnRango($pdo, 1, 10, '2026-11-19', '2026-11-20');
+assertAdminAttendanceTest(
+    count($registrosRango) === 2,
+    'La búsqueda por rango debe limitar resultados a las fechas, el año y la sección seleccionados.'
+);
+
+$procesadosRango = guardarAsistenciasAdminEnRango(
+    $pdo,
+    1,
+    10,
+    '2026-11-19',
+    '2026-11-20',
+    [
+        11 => ['2026-11-19' => 'justificado'],
+        12 => ['2026-11-20' => ''],
+    ],
+    [
+        11 => ['2026-11-19' => 'Cambio desde rango'],
+        12 => ['2026-11-20' => ''],
+    ],
+    null
+);
+assertAdminAttendanceTest($procesadosRango === 2, 'El guardado por rango debe actualizar y quitar registros.');
+assertAdminAttendanceTest(
+    $pdo->query("SELECT `estado` FROM `asistencias` WHERE `inscripcion_id` = 11")->fetchColumn() === 'justificado' &&
+    $pdo->query("SELECT `observaciones` FROM `asistencias` WHERE `inscripcion_id` = 11")->fetchColumn() === 'Cambio desde rango' &&
+    (int) $pdo->query("SELECT COUNT(*) FROM `asistencias` WHERE `inscripcion_id` = 12 AND `fecha` = '2026-11-20'")->fetchColumn() === 0 &&
+    $pdo->query("SELECT `estado` FROM `asistencias` WHERE `inscripcion_id` = 12 AND `fecha` = '2026-11-18'")->fetchColumn() === 'presente' &&
+    $pdo->query("SELECT `estado` FROM `asistencias` WHERE `inscripcion_id` = 14")->fetchColumn() === 'justificado',
+    'El guardado por rango debe aplicar cambios dentro del alcance y preservar otras secciones.'
+);
+
+$rangoInvalidoRechazado = false;
+try {
+    obtenerAsistenciasAdminEnRango($pdo, 1, 10, '2026-11-21', '2026-11-20');
+} catch (InvalidArgumentException $exception) {
+    $rangoInvalidoRechazado = true;
+}
+assertAdminAttendanceTest($rangoInvalidoRechazado, 'El sistema debe rechazar rangos con fechas invertidas.');
+
 $rechazado = false;
 try {
     guardarListaAsistenciaAdmin(
@@ -116,7 +161,7 @@ try {
 }
 assertAdminAttendanceTest($rechazado, 'El sistema debe rechazar estados fuera del catálogo.');
 assertAdminAttendanceTest(
-    $pdo->query('SELECT `estado` FROM `asistencias` WHERE `inscripcion_id` = 11')->fetchColumn() === 'ausente',
+    $pdo->query('SELECT `estado` FROM `asistencias` WHERE `inscripcion_id` = 11')->fetchColumn() === 'justificado',
     'Un estado inválido debe cancelar toda la operación.'
 );
 
