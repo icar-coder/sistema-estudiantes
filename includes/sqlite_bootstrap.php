@@ -333,6 +333,74 @@ function sqliteBootstrapCreateTriggers(PDO $target, string $table, array $column
     }
 }
 
+function sqliteBootstrapExpectedUuidTriggers(): array
+{
+    return [
+        'trg_sync_uuid_areas_aprendizaje_bi' => 'areas_aprendizaje',
+        'trg_sync_uuid_anios_escolares_bi' => 'años_escolares',
+        'trg_sync_uuid_grados_bi' => 'grados',
+        'trg_sync_uuid_profesores_bi' => 'profesores',
+        'trg_sync_uuid_representantes_bi' => 'representantes',
+        'trg_sync_uuid_areas_indicadores_bi' => 'areas_indicadores',
+        'trg_sync_uuid_secciones_bi' => 'secciones',
+        'trg_sync_uuid_lapsos_bi' => 'lapsos',
+        'trg_sync_uuid_estudiantes_bi' => 'estudiantes',
+        'trg_sync_uuid_estudiantes_representantes_bi' => 'estudiantes_representantes',
+        'trg_sync_uuid_inscripciones_bi' => 'inscripciones',
+        'trg_sync_uuid_horarios_asignaciones_bi' => 'horarios_asignaciones',
+        'trg_sync_uuid_indicadores_seccion_bi' => 'indicadores_seccion',
+        'trg_sync_uuid_historial_academico_bi' => 'historial_academico',
+        'trg_sync_uuid_historial_indicadores_bi' => 'historial_indicadores',
+        'trg_sync_uuid_asistencias_bi' => 'asistencias',
+        'trg_sync_uuid_literales_finales_bi' => 'literales_finales',
+        'trg_sync_uuid_literales_lapso_bi' => 'literales_lapso',
+        'trg_sync_uuid_proyectos_lapso_bi' => 'proyectos_lapso',
+        'trg_sync_uuid_usuarios_bi' => 'usuarios',
+    ];
+}
+
+function sqliteBootstrapValidateTriggers(array $triggers): void
+{
+    if ($triggers === []) {
+        return;
+    }
+
+    $expectedTriggers = sqliteBootstrapExpectedUuidTriggers();
+    if (count($triggers) !== count($expectedTriggers)) {
+        throw new RuntimeException(
+            'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
+        );
+    }
+
+    $expectedStatement = "SETNEW.UUID=IF(NEW.UUIDISNULLORNEW.UUID='',UUID(),NEW.UUID)";
+    $found = [];
+    foreach ($triggers as $trigger) {
+        $name = (string) ($trigger['Trigger'] ?? '');
+        $table = (string) ($trigger['Table'] ?? '');
+        $timing = strtoupper((string) ($trigger['Timing'] ?? ''));
+        $event = strtoupper((string) ($trigger['Event'] ?? ''));
+        $statement = strtoupper((string) ($trigger['Statement'] ?? ''));
+        $statement = str_replace('`', '', $statement);
+        $statement = preg_replace('/\s+/', '', $statement);
+        $statement = rtrim((string) $statement, ';');
+
+        if (!isset($expectedTriggers[$name]) || $expectedTriggers[$name] !== $table ||
+            $timing !== 'BEFORE' || $event !== 'INSERT' ||
+            $statement !== $expectedStatement || isset($found[$name])) {
+            throw new RuntimeException(
+                'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
+            );
+        }
+        $found[$name] = true;
+    }
+
+    if (count($found) !== count($expectedTriggers)) {
+        throw new RuntimeException(
+            'El esquema tiene triggers MySQL inesperados o una migración UUID incompleta.'
+        );
+    }
+}
+
 function sqliteBootstrapExport(PDO $source, PDO $target): array
 {
     if ($source->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql' ||
@@ -347,9 +415,7 @@ function sqliteBootstrapExport(PDO $source, PDO $target): array
 
     try {
     $triggersStatement = $source->query('SHOW TRIGGERS');
-    if ($triggersStatement->fetch(PDO::FETCH_ASSOC)) {
-        throw new RuntimeException('El esquema tiene triggers MySQL que deben migrarse explícitamente.');
-    }
+    sqliteBootstrapValidateTriggers($triggersStatement->fetchAll(PDO::FETCH_ASSOC));
 
     $tablesStatement = $source->query('SHOW FULL TABLES');
     $tables = [];

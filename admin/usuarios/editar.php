@@ -4,6 +4,7 @@ require_once '../../includes/database.php';
 require_once '../../includes/validaciones.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'La administración de usuarios');
 
 if (!isset($_GET['id'])) {
     header('Location: gestionar.php');

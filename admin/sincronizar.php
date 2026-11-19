@@ -23,6 +23,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 if (!isSqliteDatabase($pdo)) {
     offlineSyncAdminRespond(409, ['error' => 'offline_mode_required']);
 }
+if (!offlineSyncIsEnabled()) {
+    offlineSyncAdminRespond(409, ['error' => 'sync_disabled']);
+}
 
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 if (stripos($contentType, 'application/json') !== 0) {

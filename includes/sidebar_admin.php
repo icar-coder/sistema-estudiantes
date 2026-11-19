@@ -138,12 +138,14 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                         <span>Profesores</span>
                     </a>
                 </div>
+                <?php if (!$offlineMode): ?>
                 <div class="nav-item">
                     <a href="<?php echo $base; ?>/admin/usuarios/gestionar.php" class="nav-link">
                         <i class="fas fa-user-cog"></i>
                         <span>Usuarios</span>
                     </a>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -178,12 +180,23 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
         </div>
         <?php endif; ?>
 
+        <?php if ($offlineMode): ?>
+        <div class="nav-item">
+            <a href="<?php echo $base; ?>/admin/sincronizacion.php" class="nav-link">
+                <i class="fas fa-sync-alt"></i>
+                <span>Estado de sincronización</span>
+            </a>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!$offlineMode): ?>
         <div class="nav-item">
             <a href="<?php echo $base; ?>/admin/respaldos/index.php" class="nav-link">
                 <i class="fas fa-database"></i>
                 <span>Respaldos</span>
             </a>
         </div>
+        <?php endif; ?>
 
         <div class="nav-item">
             <a href="<?php echo $base; ?>/admin/politicas/claves_criptograficas.php" class="nav-link">

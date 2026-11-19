@@ -45,6 +45,24 @@ function offlineSyncConnect(): PDO
     return $pdo;
 }
 
+function offlineSyncIsEnabled(?array $localConfig = null): bool
+{
+    if ($localConfig === null) {
+        $localConfigPath = __DIR__ . '/config.local.php';
+        $localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
+        if (!is_array($localConfig)) {
+            throw new RuntimeException('includes/config.local.php debe devolver un arreglo.');
+        }
+    }
+
+    $enabled = $localConfig['offline_sync_enabled'] ?? true;
+    if (!is_bool($enabled)) {
+        throw new RuntimeException('offline_sync_enabled debe ser un valor booleano.');
+    }
+
+    return $enabled;
+}
+
 function offlineSyncInitialize(PDO $pdo): void
 {
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'sqlite') {
@@ -92,6 +110,80 @@ function offlineSyncInitialize(PDO $pdo): void
              ADD COLUMN `operacion` TEXT NOT NULL DEFAULT 'upsert'"
         );
     }
+}
+
+function offlineSyncPrepareLocalOnlyDatabase(PDO $pdo): void
+{
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'sqlite') {
+        throw new RuntimeException('La preparación local requiere SQLite.');
+    }
+
+    $schema = syncReceiverSchema();
+    foreach (syncReceiverOrder() as $table) {
+        $quotedTable = syncQuoteIdentifier($table);
+        $tableExists = $pdo->prepare(
+            "SELECT 1 FROM `sqlite_master` WHERE `type` = 'table' AND `name` = ? LIMIT 1"
+        );
+        $tableExists->execute([$table]);
+        if ($tableExists->fetchColumn() === false) {
+            throw new RuntimeException('Falta la tabla SQLite requerida: ' . $table . '.');
+        }
+
+        $columns = array_column(
+            $pdo->query('PRAGMA table_info(' . $quotedTable . ')')->fetchAll(PDO::FETCH_ASSOC),
+            'name'
+        );
+        $missingFields = array_values(array_diff(
+            array_merge(['id'], $schema[$table]['fields']),
+            $columns
+        ));
+        if ($missingFields !== []) {
+            throw new RuntimeException(
+                'Faltan columnas requeridas en la tabla SQLite ' . $table . ': ' .
+                implode(', ', $missingFields) . '.'
+            );
+        }
+
+        if (!in_array('uuid', $columns, true)) {
+            $pdo->exec('ALTER TABLE ' . $quotedTable . ' ADD COLUMN `uuid` TEXT');
+        }
+        if (!in_array('sincronizado', $columns, true)) {
+            $pdo->exec(
+                'ALTER TABLE ' . $quotedTable .
+                ' ADD COLUMN `sincronizado` INTEGER NOT NULL DEFAULT 0'
+            );
+        }
+
+        $pdo->exec(
+            'UPDATE ' . $quotedTable . ' SET `uuid` = UUID() ' .
+            'WHERE `uuid` IS NULL OR `uuid` = ""'
+        );
+        $duplicateUuid = $pdo->query(
+            'SELECT 1 FROM ' . $quotedTable .
+            ' GROUP BY `uuid` HAVING COUNT(*) > 1 LIMIT 1'
+        )->fetchColumn();
+        if ($duplicateUuid !== false) {
+            throw new RuntimeException('Hay UUID duplicados en la tabla SQLite ' . $table . '.');
+        }
+
+        $indexName = 'idx_local_uuid_' . substr(hash('sha256', $table), 0, 20);
+        $pdo->exec(
+            'CREATE UNIQUE INDEX IF NOT EXISTS ' . syncQuoteIdentifier($indexName) .
+            ' ON ' . $quotedTable . ' (`uuid`)'
+        );
+    }
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS `offline_sync_metadata` (
+            `key` TEXT PRIMARY KEY,
+            `value` TEXT NOT NULL
+        )'
+    );
+    $statement = $pdo->prepare(
+        'INSERT OR REPLACE INTO `offline_sync_metadata` (`key`, `value`)
+         VALUES ("database_origin", ?)'
+    );
+    $statement->execute(['local_only']);
 }
 
 function offlineSyncSeedSyncMap(PDO $pdo): void
@@ -272,6 +364,32 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
     }
 }
 
+function offlineSyncRemoveTriggers(PDO $pdo): void
+{
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'sqlite') {
+        throw new RuntimeException('Los disparadores de la cola requieren SQLite.');
+    }
+
+    $triggers = $pdo->query(
+        "SELECT `name` FROM `sqlite_master`
+         WHERE `type` = 'trigger' AND substr(`name`, 1, 11) = 'trg_outbox_'"
+    )->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($triggers as $trigger) {
+        $pdo->exec('DROP TRIGGER IF EXISTS ' . syncQuoteIdentifier((string) $trigger));
+    }
+
+    $metadataExists = $pdo->query(
+        "SELECT 1 FROM `sqlite_master`
+         WHERE `type` = 'table' AND `name` = 'offline_sync_metadata' LIMIT 1"
+    )->fetchColumn();
+    if ($metadataExists !== false) {
+        $statement = $pdo->prepare(
+            'DELETE FROM `offline_sync_metadata` WHERE `key` = "trigger_version"'
+        );
+        $statement->execute();
+    }
+}
+
 function offlineSyncGetConfig(): array
 {
     $localConfigPath = __DIR__ . '/config.local.php';
@@ -375,6 +493,22 @@ function offlineSyncPendingCount(PDO $pdo): int
     return (int) $pdo->query(
         'SELECT COUNT(*) FROM `offline_sync_outbox` WHERE `estado` = "pending"'
     )->fetchColumn();
+}
+
+function offlineSyncRetryConflict(PDO $pdo, int $entryId): bool
+{
+    if ($entryId < 1) {
+        return false;
+    }
+
+    $statement = $pdo->prepare(
+        'UPDATE `offline_sync_outbox`
+         SET `estado` = "pending", `last_error` = NULL, `updated_at` = CURRENT_TIMESTAMP
+         WHERE `id` = ? AND `estado` = "conflict"'
+    );
+    $statement->execute([$entryId]);
+
+    return $statement->rowCount() === 1;
 }
 
 function offlineSyncNextBatch(PDO $pdo): array

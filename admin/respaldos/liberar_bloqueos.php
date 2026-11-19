@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'La administración de cuentas de usuario');
 
 try {
     $stmt = $pdo->prepare('UPDATE usuarios SET bloqueado_hasta = NULL, intentos_fallidos = 0 WHERE bloqueado_hasta IS NOT NULL OR intentos_fallidos > 0');

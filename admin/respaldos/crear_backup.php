@@ -4,6 +4,7 @@ require_once '../../includes/database.php';
 require_once '../../includes/database_backup.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'Los respaldos y restauración desde el panel');
 
 try {
     $backupFile = tempnam(sys_get_temp_dir(), 'sistema_backup_');

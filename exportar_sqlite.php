@@ -13,6 +13,7 @@ if (!in_array('--confirmar-datos-privados', $argv, true)) {
     );
     exit(2);
 }
+$portableWithoutSync = in_array('--portable-sin-sincronizacion', $argv, true);
 
 require_once __DIR__ . '/includes/database_mysql.php';
 require_once __DIR__ . '/includes/sqlite_bootstrap.php';
@@ -46,7 +47,22 @@ try {
     $target->exec('PRAGMA busy_timeout = 5000');
     $counts = sqliteBootstrapExport($pdo, $target);
     offlineSyncInitialize($target);
-    offlineSyncInstallTriggers($target);
+    if ($portableWithoutSync) {
+        offlineSyncPrepareLocalOnlyDatabase($target);
+    } else {
+        offlineSyncInstallTriggers($target);
+        $target->exec(
+            'CREATE TABLE IF NOT EXISTS `offline_sync_metadata` (
+                `key` TEXT PRIMARY KEY,
+                `value` TEXT NOT NULL
+            )'
+        );
+        $origin = $target->prepare(
+            'INSERT OR REPLACE INTO `offline_sync_metadata` (`key`, `value`)
+             VALUES ("database_origin", ?)'
+        );
+        $origin->execute(['mysql_export']);
+    }
 
     $total = array_sum($counts);
     echo json_encode([
@@ -59,8 +75,12 @@ try {
         $target->rollBack();
     }
     $target = null;
+    gc_collect_cycles();
     if (is_file($targetPath)) {
-        unlink($targetPath);
+        $removed = @unlink($targetPath);
+        if (!$removed && is_file($targetPath)) {
+            fwrite(STDERR, 'No se pudo eliminar la base SQLite parcial; bórrala manualmente antes de reintentar.' . PHP_EOL);
+        }
     }
     fwrite(STDERR, 'Error al exportar SQLite: ' . $exception->getMessage() . PHP_EOL);
     exit(1);

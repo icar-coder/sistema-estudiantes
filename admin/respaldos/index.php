@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 checkAuth();
 checkRole(['admin']);
+requireOnlineFeature($pdo, 'Los respaldos y restauración desde el panel');
 
 $mensaje = $_SESSION['mensaje_backup'] ?? '';
 $tipo = $_SESSION['tipo_mensaje_backup'] ?? 'success';

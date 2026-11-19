@@ -79,6 +79,43 @@ assertSqliteBootstrapTest(
     'No se normalizó el default timestamp.'
 );
 
+$expectedTriggers = [];
+foreach (sqliteBootstrapExpectedUuidTriggers() as $name => $table) {
+    $expectedTriggers[] = [
+        'Trigger' => $name,
+        'Table' => $table,
+        'Timing' => 'BEFORE',
+        'Event' => 'INSERT',
+        'Statement' => "SET NEW.`uuid` = IF(NEW.`uuid` IS NULL OR NEW.`uuid` = '', UUID(), NEW.`uuid`)",
+    ];
+}
+sqliteBootstrapValidateTriggers([]);
+sqliteBootstrapValidateTriggers($expectedTriggers);
+
+$unexpectedTriggerRejected = false;
+try {
+    sqliteBootstrapValidateTriggers(array_slice($expectedTriggers, 0, -1));
+} catch (RuntimeException $exception) {
+    $unexpectedTriggerRejected = true;
+}
+assertSqliteBootstrapTest(
+    $unexpectedTriggerRejected,
+    'No se rechazó una migración UUID incompleta.'
+);
+
+$unexpectedTriggerRejected = false;
+$unexpectedTrigger = $expectedTriggers;
+$unexpectedTrigger[0]['Statement'] = 'DELETE FROM estudiantes';
+try {
+    sqliteBootstrapValidateTriggers($unexpectedTrigger);
+} catch (RuntimeException $exception) {
+    $unexpectedTriggerRejected = true;
+}
+assertSqliteBootstrapTest(
+    $unexpectedTriggerRejected,
+    'No se rechazó un trigger UUID con lógica inesperada.'
+);
+
 sqliteBootstrapCreateTable($pdo, $pdo, 'muestra', $columns, $indexes, []);
 sqliteBootstrapCreateIndexes($pdo, 'muestra', $indexes);
 sqliteBootstrapCreateTriggers($pdo, 'muestra', $columns, $indexes);

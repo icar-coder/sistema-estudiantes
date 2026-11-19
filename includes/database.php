@@ -28,7 +28,11 @@ if ($databaseDriver === 'mysql') {
     $pdo = offlineSyncConnect();
     sqliteRegisterFunctions($pdo);
     if ($databasePath !== ':memory:') {
-        offlineSyncInstallTriggers($pdo);
+        if (offlineSyncIsEnabled()) {
+            offlineSyncInstallTriggers($pdo);
+        } else {
+            offlineSyncRemoveTriggers($pdo);
+        }
     }
 } else {
     throw new RuntimeException('APP_DB_DRIVER debe ser mysql o sqlite.');

@@ -48,7 +48,7 @@
     })();
     </script>
     <?php endif; ?>
-    <?php if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite' &&
+    <?php if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite' && offlineSyncIsEnabled() &&
         ($_SESSION['rol'] ?? null) === 'admin'): ?>
     <?php
     if (!isset($_SESSION['csrf_offline_sync'])) {
@@ -61,13 +61,21 @@
     <script>
     (function() {
         const endpoint = <?php echo json_encode(app_url('admin/sincronizar.php')); ?>;
+        const syncStatusUrl = <?php echo json_encode(app_url('admin/sincronizacion.php')); ?>;
         const csrfToken = <?php echo json_encode($_SESSION['csrf_offline_sync']); ?>;
         const status = document.getElementById('offline-sync-status');
         let sincronizando = false;
 
-        const mostrarEstado = function(message, className) {
+        const mostrarEstado = function(message, className, detailsUrl) {
             status.textContent = message;
             status.className = 'alert ' + className + ' position-fixed shadow';
+            if (detailsUrl) {
+                const link = document.createElement('a');
+                link.href = detailsUrl;
+                link.textContent = 'Ver detalles';
+                link.className = 'alert-link d-block mt-1';
+                status.appendChild(link);
+            }
             status.hidden = false;
         };
 
@@ -105,7 +113,8 @@
                 if (summary.blocked > 0) {
                     mostrarEstado(
                         'La sincronización requiere revisar ' + summary.blocked + ' conflicto(s).',
-                        'alert-danger'
+                        'alert-danger',
+                        syncStatusUrl
                     );
                 } else if (summary.pending > 0) {
                     mostrarEstado(

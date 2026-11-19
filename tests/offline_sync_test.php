@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/includes/offline_sync.php';
+require_once dirname(__DIR__) . '/includes/sqlite_bootstrap.php';
 
 function assertOfflineSyncTest(bool $condition, string $message): void
 {
@@ -26,6 +27,71 @@ function createOfflineSyncFixtureTable(PDO $pdo, string $table): void
         'CREATE TABLE ' . syncQuoteIdentifier($table) . ' (' . implode(', ', $columns) . ')'
     );
 }
+
+assertOfflineSyncTest(
+    offlineSyncIsEnabled([]),
+    'La sincronización debe seguir habilitada por defecto.'
+);
+assertOfflineSyncTest(
+    !offlineSyncIsEnabled(['offline_sync_enabled' => false]),
+    'La configuración portable debe poder deshabilitar la sincronización.'
+);
+$invalidSyncConfigRejected = false;
+try {
+    offlineSyncIsEnabled(['offline_sync_enabled' => 'false']);
+} catch (RuntimeException $exception) {
+    $invalidSyncConfigRejected = true;
+}
+assertOfflineSyncTest(
+    $invalidSyncConfigRejected,
+    'La opción de sincronización debe exigir un booleano.'
+);
+
+$localOnlyPdo = new PDO('sqlite::memory:');
+$localOnlyPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+sqliteRegisterFunctions($localOnlyPdo);
+foreach (syncReceiverOrder() as $table) {
+    $columns = ['`id` INTEGER PRIMARY KEY AUTOINCREMENT'];
+    foreach (syncReceiverSchema()[$table]['fields'] as $column) {
+        $columns[] = syncQuoteIdentifier($column) . ' TEXT';
+    }
+    $localOnlyPdo->exec(
+        'CREATE TABLE ' . syncQuoteIdentifier($table) . ' (' . implode(', ', $columns) . ')'
+    );
+    $localOnlyPdo->exec('INSERT INTO ' . syncQuoteIdentifier($table) . ' DEFAULT VALUES');
+}
+offlineSyncPrepareLocalOnlyDatabase($localOnlyPdo);
+foreach (syncReceiverOrder() as $table) {
+    $quotedTable = syncQuoteIdentifier($table);
+    $uuid = $localOnlyPdo->query(
+        'SELECT `uuid` FROM ' . $quotedTable . ' LIMIT 1'
+    )->fetchColumn();
+    assertOfflineSyncTest(
+        is_string($uuid) && preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $uuid
+        ) === 1,
+        'La base portable debe asignar un UUID local a ' . $table . '.'
+    );
+    assertOfflineSyncTest(
+        (int) $localOnlyPdo->query(
+            'SELECT `sincronizado` FROM ' . $quotedTable . ' LIMIT 1'
+        )->fetchColumn() === 0,
+        'Los registros de la base portable deben permanecer locales.'
+    );
+}
+assertOfflineSyncTest(
+    (int) $localOnlyPdo->query(
+        "SELECT COUNT(*) FROM `sqlite_master` WHERE `type` = 'trigger'"
+    )->fetchColumn() === 0,
+    'La preparación portable no debe instalar triggers de sincronización.'
+);
+assertOfflineSyncTest(
+    $localOnlyPdo->query(
+        'SELECT `value` FROM `offline_sync_metadata` WHERE `key` = "database_origin"'
+    )->fetchColumn() === 'local_only',
+    'La base portable local-only debe identificarse como no sincronizable.'
+);
 
 $legacyPdo = new PDO('sqlite::memory:');
 $legacyPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -61,6 +127,15 @@ $triggerPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 offlineSyncInitialize($triggerPdo);
 createOfflineSyncFixtureTable($triggerPdo, 'representantes');
 createOfflineSyncFixtureTable($triggerPdo, 'estudiantes');
+offlineSyncInstallTriggers($triggerPdo, ['representantes', 'estudiantes']);
+offlineSyncRemoveTriggers($triggerPdo);
+assertOfflineSyncTest(
+    (int) $triggerPdo->query(
+        "SELECT COUNT(*) FROM `sqlite_master`
+         WHERE `type` = 'trigger' AND substr(`name`, 1, 11) = 'trg_outbox_'"
+    )->fetchColumn() === 0,
+    'Deshabilitar sincronización debe retirar los disparadores de la cola.'
+);
 offlineSyncInstallTriggers($triggerPdo, ['representantes', 'estudiantes']);
 
 $fixtureRows = [
@@ -372,6 +447,21 @@ assertOfflineSyncTest(
         'SELECT COUNT(*) FROM `offline_sync_outbox` WHERE `estado` = "conflict"'
     )->fetchColumn() === 1,
     'El conflicto no quedó visible en la cola.'
+);
+$conflictId = (int) $pdo->query(
+    'SELECT `id` FROM `offline_sync_outbox` WHERE `estado` = "conflict" LIMIT 1'
+)->fetchColumn();
+assertOfflineSyncTest(
+    offlineSyncRetryConflict($pdo, $conflictId),
+    'Un conflicto antiguo debe poder reenviarse explícitamente.'
+);
+assertOfflineSyncTest(
+    offlineSyncPendingCount($pdo) === 1,
+    'Reintentar el conflicto debe devolverlo a la cola pendiente.'
+);
+assertOfflineSyncTest(
+    !offlineSyncRetryConflict($pdo, $conflictId),
+    'Un registro que ya no está en conflicto no debe volver a encolarse.'
 );
 
 echo "offline sync tests passed\n";
