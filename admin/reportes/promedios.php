@@ -103,6 +103,7 @@ if ($estudiante_id) {
 ?>
 <?php include '../../includes/header.php'; ?>
 <?php include '../../includes/sidebar_admin.php'; ?>
+<main class="content-wrapper">
 
 <?php if (!empty($esquema_faltante)): ?>
     <div class="container-fluid mt-3">
@@ -462,4 +463,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+ </main>
 <?php include '../../includes/footer.php'; ?>

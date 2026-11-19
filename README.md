@@ -34,6 +34,8 @@ El alcance offline es el área administrativa; los portales de estudiantes y pro
 
 Antes de habilitar SQLite para uso diario, valida en una copia de prueba los flujos de captura y sincronización con el servidor y conserva una copia privada del archivo local. El módulo de respaldos del panel es solo online; en modo offline no aparece en el menú.
 
+El administrador registra y modifica asistencias desde `admin/asistencias/gestionar.php`, seleccionando año escolar, sección y fecha. Esta captura funciona en MySQL y SQLite; las modificaciones offline se encolan y se sincronizan mediante la tabla `asistencias`. El reporte estadístico de asistencias sigue siendo una función solo online.
+
 Para preparar la copia inicial sincronizable, primero aplica las migraciones indicadas arriba en la base MySQL y configura el token del servidor. Luego ejecuta `php exportar_sqlite.php --confirmar-datos-privados` desde la carpeta del proyecto, con la conexión MySQL configurada. El comando es solo CLI, se niega a sobrescribir una base local existente y muestra únicamente conteos. Copia todas las tablas y sus registros a SQLite —incluyendo información personal y usuarios locales—, por lo que protege el USB y sus respaldos. Acepta únicamente los triggers UUID creados por la migración de sincronización; si detecta otros triggers, vistas o índices no compatibles, aborta sin dejar una base parcial. SQLite no reproduce por completo las collations Unicode de MySQL; verifica unicidad en datos con acentos y mayúsculas antes de usar esa copia como base operativa.
 
 ## Paquete portable para Windows

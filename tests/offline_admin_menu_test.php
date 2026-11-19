@@ -37,6 +37,7 @@ foreach ([
     '/admin/secciones/gestionar.php',
     '/admin/estudiantes/gestionar.php',
     '/admin/profesores/gestionar.php',
+    '/admin/asistencias/gestionar.php',
     '/admin/reportes/literales.php',
     '/admin/sincronizacion.php',
 ] as $availableRoute) {

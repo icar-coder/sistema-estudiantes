@@ -213,6 +213,8 @@ function getLiteralColor($literal) {
 ?>
 
 <?php include '../../includes/header.php'; ?>
+<?php include '../../includes/sidebar_admin.php'; ?>
+<main class="content-wrapper">
 
 <?php if (!empty($esquema_faltante)): ?>
     <div class="container-fluid mt-3">
@@ -224,11 +226,7 @@ function getLiteralColor($literal) {
     </div>
 <?php endif; ?>
 
-<div class="row">
-    <?php include '../../includes/sidebar_admin.php'; ?>
-
-    <div class="col-md-9">
-        <div class="p-4">
+<div class="container-fluid p-4">
             <h2 class="mb-4">
                 <i class="fas fa-chart-bar me-2"></i>Reportes y Estadísticas por Literales
             </h2>
@@ -472,8 +470,7 @@ function getLiteralColor($literal) {
                 </div>
             <?php endif; ?>
         </div>
-    </div>
-</div>
+</main>
 
 <!-- Incluir Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

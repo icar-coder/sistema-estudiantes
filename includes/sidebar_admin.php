@@ -93,6 +93,12 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="<?php echo $base; ?>/admin/asistencias/gestionar.php" class="nav-link">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Registrar asistencias</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="<?php echo $base; ?>/admin/inscripciones/gestionar_adelantos.php" class="nav-link">
                         <i class="fas fa-forward"></i>
                         <span>Adelantos</span>

@@ -221,6 +221,8 @@ if ($año_escolar_id) {
 ?>
 
 <?php include '../../includes/header.php'; ?>
+<?php include '../../includes/sidebar_admin.php'; ?>
+<main class="content-wrapper">
 
 <?php if (!empty($esquema_faltante)): ?>
     <div class="container-fluid mt-3">
@@ -232,11 +234,7 @@ if ($año_escolar_id) {
     </div>
 <?php endif; ?>
 
-<div class="row">
-    <?php include '../../includes/sidebar_admin.php'; ?>
-
-    <div class="col-md-9">
-        <div class="p-4">
+<div class="container-fluid p-4">
             <h2 class="mb-4">Reportes de Asistencias</h2>
 
             <!-- Filtros -->
@@ -510,8 +508,7 @@ if ($año_escolar_id) {
                 </div>
             <?php endif; ?>
         </div>
-    </div>
-</div>
+</main>
 
 <!-- Incluir Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
