@@ -115,14 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = ?, ultimo_intento = NOW() WHERE id = ?');
                             $stmt->execute([
                                 $nuevosIntentos,
-                                date('Y-m-d H:i:s', time() + 15 * 60),
+                                date('Y-m-d H:i:s', time() + 60),
                                 $usuario['id'],
                             ]);
                         } else {
-                            $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 15 MINUTE), ultimo_intento = NOW() WHERE id = ?');
+                            $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 1 MINUTE), ultimo_intento = NOW() WHERE id = ?');
                             $stmt->execute([$nuevosIntentos, $usuario['id']]);
                         }
-                        $error = 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.';
+                        $error = 'Demasiados intentos fallidos. Cuenta bloqueada por 1 minuto.';
                         error_log('Cuenta bloqueada por intentos fallidos: user=' . $username);
                     } else {
                         $stmt = $pdo->prepare('UPDATE usuarios SET intentos_fallidos = ?, ultimo_intento = NOW() WHERE id = ?');
