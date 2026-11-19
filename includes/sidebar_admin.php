@@ -149,7 +149,6 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
             </div>
         </div>
 
-        <?php if (!$offlineMode): ?>
         <!-- Reportes -->
         <div class="nav-section">
             <div class="nav-section-header" onclick="toggleSection(this)">
@@ -158,6 +157,13 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                 <i class="fas fa-chevron-down arrow"></i>
             </div>
             <div class="nav-section-content">
+                <div class="nav-item">
+                    <a href="<?php echo $base; ?>/admin/reportes/literales.php" class="nav-link">
+                        <i class="fas fa-list-alt"></i>
+                        <span>Estudiantes y literales</span>
+                    </a>
+                </div>
+                <?php if (!$offlineMode): ?>
                 <div class="nav-item">
                     <a href="<?php echo $base; ?>/admin/reportes/notas.php" class="nav-link">
                         <i class="fas fa-chart-bar"></i>
@@ -176,9 +182,9 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                         <span>Promedios</span>
                     </a>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
-        <?php endif; ?>
 
         <?php if ($offlineMode): ?>
         <div class="nav-item">
