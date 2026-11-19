@@ -370,6 +370,8 @@ upload_max_filesize = 16M
 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'portable\iniciar_portable.ps1') `
     -Destination (Join-Path $outputFullPath 'iniciar_portable.ps1')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'portable\iniciar_portable.vbs') `
+    -Destination (Join-Path $outputFullPath 'iniciar_portable.vbs')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'portable\iniciar.bat') `
     -Destination (Join-Path $outputFullPath 'iniciar.bat')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'portable\router.php') `
@@ -390,8 +392,9 @@ SISTEMA DE GESTION ESTUDIANTIL - VERSION PORTABLE
 
 USO
 1. Conecta el USB y abre la carpeta del sistema.
-2. Ejecuta iniciar.bat.
-3. Para cerrar, vuelve a la ventana negra y presiona Ctrl+C antes de retirar el USB.
+2. Ejecuta iniciar_portable.vbs para abrirlo sin mostrar una consola.
+3. Usa el icono del sistema de estudiantes junto al reloj para abrirlo o salir.
+4. Selecciona "Salir y cerrar servidor" antes de retirar el USB.
 
 Esta copia usa una base SQLite local y no necesita XAMPP, MySQL ni Internet para
 abrir la aplicacion. Los estilos, iconos y graficos estan incluidos localmente.
@@ -403,7 +406,7 @@ PRIVACIDAD Y SEGURIDAD
 La base contiene informacion personal y credenciales de usuarios. Protege el USB,
 no compartas ni subas esta carpeta a servicios publicos y conserva una copia privada.
 No abras la misma base simultaneamente en dos computadoras ni retires el USB mientras
-el sistema este abierto. Para mover el sistema, detenlo primero con Ctrl+C.
+el sistema este abierto. Antes de moverlo, selecciona "Salir y cerrar servidor".
 
 El servidor web escucha solamente en 127.0.0.1 (este equipo). No permite acceso
 desde otros dispositivos de la red. Esta carpeta incluye el runtime y sus licencias.
