@@ -121,6 +121,16 @@
                         'Quedan ' + summary.pending + ' cambio(s) pendientes de enviar.',
                         'alert-warning'
                     );
+                } else if (summary.pull_pending) {
+                    mostrarEstado(
+                        'Quedan cambios por descargar; se continuará en breve.',
+                        'alert-warning'
+                    );
+                } else if (summary.pulled > 0) {
+                    mostrarEstado(
+                        'Se actualizaron ' + summary.pulled + ' cambio(s) desde el servidor.',
+                        'alert-success'
+                    );
                 } else if (summary.requests > 0) {
                     mostrarEstado('Sincronización completada.', 'alert-success');
                 } else {

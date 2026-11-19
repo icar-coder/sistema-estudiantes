@@ -355,6 +355,111 @@ assertOfflineSyncTest(
     'Los registros históricos con ID remoto cero deben poder borrar y cerrar su tombstone.'
 );
 
+$pullPdo = new PDO('sqlite::memory:');
+$pullPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+offlineSyncInitialize($pullPdo);
+createOfflineSyncFixtureTable($pullPdo, 'representantes');
+createOfflineSyncFixtureTable($pullPdo, 'estudiantes');
+offlineSyncInstallTriggers($pullPdo, ['representantes', 'estudiantes']);
+
+$remoteRepresentativeUuid = '88888888-8888-4888-8888-888888888888';
+$remoteStudentUuid = '99999999-9999-4999-8999-999999999999';
+$representativePayload = [
+    'uuid' => $remoteRepresentativeUuid,
+    'cedula' => 'PULL-1',
+    'nombre' => 'Representante remoto',
+    'apellido' => 'Actualizado',
+    'parentesco' => 'madre',
+];
+foreach (syncReceiverSchema()['representantes']['fields'] as $column) {
+    $representativePayload += [$column => null];
+}
+$studentPayload = [
+    'uuid' => $remoteStudentUuid,
+    'nombre' => 'Alumno remoto',
+    'apellido' => 'Nuevo',
+    'uuid_representante_id' => $remoteRepresentativeUuid,
+];
+foreach (syncReceiverSchema()['estudiantes']['fields'] as $column) {
+    if ($column !== 'representante_id') {
+        $studentPayload += [$column => null];
+    }
+}
+$pullApplied = offlineSyncApplyPullChanges($pullPdo, [
+    'changes' => [
+        [
+            'cursor' => '1',
+            'tabla' => 'estudiantes',
+            'uuid' => $remoteStudentUuid,
+            'operacion' => 'upsert',
+            'id_remoto' => 202,
+            'payload' => $studentPayload,
+        ],
+        [
+            'cursor' => '2',
+            'tabla' => 'representantes',
+            'uuid' => $remoteRepresentativeUuid,
+            'operacion' => 'upsert',
+            'id_remoto' => 101,
+            'payload' => $representativePayload,
+        ],
+    ],
+    'next_cursor' => '2',
+    'has_more' => false,
+]);
+assertOfflineSyncTest(
+    $pullApplied['applied'] === 2 &&
+        $pullPdo->query(
+            'SELECT `nombre` FROM `representantes` WHERE `uuid` = "' . $remoteRepresentativeUuid . '"'
+        )->fetchColumn() === 'Representante remoto',
+    'Pull debe insertar los padres y actualizar el cursor local.'
+);
+$localRepresentativeId = (int) $pullPdo->query(
+    'SELECT `id` FROM `representantes` WHERE `uuid` = "' . $remoteRepresentativeUuid . '"'
+)->fetchColumn();
+assertOfflineSyncTest(
+    (int) $pullPdo->query(
+        'SELECT `representante_id` FROM `estudiantes` WHERE `uuid` = "' . $remoteStudentUuid . '"'
+    )->fetchColumn() === $localRepresentativeId &&
+        (int) $pullPdo->query(
+            'SELECT `id_remoto` FROM `sync_map` WHERE `uuid` = "' . $remoteStudentUuid . '"'
+        )->fetchColumn() === 202,
+    'Pull debe traducir las FKs UUID a IDs locales y guardar el mapa remoto.'
+);
+assertOfflineSyncTest(
+    offlineSyncPendingCount($pullPdo) === 0,
+    'Aplicar cambios remotos no debe crear cambios locales pendientes.'
+);
+
+$pendingPullRecord = $representativePayload;
+$pendingPullRecord['nombre'] = 'Cambio local pendiente';
+offlineSyncEnqueue($pullPdo, 'representantes', $pendingPullRecord);
+$pendingPullRejected = false;
+try {
+    offlineSyncApplyPullChanges($pullPdo, [
+        'changes' => [[
+            'cursor' => '3',
+            'tabla' => 'representantes',
+            'uuid' => $remoteRepresentativeUuid,
+            'operacion' => 'upsert',
+            'id_remoto' => 101,
+            'payload' => $representativePayload,
+        ]],
+        'next_cursor' => '3',
+        'has_more' => false,
+    ]);
+} catch (OfflineSyncBusyException $exception) {
+    $pendingPullRejected = true;
+}
+assertOfflineSyncTest(
+    $pendingPullRejected &&
+        offlineSyncPullCursor($pullPdo) === '2' &&
+        $pullPdo->query(
+            'SELECT `nombre` FROM `representantes` WHERE `uuid` = "' . $remoteRepresentativeUuid . '"'
+        )->fetchColumn() === 'Representante remoto',
+    'Pull no debe sobrescribir un registro local pendiente ni avanzar el cursor.'
+);
+
 $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 offlineSyncInitialize($pdo);

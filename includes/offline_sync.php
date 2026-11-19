@@ -100,6 +100,12 @@ function offlineSyncInitialize(PDO $pdo): void
             UNIQUE (uuid, tabla)
         )'
     );
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS offline_sync_metadata (
+            `key` TEXT PRIMARY KEY,
+            `value` TEXT NOT NULL
+        )'
+    );
     $outboxColumns = array_column(
         $pdo->query('PRAGMA table_info(`offline_sync_outbox`)')->fetchAll(PDO::FETCH_ASSOC),
         'name'
@@ -226,7 +232,7 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
         $version = $pdo->query(
             'SELECT `value` FROM `offline_sync_metadata` WHERE `key` = "trigger_version"'
         )->fetchColumn();
-        if ($version === '2') {
+        if ($version === '3') {
             return;
         }
         offlineSyncSeedSyncMap($pdo);
@@ -322,7 +328,10 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
         }
         $pdo->exec(
             'CREATE TRIGGER ' . syncQuoteIdentifier($triggerBase . '_insert') .
-            ' AFTER INSERT ON ' . $quotedTable . ' BEGIN ' . $triggerBody .
+            ' AFTER INSERT ON ' . $quotedTable .
+            ' WHEN NOT EXISTS (SELECT 1 FROM `offline_sync_metadata` ' .
+            'WHERE `key` = "pull_in_progress" AND `value` = "1") ' .
+            ' BEGIN ' . $triggerBody .
             ' UPDATE ' . $quotedTable . ' SET `sincronizado` = 0 WHERE `id` = NEW.`id`; END'
         );
         $updateColumns = array_values(array_unique(array_merge(['uuid'], $tableSchema['fields'])));
@@ -331,6 +340,8 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
             'CREATE TRIGGER ' . syncQuoteIdentifier($triggerBase . '_update') .
             ' AFTER UPDATE OF ' . $updateColumnSql . ' ON ' . $quotedTable .
             ' WHEN NOT (COALESCE(NEW.`sincronizado`, 0) = 1 AND COALESCE(OLD.`sincronizado`, 0) <> 1)' .
+            ' AND NOT EXISTS (SELECT 1 FROM `offline_sync_metadata` ' .
+            'WHERE `key` = "pull_in_progress" AND `value` = "1")' .
             ' BEGIN ' . $triggerBody .
             ' UPDATE ' . $quotedTable . ' SET `sincronizado` = 0 WHERE `id` = NEW.`id`; END'
         );
@@ -351,7 +362,10 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
             '`updated_at` = CURRENT_TIMESTAMP;';
         $pdo->exec(
             'CREATE TRIGGER ' . syncQuoteIdentifier($triggerBase . '_delete') .
-            ' AFTER DELETE ON ' . $quotedTable . ' BEGIN ' . $deleteBody . ' END'
+            ' AFTER DELETE ON ' . $quotedTable .
+            ' WHEN NOT EXISTS (SELECT 1 FROM `offline_sync_metadata` ' .
+            'WHERE `key` = "pull_in_progress" AND `value` = "1") ' .
+            ' BEGIN ' . $deleteBody . ' END'
         );
     }
 
@@ -665,6 +679,70 @@ function offlineSyncRequest(
     return $response['results'];
 }
 
+function offlineSyncPullRequest(string $endpoint, string $token, string $cursor): array
+{
+    if (!extension_loaded('curl')) {
+        throw new RuntimeException('La extensión cURL no está habilitada.');
+    }
+
+    $payload = json_encode(
+        ['action' => 'pull', 'cursor' => $cursor],
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+    if ($payload === false) {
+        throw new RuntimeException('No se pudo codificar la solicitud pull.');
+    }
+
+    $curl = curl_init($endpoint);
+    if ($curl === false) {
+        throw new RuntimeException('No se pudo iniciar cURL para descargar cambios.');
+    }
+
+    try {
+        $configured = curl_setopt_array($curl, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+        if (!$configured) {
+            throw new RuntimeException('No se pudo configurar la solicitud pull.');
+        }
+
+        $body = curl_exec($curl);
+        if ($body === false) {
+            throw new RuntimeException('No se pudieron descargar cambios: ' . curl_error($curl));
+        }
+        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    } finally {
+        curl_close($curl);
+    }
+
+    $response = json_decode($body, true);
+    if ($status !== 200 || !is_array($response) ||
+        !isset($response['changes'], $response['next_cursor'], $response['has_more']) ||
+        !is_array($response['changes']) ||
+        !is_string($response['next_cursor']) ||
+        !preg_match('/^\d{1,20}$/', $response['next_cursor']) ||
+        !is_bool($response['has_more'])) {
+        $serverError = is_array($response) && isset($response['error']) && is_string($response['error'])
+            ? $response['error']
+            : 'respuesta_pull_inválida';
+        throw new OfflineSyncHttpException($status, $serverError);
+    }
+
+    return $response;
+}
+
 class OfflineSyncHttpException extends RuntimeException
 {
     private $statusCode;
@@ -683,6 +761,257 @@ class OfflineSyncHttpException extends RuntimeException
 
 class OfflineSyncBusyException extends RuntimeException
 {
+}
+
+function offlineSyncPullCursor(PDO $pdo): string
+{
+    $statement = $pdo->prepare(
+        'SELECT `value` FROM `offline_sync_metadata` WHERE `key` = "pull_cursor"'
+    );
+    $statement->execute();
+    $cursor = $statement->fetchColumn();
+
+    if ($cursor === false) {
+        return '0';
+    }
+    if (!is_string($cursor) || !preg_match('/^\d{1,20}$/', $cursor)) {
+        throw new RuntimeException('El cursor pull local está corrupto.');
+    }
+
+    return $cursor;
+}
+
+function offlineSyncCompareCursors(string $left, string $right): int
+{
+    $left = ltrim($left, '0');
+    $right = ltrim($right, '0');
+    $left = $left === '' ? '0' : $left;
+    $right = $right === '' ? '0' : $right;
+    if (strlen($left) !== strlen($right)) {
+        return strlen($left) <=> strlen($right);
+    }
+
+    return strcmp($left, $right) <=> 0;
+}
+
+function offlineSyncApplyPullChanges(PDO $pdo, array $response): array
+{
+    if (!isset($response['changes'], $response['next_cursor'], $response['has_more']) ||
+        !is_array($response['changes']) || !is_string($response['next_cursor']) ||
+        !preg_match('/^\d{1,20}$/', $response['next_cursor']) ||
+        !is_bool($response['has_more'])) {
+        throw new RuntimeException('La respuesta pull no tiene el formato esperado.');
+    }
+
+    $changes = [];
+    $schema = syncReceiverSchema();
+    $order = array_flip(syncReceiverOrder());
+    foreach ($response['changes'] as $change) {
+        if (!is_array($change) || !isset(
+            $change['cursor'],
+            $change['tabla'],
+            $change['uuid'],
+            $change['operacion'],
+            $change['id_remoto'],
+            $change['payload']
+        ) || !is_string($change['cursor']) || !preg_match('/^\d{1,20}$/', $change['cursor']) ||
+            !is_string($change['tabla']) || !isset($schema[$change['tabla']]) ||
+            !is_string($change['uuid']) || !is_numeric($change['id_remoto']) ||
+            !is_array($change['payload']) ||
+            !in_array($change['operacion'], ['upsert', 'delete'], true)) {
+            throw new RuntimeException('La respuesta pull contiene un cambio inválido.');
+        }
+        $change['uuid'] = strtolower($change['uuid']);
+        if (!preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/',
+            $change['uuid']
+        ) || strtolower((string) ($change['payload']['uuid'] ?? '')) !== $change['uuid']) {
+            throw new RuntimeException('La respuesta pull contiene un UUID inválido.');
+        }
+
+        $key = $change['tabla'] . ':' . $change['uuid'];
+        if (!isset($changes[$key]) ||
+            offlineSyncCompareCursors($change['cursor'], $changes[$key]['cursor']) > 0) {
+            $changes[$key] = $change;
+        }
+    }
+
+    $changes = array_values($changes);
+    usort($changes, function (array $left, array $right) use ($order): int {
+        $leftDelete = $left['operacion'] === 'delete';
+        $rightDelete = $right['operacion'] === 'delete';
+        if ($leftDelete !== $rightDelete) {
+            return $leftDelete ? 1 : -1;
+        }
+
+        $leftOrder = $order[$left['tabla']] ?? PHP_INT_MAX;
+        $rightOrder = $order[$right['tabla']] ?? PHP_INT_MAX;
+        if ($leftDelete) {
+            $leftOrder = -$leftOrder;
+            $rightOrder = -$rightOrder;
+        }
+        if ($leftOrder !== $rightOrder) {
+            return $leftOrder <=> $rightOrder;
+        }
+
+        return offlineSyncCompareCursors($left['cursor'], $right['cursor']);
+    });
+
+    $currentCursor = offlineSyncPullCursor($pdo);
+    if (offlineSyncCompareCursors($response['next_cursor'], $currentCursor) < 0) {
+        throw new RuntimeException('El servidor devolvió un cursor pull anterior al local.');
+    }
+
+    $applied = 0;
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec(
+            'INSERT OR REPLACE INTO `offline_sync_metadata` (`key`, `value`)
+             VALUES ("pull_in_progress", "1")'
+        );
+
+        foreach ($changes as $change) {
+            $table = $change['tabla'];
+            $uuid = $change['uuid'];
+            $outbox = $pdo->prepare(
+                'SELECT `estado` FROM `offline_sync_outbox`
+                 WHERE `tabla` = ? AND `uuid` = ? AND `estado` = "pending" LIMIT 1'
+            );
+            $outbox->execute([$table, $uuid]);
+            if ($outbox->fetchColumn() !== false) {
+                throw new OfflineSyncBusyException(
+                    'El registro local cambió durante la descarga; se reintentará en la próxima sincronización.'
+                );
+            }
+
+            if ($change['operacion'] === 'delete') {
+                $delete = $pdo->prepare(
+                    'DELETE FROM ' . syncQuoteIdentifier($table) . ' WHERE `uuid` = ?'
+                );
+                $delete->execute([$uuid]);
+                $removeMap = $pdo->prepare(
+                    'DELETE FROM `sync_map` WHERE `uuid` = ? AND `tabla` = ?'
+                );
+                $removeMap->execute([$uuid, $table]);
+                $resolveConflict = $pdo->prepare(
+                    'UPDATE `offline_sync_outbox`
+                     SET `estado` = "synced", `last_error` = NULL, `updated_at` = CURRENT_TIMESTAMP
+                     WHERE `tabla` = ? AND `uuid` = ? AND `estado` = "conflict"'
+                );
+                $resolveConflict->execute([$table, $uuid]);
+                $applied++;
+                continue;
+            }
+
+            $validated = syncValidateRecords([$table => [$change['payload']]]);
+            if (!isset($validated[$table][0])) {
+                throw new RuntimeException('No se pudo validar un registro recibido por pull.');
+            }
+            $record = $validated[$table][0];
+            if ($record['uuid'] !== $uuid) {
+                throw new RuntimeException('El UUID del registro recibido no coincide con su evento.');
+            }
+
+            $data = [];
+            foreach ($schema[$table]['fields'] as $column) {
+                if (!isset($schema[$table]['foreign_keys'][$column])) {
+                    if (!array_key_exists($column, $record['data'])) {
+                        throw new RuntimeException('Falta el campo ' . $table . '.' . $column . ' en el pull.');
+                    }
+                    $data[$column] = $record['data'][$column];
+                    continue;
+                }
+
+                $foreignKey = $schema[$table]['foreign_keys'][$column];
+                $uuidKey = 'uuid_' . $column;
+                if (!array_key_exists($uuidKey, $record['data'])) {
+                    throw new RuntimeException('Falta la referencia UUID ' . $uuidKey . ' en el pull.');
+                }
+                $foreignUuid = $record['data'][$uuidKey];
+                if ($foreignUuid === null) {
+                    if (!$foreignKey['nullable']) {
+                        throw new RuntimeException('El pull contiene una referencia obligatoria vacía.');
+                    }
+                    $data[$column] = null;
+                    continue;
+                }
+
+                $foreignStatement = $pdo->prepare(
+                    'SELECT `id` FROM ' . syncQuoteIdentifier($foreignKey['table']) .
+                    ' WHERE `uuid` = ? LIMIT 1'
+                );
+                $foreignStatement->execute([$foreignUuid]);
+                $localId = $foreignStatement->fetchColumn();
+                if ($localId === false) {
+                    throw new RuntimeException(
+                        'No se encontró la entidad local ' . $foreignKey['table'] .
+                        ' referenciada por el pull.'
+                    );
+                }
+                $data[$column] = (int) $localId;
+            }
+
+            $localStatement = $pdo->prepare(
+                'SELECT `id` FROM ' . syncQuoteIdentifier($table) . ' WHERE `uuid` = ? LIMIT 1'
+            );
+            $localStatement->execute([$uuid]);
+            $localId = $localStatement->fetchColumn();
+            if ($localId === false) {
+                $columns = array_merge(['uuid'], array_keys($data), ['sincronizado']);
+                $insert = $pdo->prepare(
+                    'INSERT INTO ' . syncQuoteIdentifier($table) . ' (' .
+                    implode(', ', array_map('syncQuoteIdentifier', $columns)) . ') VALUES (' .
+                    implode(', ', array_fill(0, count($columns), '?')) . ')'
+                );
+                $insert->execute(array_merge([$uuid], array_values($data), [1]));
+            } else {
+                $assignments = [];
+                foreach (array_keys($data) as $column) {
+                    $assignments[] = syncQuoteIdentifier($column) . ' = ?';
+                }
+                $assignments[] = '`sincronizado` = 1';
+                $update = $pdo->prepare(
+                    'UPDATE ' . syncQuoteIdentifier($table) . ' SET ' .
+                    implode(', ', $assignments) . ' WHERE `id` = ?'
+                );
+                $update->execute(array_merge(array_values($data), [(int) $localId]));
+            }
+
+            $map = $pdo->prepare(
+                'INSERT INTO `sync_map` (`uuid`, `tabla`, `id_remoto`) VALUES (?, ?, ?)
+                 ON CONFLICT (`uuid`, `tabla`) DO UPDATE SET `id_remoto` = excluded.`id_remoto`'
+            );
+            $map->execute([$uuid, $table, (int) $change['id_remoto']]);
+            $resolveConflict = $pdo->prepare(
+                'UPDATE `offline_sync_outbox`
+                 SET `estado` = "synced", `last_error` = NULL, `updated_at` = CURRENT_TIMESTAMP
+                 WHERE `tabla` = ? AND `uuid` = ? AND `estado` = "conflict"'
+            );
+            $resolveConflict->execute([$table, $uuid]);
+            $applied++;
+        }
+
+        $saveCursor = $pdo->prepare(
+            'INSERT OR REPLACE INTO `offline_sync_metadata` (`key`, `value`)
+             VALUES ("pull_cursor", ?)'
+        );
+        $saveCursor->execute([$response['next_cursor']]);
+        $pdo->prepare(
+            'DELETE FROM `offline_sync_metadata` WHERE `key` = "pull_in_progress"'
+        )->execute();
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $exception;
+    }
+
+    return [
+        'applied' => $applied,
+        'next_cursor' => $response['next_cursor'],
+        'has_more' => $response['has_more'],
+    ];
 }
 
 function offlineSyncStoreResults(PDO $pdo, array $entries, array $results): array
@@ -824,7 +1153,7 @@ function offlineSyncRunUnlocked(PDO $pdo, string $endpoint, string $token, int $
         throw new InvalidArgumentException('maxBatches debe ser mayor que cero.');
     }
 
-    $summary = ['requests' => 0, 'synced' => 0, 'conflicts' => 0];
+    $summary = ['requests' => 0, 'synced' => 0, 'conflicts' => 0, 'pulled' => 0];
     for ($batchNumber = 0; $batchNumber < $maxBatches; $batchNumber++) {
         $batch = offlineSyncNextBatch($pdo);
         if ($batch['entries'] === []) {
@@ -851,6 +1180,21 @@ function offlineSyncRunUnlocked(PDO $pdo, string $endpoint, string $token, int $
             throw $exception;
         }
     }
+
+    $pullPending = false;
+    if (offlineSyncPendingCount($pdo) === 0) {
+        for ($pullBatch = 0; $pullBatch < $maxBatches; $pullBatch++) {
+            $cursor = offlineSyncPullCursor($pdo);
+            $response = offlineSyncPullRequest($endpoint, $token, $cursor);
+            $pulled = offlineSyncApplyPullChanges($pdo, $response);
+            $summary['pulled'] += $pulled['applied'];
+            $pullPending = $pulled['has_more'];
+            if (!$pulled['has_more']) {
+                break;
+            }
+        }
+    }
+    $summary['pull_pending'] = $pullPending;
 
     return $summary + [
         'pending' => offlineSyncPendingCount($pdo),

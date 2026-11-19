@@ -11,6 +11,16 @@ function assertSyncReceiverTest(bool $condition, string $message): void
 
 $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pullTriggers = syncPullTriggerStatements($pdo);
+assertSyncReceiverTest(
+    count($pullTriggers) === count(syncReceiverOrder()) * 3,
+    'La instalación pull debe generar disparadores de altas, cambios y borrados.'
+);
+assertSyncReceiverTest(
+    strpos(implode("\n", $pullTriggers), "'uuid_representante_id'") !== false &&
+        strpos(implode("\n", $pullTriggers), "'delete'") !== false,
+    'Los eventos pull deben incluir UUID de claves foráneas y tombstones.'
+);
 $pdo->exec(
     'CREATE TABLE representantes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

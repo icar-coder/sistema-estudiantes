@@ -13,6 +13,8 @@ function syncRespond(int $status, array $body): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
     echo json_encode($body, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
@@ -58,8 +60,35 @@ if ($rawBody === false || strlen($rawBody) > $maxRequestSize) {
 }
 
 $payload = json_decode($rawBody, true);
-if (json_last_error() !== JSON_ERROR_NONE || !is_array($payload) ||
-    !array_key_exists('records', $payload) || count($payload) < 1 || count($payload) > 2 ||
+if (json_last_error() !== JSON_ERROR_NONE || !is_array($payload)) {
+    syncRespond(400, ['error' => 'invalid_json_payload']);
+}
+
+if (($payload['action'] ?? null) === 'pull') {
+    if (count($payload) !== 2 || !array_key_exists('cursor', $payload) ||
+        (!is_string($payload['cursor']) && !is_int($payload['cursor'])) ||
+        !preg_match('/^\d{1,20}$/', (string) $payload['cursor'])) {
+        syncRespond(400, ['error' => 'invalid_pull_request']);
+    }
+
+    try {
+        require_once __DIR__ . '/includes/database_mysql.php';
+        $pull = syncReadPullChanges($pdo, (string) $payload['cursor']);
+        syncRespond(200, $pull);
+    } catch (SyncPullNotInstalledException $exception) {
+        syncRespond(503, ['error' => 'sync_pull_not_configured']);
+    } catch (SyncPayloadException $exception) {
+        syncRespond(400, ['error' => 'invalid_pull_request']);
+    } catch (PDOException $exception) {
+        error_log('Error al descargar cambios en api_sync.php: ' . $exception->getMessage());
+        syncRespond(500, ['error' => 'sync_database_error']);
+    } catch (Throwable $exception) {
+        error_log('Error en pull de api_sync.php: ' . $exception->getMessage());
+        syncRespond(500, ['error' => 'sync_pull_error']);
+    }
+}
+
+if (!array_key_exists('records', $payload) || count($payload) < 1 || count($payload) > 2 ||
     array_diff(array_keys($payload), ['records', 'deletions']) !== [] ||
     !is_array($payload['records']) ||
     (array_key_exists('deletions', $payload) && !is_array($payload['deletions']))) {

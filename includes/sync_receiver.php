@@ -213,6 +213,152 @@ function syncReceiverOrder(): array
     ];
 }
 
+function syncPullTriggerStatements(PDO $pdo): array
+{
+    $schema = syncReceiverSchema();
+    $statements = [];
+    foreach (syncReceiverOrder() as $table) {
+        $quotedTable = syncQuoteIdentifier($table);
+        $tableLiteral = $pdo->quote($table);
+        $triggerBase = 'trg_sync_pull_' . substr(hash('sha256', $table), 0, 20);
+        $jsonArguments = [$pdo->quote('uuid'), 'NEW.`uuid`'];
+        foreach ($schema[$table]['fields'] as $column) {
+            if (isset($schema[$table]['foreign_keys'][$column])) {
+                $foreignTable = syncQuoteIdentifier($schema[$table]['foreign_keys'][$column]['table']);
+                $expression = '(SELECT `uuid` FROM ' . $foreignTable .
+                    ' WHERE `id` = NEW.' . syncQuoteIdentifier($column) . ' LIMIT 1)';
+                $key = 'uuid_' . $column;
+            } else {
+                $expression = 'NEW.' . syncQuoteIdentifier($column);
+                $key = $column;
+            }
+            $jsonArguments[] = $pdo->quote($key);
+            $jsonArguments[] = $expression;
+        }
+
+        $newPayload = 'JSON_OBJECT(' . implode(', ', $jsonArguments) . ')';
+        foreach (['ai' => 'INSERT', 'au' => 'UPDATE'] as $suffix => $event) {
+            $statements[] = 'CREATE TRIGGER ' .
+                syncQuoteIdentifier($triggerBase . '_' . $suffix) .
+                ' AFTER ' . $event . ' ON ' . $quotedTable . ' FOR EACH ROW ' .
+                'INSERT INTO `sync_changes` ' .
+                '(`tabla`, `uuid`, `operacion`, `id_remoto`, `payload_json`) VALUES (' .
+                $tableLiteral . ', NEW.`uuid`, ' . $pdo->quote('upsert') . ', ' .
+                'NEW.`id`, ' . $newPayload . ')';
+        }
+
+        $deletePayload = 'JSON_OBJECT(' . $pdo->quote('uuid') . ', OLD.`uuid`)';
+        $statements[] = 'CREATE TRIGGER ' .
+            syncQuoteIdentifier($triggerBase . '_ad') .
+            ' AFTER DELETE ON ' . $quotedTable . ' FOR EACH ROW ' .
+            'INSERT INTO `sync_changes` ' .
+            '(`tabla`, `uuid`, `operacion`, `id_remoto`, `payload_json`) VALUES (' .
+            $tableLiteral . ', OLD.`uuid`, ' . $pdo->quote('delete') . ', OLD.`id`, ' .
+            $deletePayload . ')';
+    }
+
+    return $statements;
+}
+
+function syncInstallPullSchema(PDO $pdo): void
+{
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+        throw new RuntimeException('El registro de cambios pull requiere MySQL o MariaDB.');
+    }
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS `sync_changes` (
+            `cursor` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `tabla` VARCHAR(50) NOT NULL,
+            `uuid` CHAR(36) NOT NULL,
+            `operacion` ENUM("upsert", "delete") NOT NULL,
+            `id_remoto` BIGINT UNSIGNED NOT NULL,
+            `payload_json` LONGTEXT NOT NULL,
+            `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+            PRIMARY KEY (`cursor`),
+            KEY `idx_sync_changes_uuid` (`tabla`, `uuid`, `cursor`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    );
+
+    foreach (syncPullTriggerStatements($pdo) as $statement) {
+        preg_match('/^CREATE TRIGGER `([^`]+)`/', $statement, $matches);
+        if (!isset($matches[1])) {
+            throw new RuntimeException('No se pudo determinar el nombre de un disparador pull.');
+        }
+        $pdo->exec('DROP TRIGGER IF EXISTS ' . syncQuoteIdentifier($matches[1]));
+        $pdo->exec($statement);
+    }
+}
+
+function syncReadPullChanges(PDO $pdo, string $cursor, int $limit = 50): array
+{
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+        throw new RuntimeException('La descarga de cambios requiere MySQL o MariaDB.');
+    }
+    if (!preg_match('/^\d{1,20}$/', $cursor) || $limit < 1 || $limit > 100) {
+        throw new SyncPayloadException('El cursor de descarga no es válido.');
+    }
+
+    $exists = $pdo->query(
+        "SELECT 1 FROM information_schema.tables
+         WHERE table_schema = DATABASE() AND table_name = 'sync_changes' LIMIT 1"
+    )->fetchColumn();
+    if ($exists === false) {
+        throw new SyncPullNotInstalledException('Debe instalarse el registro de cambios pull.');
+    }
+    $triggerCount = (int) $pdo->query(
+        "SELECT COUNT(*) FROM information_schema.triggers
+         WHERE trigger_schema = DATABASE() AND trigger_name LIKE 'trg_sync_pull_%'"
+    )->fetchColumn();
+    if ($triggerCount !== count(syncReceiverOrder()) * 3) {
+        throw new SyncPullNotInstalledException('Faltan disparadores para registrar cambios pull.');
+    }
+
+    $statement = $pdo->prepare(
+        'SELECT `cursor`, `tabla`, `uuid`, `operacion`, `id_remoto`, `payload_json`
+         FROM `sync_changes` WHERE `cursor` > :cursor
+         ORDER BY `cursor` LIMIT ' . ($limit + 1)
+    );
+    $statement->bindValue(':cursor', $cursor, PDO::PARAM_STR);
+    $statement->execute();
+    $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+    $hasMore = count($rows) > $limit;
+    if ($hasMore) {
+        array_pop($rows);
+    }
+
+    $changes = [];
+    foreach ($rows as $row) {
+        $payload = json_decode($row['payload_json'], true);
+        if (!is_array($payload) || json_last_error() !== JSON_ERROR_NONE ||
+            !isset($payload['uuid']) || !is_string($payload['uuid']) ||
+            strtolower($payload['uuid']) !== strtolower($row['uuid'])) {
+            throw new RuntimeException('El registro de cambios contiene un payload inválido.');
+        }
+
+        $changes[] = [
+            'cursor' => (string) $row['cursor'],
+            'tabla' => $row['tabla'],
+            'uuid' => strtolower($row['uuid']),
+            'operacion' => $row['operacion'],
+            'id_remoto' => (int) $row['id_remoto'],
+            'payload' => $payload,
+        ];
+    }
+
+    return [
+        'changes' => $changes,
+        'next_cursor' => $changes === []
+            ? $cursor
+            : $changes[count($changes) - 1]['cursor'],
+        'has_more' => $hasMore,
+    ];
+}
+
+class SyncPullNotInstalledException extends RuntimeException
+{
+}
+
 function syncIsList(array $value): bool
 {
     return $value === [] || array_keys($value) === range(0, count($value) - 1);

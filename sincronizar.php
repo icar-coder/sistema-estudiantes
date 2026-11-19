@@ -18,7 +18,7 @@ try {
     $summary = offlineSyncRun($pdo, $config['endpoint'], $config['token']);
     echo json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
 
-    if ($summary['pending'] > 0 || $summary['blocked'] > 0) {
+    if ($summary['pending'] > 0 || $summary['blocked'] > 0 || $summary['pull_pending']) {
         exit(2);
     }
 } catch (Throwable $exception) {
