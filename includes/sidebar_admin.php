@@ -173,19 +173,13 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                 <div class="nav-item">
                     <a href="<?php echo $base; ?>/admin/reportes/notas.php" class="nav-link">
                         <i class="fas fa-chart-bar"></i>
-                        <span>Notas y Literales</span>
+                        <span>Estadísticas por literales</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="<?php echo $base; ?>/admin/reportes/asistencias.php" class="nav-link">
                         <i class="fas fa-user-check"></i>
                         <span>Asistencias</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/reportes/promedios.php" class="nav-link">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Promedios</span>
                     </a>
                 </div>
                 <?php endif; ?>

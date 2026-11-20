@@ -218,7 +218,13 @@ if (!empty($seccion['nombre'])) {
                         <select class="form-select" id="capacidad" name="capacidad">
                             <option value="">Sin límite específico</option>
                             <?php 
-                            $capacidades = [20, 25, 30, 35];
+                            $capacidades = array_values(array_unique(array_filter(
+                                [12, 20, 25, 30, 35, (int) $seccion['capacidad']],
+                                static function ($capacidad) {
+                                    return $capacidad > 0;
+                                }
+                            )));
+                            sort($capacidades);
                             foreach ($capacidades as $cap): 
                             ?>
                                 <option value="<?php echo $cap; ?>" 

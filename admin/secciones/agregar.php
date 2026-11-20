@@ -467,7 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <select class="form-select" id="capacidad" name="capacidad">
                             <option value="">Sin límite específico</option>
                             <?php 
-                            $capacidades = [20, 25, 30, 35];
+                            $capacidades = [12, 20, 25, 30, 35];
                             foreach ($capacidades as $cap): 
                             ?>
                                 <option value="<?php echo $cap; ?>" 

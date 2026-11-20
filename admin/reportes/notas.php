@@ -2,12 +2,30 @@
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 require_once '../../includes/functions_evaluacion.php';
-require_once '../../includes/functions_notas.php';
 checkAuth();
 checkRole(['admin']);
-requireOnlineFeature($pdo, 'El reporte de notas');
+requireOnlineFeature($pdo, 'El reporte de estadísticas por literales');
 
-$esquema_faltante = verificarEsquemaReportes(['notas', 'lapsos', 'inscripciones', 'años_escolares']);
+$tablasRequeridas = [
+    'años_escolares',
+    'lapsos',
+    'secciones',
+    'grados',
+    'estudiantes',
+    'inscripciones',
+    'literales_lapso',
+    'literales_finales',
+    'historial_academico',
+    'historial_indicadores',
+    'areas_indicadores',
+    'areas_aprendizaje',
+];
+$esquema_faltante = [];
+foreach ($tablasRequeridas as $tabla) {
+    if (!databaseTableExists($pdo, $tabla)) {
+        $esquema_faltante[] = $tabla;
+    }
+}
 
 // Obtener parámetros de filtro
 $año_escolar_id = $_GET['año_escolar_id'] ?? '';
@@ -280,7 +298,7 @@ function getLiteralColor($literal) {
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-chart-bar me-2"></i>Generar Reportes
                             </button>
-                            <a href="reportes.php" class="btn btn-outline-secondary ms-2">
+                            <a href="notas.php" class="btn btn-outline-secondary ms-2">
                                 <i class="fas fa-times me-2"></i>Limpiar Filtros
                             </a>
                         </div>
@@ -614,7 +632,7 @@ document.getElementById('año_escolar_id').addEventListener('change', function()
     
     // Recargar la página con el nuevo filtro
     if (añoId) {
-        window.location.href = `reportes.php?año_escolar_id=${añoId}`;
+        window.location.href = `notas.php?año_escolar_id=${encodeURIComponent(añoId)}`;
     }
 });
 </script>
