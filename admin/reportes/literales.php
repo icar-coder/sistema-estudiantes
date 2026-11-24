@@ -331,8 +331,8 @@ function escaparReporteLiterales($valor): string
                         No hay estudiantes que coincidan con los filtros seleccionados.
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped align-middle">
+                    <div class="table-responsive report-table-wrapper">
+                        <table class="table table-bordered table-striped align-middle report-table">
                             <thead class="table-light">
                                 <tr>
                                     <th>#</th>
@@ -432,9 +432,32 @@ function escaparReporteLiterales($valor): string
 </main>
 
 <style>
+.report-table {
+    font-size: 0.88rem;
+}
+.report-table th,
+.report-table td {
+    vertical-align: middle;
+}
+.report-table th {
+    white-space: nowrap;
+}
+.report-table td:nth-child(1),
+.report-table td:nth-child(2),
+.report-table td:nth-child(5),
+.report-table td:last-child {
+    text-align: center;
+}
+.report-table td:nth-child(6),
+.report-table td:nth-child(7),
+.report-table td:nth-child(8) {
+    min-width: 155px;
+}
+
 @media print {
     @page {
-        margin: 12mm;
+        size: letter landscape;
+        margin: 8mm;
     }
     body * {
         visibility: hidden !important;
@@ -449,16 +472,55 @@ function escaparReporteLiterales($valor): string
         width: 100%;
         color: #000;
     }
+    #printable-report h2,
+    #printable-report h3 {
+        margin: 0 0 4px 0;
+    }
+    #printable-report .report-summary {
+        margin-bottom: 6px !important;
+    }
+    #printable-report .report-summary .border {
+        padding: 5px 7px !important;
+    }
     #printable-report .table-responsive {
         overflow: visible !important;
     }
-    #printable-report table {
+    #printable-report .report-table {
         width: 100%;
-        font-size: 8pt;
+        table-layout: auto;
+        font-size: 7.2pt;
+        line-height: 1.12;
     }
-    #printable-report th,
-    #printable-report td {
-        padding: 0.25rem !important;
+    #printable-report .report-table th,
+    #printable-report .report-table td {
+        padding: 3px 4px !important;
+        border: 1px solid #777 !important;
+        word-break: normal;
+        overflow-wrap: break-word;
+    }
+    #printable-report .report-table thead {
+        display: table-header-group;
+    }
+    #printable-report .report-table tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    #printable-report .badge {
+        border: 1px solid #777;
+        color: #000 !important;
+        background: #fff !important;
+        padding: 1px 3px;
+    }
+    #printable-report small,
+    #printable-report .text-muted {
+        color: #333 !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .report-table {
+        min-width: 900px;
+        font-size: 0.82rem;
     }
 }
 </style>
