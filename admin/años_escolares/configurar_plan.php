@@ -48,6 +48,122 @@ $tipoMensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $añoId = (int) ($_POST['año_escolar_id'] ?? 0);
+    $accion = trim((string) ($_POST['accion'] ?? ''));
+    if ($accion === 'agregar_area') {
+        $nombre = trim((string) ($_POST['nombre_area'] ?? ''));
+        $codigo = strtoupper(trim((string) ($_POST['codigo_area'] ?? '')));
+        $descripcion = trim((string) ($_POST['descripcion_area'] ?? ''));
+        $nivel = trim((string) ($_POST['nivel_area'] ?? 'primaria'));
+        if ($nombre === '' || $codigo === '') {
+            $mensaje = 'Complete el nombre y el código del área.';
+            $tipoMensaje = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT id FROM areas_aprendizaje WHERE codigo = ? LIMIT 1'
+                );
+                $stmt->execute([$codigo]);
+                if ($stmt->fetch()) {
+                    $mensaje = 'Ya existe un área con ese código.';
+                    $tipoMensaje = 'danger';
+                } else {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO areas_aprendizaje
+                         (nombre, codigo, descripcion, nivel, estado)
+                         VALUES (?, ?, ?, ?, 'activa')"
+                    );
+                    $stmt->execute([$nombre, $codigo, $descripcion, $nivel]);
+                    $areaIdNueva = (int) $pdo->lastInsertId();
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO años_escolares_areas (año_escolar_id, area_id)
+                         VALUES (?, ?)'
+                    );
+                    $stmt->execute([$añoId, $areaIdNueva]);
+                    $mensaje = 'Área agregada y asignada al año.';
+                    $tipoMensaje = 'success';
+                }
+            } catch (Throwable $e) {
+                $mensaje = 'No se pudo agregar el área.';
+                $tipoMensaje = 'danger';
+            }
+        }
+    } elseif ($accion === 'editar_area') {
+        $areaId = (int) ($_POST['area_id'] ?? 0);
+        $nombre = trim((string) ($_POST['nombre_area'] ?? ''));
+        $codigo = strtoupper(trim((string) ($_POST['codigo_area'] ?? '')));
+        $descripcion = trim((string) ($_POST['descripcion_area'] ?? ''));
+        $nivel = trim((string) ($_POST['nivel_area'] ?? 'primaria'));
+        if ($areaId < 1 || $nombre === '' || $codigo === '') {
+            $mensaje = 'Complete los datos del área.';
+            $tipoMensaje = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare(
+                    'UPDATE areas_aprendizaje
+                     SET nombre = ?, codigo = ?, descripcion = ?, nivel = ?
+                     WHERE id = ?'
+                );
+                $stmt->execute([$nombre, $codigo, $descripcion, $nivel, $areaId]);
+                $mensaje = 'Área modificada correctamente.';
+                $tipoMensaje = 'success';
+            } catch (Throwable $e) {
+                $mensaje = 'No se pudo modificar el área.';
+                $tipoMensaje = 'danger';
+            }
+        }
+    } elseif ($accion === 'agregar_indicador') {
+        $areaId = (int) ($_POST['area_id'] ?? 0);
+        $nombre = trim((string) ($_POST['nombre_indicador'] ?? ''));
+        $descripcion = trim((string) ($_POST['descripcion_indicador'] ?? ''));
+        $orden = max(0, (int) ($_POST['orden_indicador'] ?? 0));
+        if ($areaId < 1 || $nombre === '') {
+            $mensaje = 'Complete el texto del indicador.';
+            $tipoMensaje = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare(
+                    "INSERT INTO areas_indicadores
+                     (area_id, nombre, descripcion, escala, orden, estado)
+                     VALUES (?, ?, ?, 'L', ?, 'activo')"
+                );
+                $stmt->execute([$areaId, $nombre, $descripcion, $orden]);
+                $indicadorId = (int) $pdo->lastInsertId();
+                $stmt = $pdo->prepare(
+                    'INSERT INTO años_escolares_indicadores
+                     (año_escolar_id, indicador_id) VALUES (?, ?)'
+                );
+                $stmt->execute([$añoId, $indicadorId]);
+                $mensaje = 'Indicador agregado y asignado al año.';
+                $tipoMensaje = 'success';
+            } catch (Throwable $e) {
+                $mensaje = 'No se pudo agregar el indicador.';
+                $tipoMensaje = 'danger';
+            }
+        }
+    } elseif ($accion === 'editar_indicador') {
+        $indicadorId = (int) ($_POST['indicador_id'] ?? 0);
+        $nombre = trim((string) ($_POST['nombre_indicador'] ?? ''));
+        $descripcion = trim((string) ($_POST['descripcion_indicador'] ?? ''));
+        $orden = max(0, (int) ($_POST['orden_indicador'] ?? 0));
+        if ($indicadorId < 1 || $nombre === '') {
+            $mensaje = 'Complete el texto del indicador.';
+            $tipoMensaje = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare(
+                    'UPDATE areas_indicadores
+                     SET nombre = ?, descripcion = ?, orden = ?
+                     WHERE id = ?'
+                );
+                $stmt->execute([$nombre, $descripcion, $orden, $indicadorId]);
+                $mensaje = 'Indicador modificado correctamente.';
+                $tipoMensaje = 'success';
+            } catch (Throwable $e) {
+                $mensaje = 'No se pudo modificar el indicador.';
+                $tipoMensaje = 'danger';
+            }
+        }
+    } elseif ($accion === 'guardar_plan') {
     $areasSeleccionadas = $_POST['areas'] ?? [];
     $indicadoresSeleccionados = $_POST['indicadores'] ?? [];
     $copiarDesde = (int) ($_POST['copiar_desde'] ?? 0);
@@ -140,6 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+}
 
 $años = $pdo->query(
     'SELECT id, nombre FROM años_escolares ORDER BY nombre DESC'
@@ -158,7 +275,7 @@ if (!$año && $años !== []) {
 }
 
 $areas = $pdo->query(
-    "SELECT id, codigo, nombre, nivel
+    "SELECT id, codigo, nombre, descripcion, nivel
      FROM areas_aprendizaje
      WHERE estado = 'activa'
      ORDER BY nivel, nombre"
@@ -242,8 +359,47 @@ function escaparPlan($valor): string
             </div>
         </form>
 
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Agregar área nueva</strong>
+                <span class="text-muted small">Se creará y se asignará automáticamente a este año</span>
+            </div>
+            <div class="card-body">
+                <form method="post" class="row g-3 align-items-end">
+                    <input type="hidden" name="año_escolar_id" value="<?php echo $añoId; ?>">
+                    <input type="hidden" name="accion" value="agregar_area">
+                    <div class="col-md-3">
+                        <label class="form-label" for="nombre_area_nueva">Nombre</label>
+                        <input class="form-control" id="nombre_area_nueva" name="nombre_area" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="codigo_area_nueva">Código</label>
+                        <input class="form-control" id="codigo_area_nueva" name="codigo_area" maxlength="20" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="descripcion_area_nueva">Descripción</label>
+                        <input class="form-control" id="descripcion_area_nueva" name="descripcion_area">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="nivel_area_nueva">Nivel</label>
+                        <select class="form-select" id="nivel_area_nueva" name="nivel_area">
+                            <option value="primaria">Primaria</option>
+                            <option value="inicial">Inicial</option>
+                            <option value="media">Media</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus me-1"></i>Agregar área
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <form method="post" class="card">
             <input type="hidden" name="año_escolar_id" value="<?php echo $añoId; ?>">
+            <input type="hidden" name="accion" value="guardar_plan">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Plan de <?php echo escaparPlan($año['nombre'] ?? ''); ?></strong>
                 <div class="d-flex gap-2">
@@ -256,7 +412,6 @@ function escaparPlan($valor): string
                                 </option>
                             <?php endif; ?>
                         <?php endforeach; ?>
-                        </select>
                     </select>
                     <button type="submit" class="btn btn-sm btn-outline-primary"
                             onclick="return this.form.elements['copiar_desde'].value !== '' || confirm('¿Guardar las áreas e indicadores seleccionados?')">
@@ -283,6 +438,42 @@ function escaparPlan($valor): string
                                             <?php echo escaparPlan($area['nombre']); ?>
                                         </label>
                                     </div>
+                                    <details class="mt-2">
+                                        <summary class="small text-primary">Modificar área</summary>
+                                        <form method="post" class="mt-2">
+                                            <input type="hidden" name="año_escolar_id" value="<?php echo $añoId; ?>">
+                                            <input type="hidden" name="accion" value="editar_area">
+                                            <input type="hidden" name="area_id" value="<?php echo $areaId; ?>">
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+                                                    <input class="form-control form-control-sm" name="nombre_area"
+                                                           value="<?php echo escaparPlan($area['nombre']); ?>" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input class="form-control form-control-sm" name="codigo_area"
+                                                           value="<?php echo escaparPlan($area['codigo']); ?>" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <select class="form-select form-select-sm" name="nivel_area">
+                                                        <?php foreach (['inicial', 'primaria', 'media'] as $nivelArea): ?>
+                                                            <option value="<?php echo $nivelArea; ?>" <?php echo ($area['nivel'] ?? '') === $nivelArea ? 'selected' : ''; ?>>
+                                                                <?php echo ucfirst($nivelArea); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <textarea class="form-control form-control-sm" name="descripcion_area"
+                                                              rows="2"><?php echo escaparPlan($area['descripcion'] ?? ''); ?></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                        Guardar área
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </details>
                                 </div>
                                 <div class="card-body">
                                     <?php $hayIndicadores = false; ?>
@@ -301,8 +492,55 @@ function escaparPlan($valor): string
                                                     <?php echo escaparPlan(trim((string) ($indicador['descripcion'] ?: $indicador['nombre']))); ?>
                                                 </label>
                                             </div>
+                                            <details class="ms-4 mb-2">
+                                                <summary class="small text-secondary">Modificar indicador</summary>
+                                                <form method="post" class="border rounded p-2 mt-1">
+                                                    <input type="hidden" name="año_escolar_id" value="<?php echo $añoId; ?>">
+                                                    <input type="hidden" name="accion" value="editar_indicador">
+                                                    <input type="hidden" name="indicador_id" value="<?php echo $indicadorId; ?>">
+                                                    <div class="mb-2">
+                                                        <input class="form-control form-control-sm" name="nombre_indicador"
+                                                               value="<?php echo escaparPlan($indicador['nombre']); ?>" required>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <textarea class="form-control form-control-sm" name="descripcion_indicador"
+                                                                  rows="2"><?php echo escaparPlan($indicador['descripcion'] ?? ''); ?></textarea>
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        <input type="number" min="0" class="form-control form-control-sm"
+                                                               name="orden_indicador" value="<?php echo (int) ($indicador['orden'] ?? 0); ?>"
+                                                               style="max-width: 100px;">
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            Guardar
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </details>
                                         <?php endif; ?>
                                     <?php endforeach; ?>
+                                    <details class="mt-3">
+                                        <summary class="text-success">Agregar indicador a esta área</summary>
+                                        <form method="post" class="border rounded p-3 mt-2">
+                                            <input type="hidden" name="año_escolar_id" value="<?php echo $añoId; ?>">
+                                            <input type="hidden" name="accion" value="agregar_indicador">
+                                            <input type="hidden" name="area_id" value="<?php echo $areaId; ?>">
+                                            <div class="mb-2">
+                                                <label class="form-label small">Nombre del indicador</label>
+                                                <input class="form-control form-control-sm" name="nombre_indicador" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small">Descripción</label>
+                                                <textarea class="form-control form-control-sm" name="descripcion_indicador" rows="2"></textarea>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <input type="number" min="0" class="form-control form-control-sm"
+                                                       name="orden_indicador" value="0" style="max-width: 100px;">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    Agregar indicador
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </details>
                                     <?php if (!$hayIndicadores): ?>
                                         <span class="text-muted">Esta área no tiene indicadores activos.</span>
                                     <?php endif; ?>
