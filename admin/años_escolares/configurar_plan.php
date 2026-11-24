@@ -351,7 +351,7 @@ function escaparPlan($valor): string
         </form>
 
         <?php if ($año): ?>
-            <?php if ($esEditable && $areaAsignada): ?>
+            <?php if ($esEditable): ?>
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <strong>Agregar área nueva</strong>

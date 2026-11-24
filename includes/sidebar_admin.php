@@ -115,12 +115,6 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                         <span>Evaluación por Literales</span>
                     </a>
                 </div>
-                <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/estudiantes/gestionar.php" class="nav-link">
-                        <i class="fas fa-file-pdf"></i>
-                        <span>Boletas por estudiante</span>
-                    </a>
-                </div>
             </div>
         </div>
 
