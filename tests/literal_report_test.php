@@ -46,6 +46,30 @@ $pdo->exec('CREATE TABLE `literales_finales` (
     `año_escolar_id` INTEGER,
     `literal_final` TEXT
 )');
+$pdo->exec('CREATE TABLE `historial_academico` (
+    `id` INTEGER PRIMARY KEY,
+    `estudiante_id` INTEGER,
+    `año_escolar_id` INTEGER,
+    `literal_final` TEXT
+)');
+$pdo->exec('CREATE TABLE `areas_aprendizaje` (
+    `id` INTEGER PRIMARY KEY,
+    `nombre` TEXT
+)');
+$pdo->exec('CREATE TABLE `areas_indicadores` (
+    `id` INTEGER PRIMARY KEY,
+    `area_id` INTEGER,
+    `nombre` TEXT,
+    `descripcion` TEXT,
+    `orden` INTEGER
+)');
+$pdo->exec('CREATE TABLE `historial_indicadores` (
+    `id` INTEGER PRIMARY KEY,
+    `historial_id` INTEGER,
+    `indicador_id` INTEGER,
+    `momento` INTEGER,
+    `valoracion` TEXT
+)');
 
 $pdo->exec("INSERT INTO `secciones` VALUES (10, 'A'), (20, 'B'), (30, 'C')");
 $pdo->exec("INSERT INTO `lapsos` VALUES
@@ -70,6 +94,19 @@ $pdo->exec("INSERT INTO `literales_finales` VALUES
     (1, 11, 1, 'B'),
     (2, 13, 1, 'A'),
     (3, 14, 2, 'E')");
+$pdo->exec("INSERT INTO `historial_academico` VALUES
+    (21, 1, 1, 'B'),
+    (22, 3, 1, 'A')");
+$pdo->exec("INSERT INTO `areas_aprendizaje` VALUES
+    (1, 'Lengua'),
+    (2, 'Matematica')");
+$pdo->exec("INSERT INTO `areas_indicadores` VALUES
+    (31, 1, 'Lectura', 'Lee diversos tipos de textos', 1),
+    (32, 2, 'Calculo', 'Opera con numeros naturales', 1)");
+$pdo->exec("INSERT INTO `historial_indicadores` VALUES
+    (41, 21, 31, 1, 'LE'),
+    (42, 21, 32, 2, 'L'),
+    (43, 22, 31, 1, 'PA')");
 
 $reporte = obtenerReporteLiterales($pdo, 1, null, null, '');
 assertLiteralReportTest(
@@ -100,6 +137,13 @@ assertLiteralReportTest(
 assertLiteralReportTest(
     $filtrado['evaluaciones'] === [],
     'El reporte debe permitir mostrar un estudiante sin literal en el lapso filtrado.'
+);
+
+$conIndicadores = obtenerReporteLiterales($pdo, 1, null, null, 'Ana', true, 1);
+assertLiteralReportTest(
+    count($conIndicadores['indicadores'][11] ?? []) === 1 &&
+    $conIndicadores['indicadores'][11][0]['valoracion'] === 'LE',
+    'El reporte debe filtrar los indicadores por inscripción y momento.'
 );
 
 echo "literal report tests passed\n";

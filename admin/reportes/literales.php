@@ -34,6 +34,21 @@ $lapsoId = null;
 $seccionId = null;
 $busqueda = '';
 $añoEscolarNombre = '';
+$mostrarIndicadores = ($_GET['mostrar_indicadores'] ?? '') === '1';
+$momentoId = null;
+$momentoDisponible = databaseTableExists($pdo, 'historial_indicadores') &&
+    databaseColumnExists($pdo, 'historial_indicadores', 'momento');
+if ($momentoDisponible) {
+    $momentoRaw = $_GET['momento'] ?? '';
+    if (is_string($momentoRaw) && $momentoRaw !== '') {
+        $momentoFiltro = filter_var($momentoRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($momentoFiltro === false) {
+            $errores[] = 'El momento seleccionado no es válido.';
+        } else {
+            $momentoId = (int) $momentoFiltro;
+        }
+    }
+}
 
 if ($tablasFaltantes === []) {
     $añosEscolares = $pdo->query(
@@ -130,7 +145,9 @@ if ($tablasFaltantes === []) {
                 $añoEscolarId,
                 $lapsoId,
                 $seccionId,
-                $busqueda
+                $busqueda,
+                $mostrarIndicadores,
+                $momentoId
             );
         }
     }
@@ -227,6 +244,31 @@ function escaparReporteLiterales($valor): string
                                    placeholder="Nombre, apellido o cédula escolar"
                                    <?php echo $añoEscolarId === null ? 'disabled' : ''; ?>>
                         </div>
+                        <?php if (databaseTableExists($pdo, 'historial_academico') &&
+                                  databaseTableExists($pdo, 'historial_indicadores') &&
+                                  databaseTableExists($pdo, 'areas_indicadores') &&
+                                  databaseTableExists($pdo, 'areas_aprendizaje')): ?>
+                            <div class="col-md-4">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="mostrar_indicadores"
+                                           name="mostrar_indicadores" value="1"
+                                           <?php echo $mostrarIndicadores ? 'checked' : ''; ?>>
+                                    <label class="form-check-label" for="mostrar_indicadores">
+                                        Mostrar indicadores evaluados
+                                    </label>
+                                </div>
+                            </div>
+                            <?php if ($momentoDisponible): ?>
+                                <div class="col-md-3">
+                                    <label for="momento" class="form-label">Momento del indicador</label>
+                                    <select class="form-select" id="momento" name="momento">
+                                        <option value="">Todos los momentos</option>
+                                        <option value="1" <?php echo $momentoId === 1 ? 'selected' : ''; ?>>Momento 1</option>
+                                        <option value="2" <?php echo $momentoId === 2 ? 'selected' : ''; ?>>Momento 2</option>
+                                    </select>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <div class="col-12 d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-filter me-1"></i>Generar reporte
@@ -302,6 +344,9 @@ function escaparReporteLiterales($valor): string
                                         <th><?php echo escaparReporteLiterales($lapso['nombre']); ?></th>
                                     <?php endforeach; ?>
                                     <th>Literal final</th>
+                                    <?php if ($mostrarIndicadores): ?>
+                                        <th>Indicadores<?php echo $momentoId !== null ? ' - Momento ' . $momentoId : ''; ?></th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -350,6 +395,27 @@ function escaparReporteLiterales($valor): string
                                                 <span class="text-muted">Sin evaluar</span>
                                             <?php endif; ?>
                                         </td>
+                                        <?php if ($mostrarIndicadores): ?>
+                                            <td>
+                                                <?php $indicadoresEstudiante = $datosReporte['indicadores'][(int) $estudiante['inscripcion_id']] ?? []; ?>
+                                                <?php if ($indicadoresEstudiante !== []): ?>
+                                                    <?php foreach ($indicadoresEstudiante as $indicador): ?>
+                                                        <?php
+                                                        $textoIndicador = trim((string) ($indicador['indicador_descripcion'] ?: $indicador['indicador_nombre']));
+                                                        ?>
+                                                        <div class="mb-2">
+                                                            <strong><?php echo escaparReporteLiterales($indicador['area_nombre']); ?>:</strong>
+                                                            <?php echo escaparReporteLiterales($textoIndicador ?: 'Indicador sin descripción'); ?>
+                                                            <span class="badge bg-secondary ms-1">
+                                                                <?php echo escaparReporteLiterales($indicador['valoracion']); ?>
+                                                            </span>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">Sin indicadores</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endif; ?>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

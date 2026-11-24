@@ -1,11 +1,15 @@
 <?php
 
+require_once dirname(__DIR__) . '/includes/database_helpers.php';
+
 function obtenerReporteLiterales(
     PDO $pdo,
     int $añoEscolarId,
     ?int $lapsoId,
     ?int $seccionId,
-    string $busqueda
+    string $busqueda,
+    bool $mostrarIndicadores = false,
+    ?int $momentoId = null
 ): array {
     $condiciones = ['i.`año_escolar_id` = ?'];
     $parametros = [$añoEscolarId];
@@ -82,9 +86,47 @@ function obtenerReporteLiterales(
         $evaluaciones[(int) $evaluacion['inscripcion_id']][(int) $evaluacion['lapso_id']] = $evaluacion;
     }
 
+    $indicadores = [];
+    if ($mostrarIndicadores &&
+        databaseTableExists($pdo, 'historial_academico') &&
+        databaseTableExists($pdo, 'historial_indicadores') &&
+        databaseTableExists($pdo, 'areas_indicadores') &&
+        databaseTableExists($pdo, 'areas_aprendizaje')) {
+        $condicionesIndicadores = $condiciones;
+        $parametrosIndicadores = $parametros;
+        $tieneMomento = databaseColumnExists($pdo, 'historial_indicadores', 'momento');
+        if ($tieneMomento && $momentoId !== null) {
+            $condicionesIndicadores[] = 'hi.`momento` = ?';
+            $parametrosIndicadores[] = $momentoId;
+        }
+
+        $momentoSeleccion = $tieneMomento ? 'hi.`momento`' : '1';
+        $statement = $pdo->prepare(
+            'SELECT i.`id` AS `inscripcion_id`, aa.`nombre` AS `area_nombre`,
+                    ai.`nombre` AS `indicador_nombre`, ai.`descripcion` AS `indicador_descripcion`,
+                    hi.`valoracion`, ' . $momentoSeleccion . ' AS `momento`
+             FROM `inscripciones` i
+             JOIN `estudiantes` e ON e.`id` = i.`estudiante_id`
+             JOIN `historial_academico` ha
+               ON ha.`estudiante_id` = i.`estudiante_id`
+              AND ha.`año_escolar_id` = i.`año_escolar_id`
+             JOIN `historial_indicadores` hi ON hi.`historial_id` = ha.`id`
+             JOIN `areas_indicadores` ai ON ai.`id` = hi.`indicador_id`
+             JOIN `areas_aprendizaje` aa ON aa.`id` = ai.`area_id`
+             LEFT JOIN `secciones` s ON s.`id` = i.`seccion_id`
+             WHERE ' . implode(' AND ', $condicionesIndicadores) . '
+             ORDER BY i.`id`, aa.`nombre`, ai.`orden`, ai.`id`'
+        );
+        $statement->execute($parametrosIndicadores);
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $indicador) {
+            $indicadores[(int) $indicador['inscripcion_id']][] = $indicador;
+        }
+    }
+
     return [
         'lapsos' => $lapsos,
         'estudiantes' => $estudiantes,
         'evaluaciones' => $evaluaciones,
+        'indicadores' => $indicadores,
     ];
 }
