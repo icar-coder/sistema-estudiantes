@@ -96,7 +96,8 @@ $pdo->exec("INSERT INTO `literales_finales` VALUES
     (3, 14, 2, 'E')");
 $pdo->exec("INSERT INTO `historial_academico` VALUES
     (21, 1, 1, 'B'),
-    (22, 3, 1, 'A')");
+    (22, 3, 1, 'A'),
+    (23, 4, 1, 'A')");
 $pdo->exec("INSERT INTO `areas_aprendizaje` VALUES
     (1, 'Lengua'),
     (2, 'Matematica')");
@@ -106,12 +107,13 @@ $pdo->exec("INSERT INTO `areas_indicadores` VALUES
 $pdo->exec("INSERT INTO `historial_indicadores` VALUES
     (41, 21, 31, 1, 'LE'),
     (42, 21, 32, 2, 'L'),
-    (43, 22, 31, 1, 'PA')");
+    (43, 22, 31, 1, 'PA'),
+    (44, 23, 32, 1, 'LE')");
 
 $reporte = obtenerReporteLiterales($pdo, 1, null, null, '');
 assertLiteralReportTest(
-    count($reporte['estudiantes']) === 3,
-    'El reporte debe incluir las inscripciones del año seleccionado, incluso si ya no están activas.'
+    count($reporte['estudiantes']) === 4,
+    'El reporte debe incluir inscripciones y registros historicos sin inscripción del año seleccionado.'
 );
 assertLiteralReportTest(
     count($reporte['lapsos']) === 2,
@@ -141,9 +143,17 @@ assertLiteralReportTest(
 
 $conIndicadores = obtenerReporteLiterales($pdo, 1, null, null, 'Ana', true, 1);
 assertLiteralReportTest(
-    count($conIndicadores['indicadores'][11] ?? []) === 1 &&
-    $conIndicadores['indicadores'][11][0]['valoracion'] === 'LE',
+    count($conIndicadores['indicadores'][1] ?? []) === 1 &&
+    $conIndicadores['indicadores'][1][0]['valoracion'] === 'LE',
     'El reporte debe filtrar los indicadores por inscripción y momento.'
+);
+$historicoIndicadores = obtenerReporteLiterales($pdo, 1, null, null, 'Dora', true, 1);
+assertLiteralReportTest(
+    count($historicoIndicadores['estudiantes']) === 1 &&
+    $historicoIndicadores['estudiantes'][0]['inscripcion_id'] === null &&
+    $historicoIndicadores['estudiantes'][0]['literal_final'] === 'A' &&
+    $historicoIndicadores['indicadores'][4][0]['valoracion'] === 'LE',
+    'El reporte debe incluir estudiantes históricos sin inscripción y sus indicadores.'
 );
 
 echo "literal report tests passed\n";

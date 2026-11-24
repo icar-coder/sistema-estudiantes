@@ -397,7 +397,7 @@ function escaparReporteLiterales($valor): string
                                         </td>
                                         <?php if ($mostrarIndicadores): ?>
                                             <td>
-                                                <?php $indicadoresEstudiante = $datosReporte['indicadores'][(int) $estudiante['inscripcion_id']] ?? []; ?>
+                                                <?php $indicadoresEstudiante = $datosReporte['indicadores'][(int) $estudiante['estudiante_id']] ?? []; ?>
                                                 <?php if ($indicadoresEstudiante !== []): ?>
                                                     <?php foreach ($indicadoresEstudiante as $indicador): ?>
                                                         <?php
