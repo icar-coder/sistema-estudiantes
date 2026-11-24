@@ -1,0 +1,5 @@
+OCR resources included locally
+
+- Tesseract.js 5.1.1: Apache License 2.0; see LICENSE-tesseract-js.md.
+- Tesseract.js Core 5.1.1: Apache License 2.0; see LICENSE-tesseract-core.txt.
+- @tesseract.js-data/spa 1.0.0, 4.0.0_best_int model: MIT License; see LICENSE-spanish-model.txt.

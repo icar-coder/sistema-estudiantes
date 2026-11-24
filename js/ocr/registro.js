@@ -326,7 +326,9 @@
                 return;
             }
             if (!window.Tesseract) {
-                estado.textContent = 'No se pudo cargar el motor OCR local.';
+                const scriptMotor = document.getElementById('ocr-tesseract-library');
+                const rutaMotor = scriptMotor ? scriptMotor.src : 'js/ocr/assets/tesseract.min.js';
+                estado.textContent = `No se pudo cargar el motor OCR local (${rutaMotor}). Verifica que el recurso esté publicado y sea accesible.`;
                 return;
             }
 

@@ -297,9 +297,9 @@ $replacements = @{
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' = '/assets/vendor/fontawesome/css/all.min.css'
     'https://cdn.jsdelivr.net/npm/chart.js' = '/assets/vendor/chart.js/chart.umd.min.js'
     'https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600&display=swap' = 'data:text/css,'
-    '"https://cdn.jsdelivr.net/npm/tesseract.js@v".concat(c,"/dist/worker.min.js")' = '"/js/ocr/vendor/worker.min.js"'
-    'o||"https://cdn.jsdelivr.net/npm/tesseract.js-core@v".concat(s.substring(1))' = 'o||"/js/ocr/vendor/tesseract-core-simd-lstm.wasm.js"'
-    's||"https://cdn.jsdelivr.net/npm/@tesseract.js-data/".concat(i,m?"/4.0.0_best_int":"/4.0.0")' = 's||"/js/ocr/vendor"'
+    '"https://cdn.jsdelivr.net/npm/tesseract.js@v".concat(c,"/dist/worker.min.js")' = '"/js/ocr/assets/worker.min.js"'
+    'o||"https://cdn.jsdelivr.net/npm/tesseract.js-core@v".concat(s.substring(1))' = 'o||"/js/ocr/assets/tesseract-core-simd-lstm.wasm.js"'
+    's||"https://cdn.jsdelivr.net/npm/@tesseract.js-data/".concat(i,m?"/4.0.0_best_int":"/4.0.0")' = 's||"/js/ocr/assets"'
 }
 foreach ($file in Get-ChildItem -LiteralPath $outputFullPath -Recurse -File |
     Where-Object { $_.Extension -in @('.php', '.js', '.css') }) {

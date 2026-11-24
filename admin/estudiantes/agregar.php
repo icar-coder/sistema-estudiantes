@@ -475,9 +475,9 @@ $documentos_requeridos = [
         <section
             id="ocr-registro"
             class="card mb-4"
-            data-worker-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/worker.min.js'), ENT_QUOTES, 'UTF-8'); ?>"
-            data-core-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/tesseract-core-simd-lstm.wasm.js'), ENT_QUOTES, 'UTF-8'); ?>"
-            data-language-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-worker-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/worker.min.js'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-core-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/tesseract-core-simd-lstm.wasm.js'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-language-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/'), ENT_QUOTES, 'UTF-8'); ?>"
             aria-labelledby="ocr-titulo"
         >
             <div class="card-header bg-info text-dark">
@@ -1257,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php if ($mostrar_formulario_completo): ?>
-<script src="<?php echo htmlspecialchars(app_url('js/ocr/vendor/tesseract.min.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script id="ocr-tesseract-library" src="<?php echo htmlspecialchars(app_url('js/ocr/assets/tesseract.min.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <script src="<?php echo htmlspecialchars(app_url('js/ocr/registro.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <?php endif; ?>
 <script src="../../js/validaciones-formularios.js"></script>
