@@ -307,11 +307,27 @@
         const tipoDocumento = document.getElementById('ocr-tipo');
         const rotacion = document.getElementById('ocr-rotacion');
         const botonLeer = document.getElementById('ocr-leer');
+        const botonGemini = document.getElementById('ocr-gemini');
         const botonAplicar = document.getElementById('ocr-aplicar');
+        const consentimientoGemini = document.getElementById('ocr-gemini-consentimiento');
         const salida = document.getElementById('ocr-texto');
         const estado = document.getElementById('ocr-estado');
         const progreso = document.getElementById('ocr-progreso');
         let sugerenciasActuales = {};
+        let procesoActivo = false;
+
+        function actualizarBotonGemini() {
+            botonGemini.disabled = procesoActivo ||
+                !consentimientoGemini.checked ||
+                !archivos.files ||
+                archivos.files.length !== 1;
+        }
+
+        archivos.addEventListener('change', () => {
+            consentimientoGemini.checked = false;
+            actualizarBotonGemini();
+        });
+        consentimientoGemini.addEventListener('change', actualizarBotonGemini);
 
         botonLeer.addEventListener('click', async () => {
             const seleccionados = Array.from(archivos.files || []);
@@ -332,12 +348,15 @@
                 return;
             }
 
+            procesoActivo = true;
             botonLeer.disabled = true;
+            actualizarBotonGemini();
             botonAplicar.disabled = true;
             progreso.value = 0;
             estado.textContent = 'Iniciando OCR local en este dispositivo…';
             let worker = null;
             let indiceActual = 0;
+            sugerenciasActuales = {};
             try {
                 worker = await Tesseract.createWorker('spa', Tesseract.OEM.LSTM_ONLY, {
                     workerPath: panel.dataset.workerUrl,
@@ -378,9 +397,125 @@
                 botonAplicar.disabled = Object.keys(sugerenciasActuales).length === 0;
             } finally {
                 if (worker) {
-                    await worker.terminate();
+                    try {
+                        await worker.terminate();
+                    } catch (error) {
+                        estado.textContent = `No se pudo cerrar el motor OCR correctamente: ${error.message}`;
+                    }
                 }
                 botonLeer.disabled = false;
+                procesoActivo = false;
+                actualizarBotonGemini();
+            }
+        });
+
+        botonGemini.addEventListener('click', async () => {
+            const seleccionados = Array.from(archivos.files || []);
+            if (!consentimientoGemini.checked) {
+                estado.textContent = 'Confirma que la imagen es sintética o está completamente anonimizada.';
+                return;
+            }
+            if (seleccionados.length !== 1) {
+                estado.textContent = 'Selecciona exactamente una imagen para evaluar con Gemini.';
+                return;
+            }
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(seleccionados[0].type)) {
+                estado.textContent = 'Selecciona una imagen JPG, PNG o WebP.';
+                return;
+            }
+
+            procesoActivo = true;
+            botonLeer.disabled = true;
+            archivos.disabled = true;
+            rotacion.disabled = true;
+            consentimientoGemini.disabled = true;
+            actualizarBotonGemini();
+            botonAplicar.disabled = true;
+            progreso.value = 0;
+            estado.textContent = 'Preparando y enviando la imagen seleccionada a Gemini…';
+            try {
+                const canvas = await prepararImagen(seleccionados[0], Number(rotacion.value));
+                const imagenPreparada = await new Promise((resolve) => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.88);
+                });
+                if (!imagenPreparada) {
+                    throw new Error('El navegador no pudo preparar la imagen.');
+                }
+                if (imagenPreparada.size > 4 * 1024 * 1024) {
+                    throw new Error('La imagen preparada supera el límite de 4 MB.');
+                }
+
+                const datos = new FormData();
+                datos.append('confirmacion_sintetica', '1');
+                datos.append('imagen', imagenPreparada, 'documento.jpg');
+                const respuesta = await fetch(panel.dataset.geminiUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRF-Token': panel.dataset.csrfToken },
+                    body: datos
+                });
+                let contenido;
+                try {
+                    contenido = await respuesta.json();
+                } catch (error) {
+                    throw new Error('El servidor devolvió una respuesta que no se pudo leer.');
+                }
+                if (!respuesta.ok) {
+                    throw new Error(contenido.message || 'No se pudo completar la evaluación Gemini.');
+                }
+                if (!contenido || !contenido.result ||
+                    !contenido.result.estudiante || !contenido.result.representante) {
+                    throw new Error('El servidor devolvió sugerencias incompletas.');
+                }
+
+                const nombresCampos = {
+                    estudiante: {
+                        nombre: 'nombre',
+                        apellido: 'apellido',
+                        fecha_nacimiento: 'fecha_nacimiento',
+                        genero: 'genero',
+                        lugar_nacimiento: 'lugar_nacimiento',
+                        direccion: 'direccion',
+                        escuela_anterior: 'escuela_anterior',
+                        email: 'email'
+                    },
+                    representante: {
+                        nombre: 'representante_nombre',
+                        apellido: 'representante_apellido',
+                        cedula: 'representante_cedula',
+                        fecha_nacimiento: 'representante_fecha_nacimiento',
+                        genero: 'representante_genero',
+                        direccion: 'representante_direccion',
+                        email: 'representante_email'
+                    }
+                };
+                sugerenciasActuales = {};
+                for (const [grupo, campos] of Object.entries(nombresCampos)) {
+                    for (const [campo, nombreFormulario] of Object.entries(campos)) {
+                        const valor = contenido.result[grupo][campo];
+                        if (valor) {
+                            sugerenciasActuales[nombreFormulario] = valor;
+                        }
+                    }
+                }
+
+                const cantidad = Object.keys(sugerenciasActuales).length;
+                salida.value = `${salida.value}${salida.value ? '\n\n' : ''}--- Gemini (${contenido.model}) ---\n${JSON.stringify(contenido.result, null, 2)}`;
+                progreso.value = 100;
+                botonAplicar.disabled = cantidad === 0;
+                estado.textContent = cantidad
+                    ? `Gemini terminó. Hay ${cantidad} sugerencia(s); compáralas y revísalas antes de aplicarlas.`
+                    : 'Gemini no encontró datos utilizables. Completa los campos manualmente.';
+            } catch (error) {
+                estado.textContent = `No se pudo evaluar la imagen con Gemini: ${error.message}`;
+            } finally {
+                consentimientoGemini.checked = false;
+                archivos.disabled = false;
+                rotacion.disabled = false;
+                consentimientoGemini.disabled = false;
+                botonLeer.disabled = false;
+                procesoActivo = false;
+                actualizarBotonGemini();
             }
         });
 

@@ -7,6 +7,10 @@ require_once '../../includes/functions_secciones.php';
 checkAuth();
 checkRole(['admin']);
 
+if (empty($_SESSION['csrf_gemini_ocr'])) {
+    $_SESSION['csrf_gemini_ocr'] = bin2hex(random_bytes(32));
+}
+
 $mensaje = '';
 $tipo_mensaje = '';
 $mostrar_formulario_completo = false;
@@ -478,6 +482,8 @@ $documentos_requeridos = [
             data-worker-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/worker.min.js'), ENT_QUOTES, 'UTF-8'); ?>"
             data-core-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/tesseract-core-simd-lstm.wasm.js'), ENT_QUOTES, 'UTF-8'); ?>"
             data-language-url="<?php echo htmlspecialchars(app_url('js/ocr/assets/'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-gemini-url="<?php echo htmlspecialchars(app_url('admin/estudiantes/ocr_gemini.php'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-csrf-token="<?php echo htmlspecialchars($_SESSION['csrf_gemini_ocr'], ENT_QUOTES, 'UTF-8'); ?>"
             aria-labelledby="ocr-titulo"
         >
             <div class="card-header bg-info text-dark">
@@ -491,9 +497,9 @@ $documentos_requeridos = [
                     En la tarjeta solo se buscarán datos para identificar al estudiante; no se guardan vacunas.
                 </p>
                 <div class="alert alert-warning" role="note">
-                    Las imágenes se procesan en este equipo y no se suben ni se guardan.
-                    La lectura es una sugerencia y puede separar mal nombres y apellidos:
-                    confirma cada dato antes de registrar.
+                    La lectura local se procesa en este equipo. Si eliges Gemini, la imagen seleccionada
+                    se enviará a Google para su análisis y no se guardará en esta aplicación.
+                    Revisa sus condiciones de tratamiento de datos antes de continuar.
                 </div>
                 <div class="row align-items-end">
                     <div class="col-lg-6 mb-3">
@@ -524,9 +530,24 @@ $documentos_requeridos = [
                     <button type="button" class="btn btn-primary" id="ocr-leer">
                         <i class="fas fa-search me-2"></i>Leer documento
                     </button>
+                    <button type="button" class="btn btn-outline-primary" id="ocr-gemini" disabled>
+                        <i class="fas fa-cloud me-2"></i>Evaluar con Gemini
+                    </button>
                     <button type="button" class="btn btn-outline-success" id="ocr-aplicar" disabled>
                         <i class="fas fa-check me-2"></i>Aplicar sugerencias a campos vacíos
                     </button>
+                </div>
+                <div class="alert alert-danger" role="note">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ocr-gemini-consentimiento">
+                        <label class="form-check-label" for="ocr-gemini-consentimiento">
+                            Para esta evaluación confirmo que la imagen es sintética o está completamente
+                            anonimizada. Entiendo que se enviará a Google y que el nivel gratuito puede usar
+                            el contenido para mejorar sus productos. No usaré documentos reales ni datos
+                            personales en esta función.
+                        </label>
+                    </div>
+                    <small class="d-block mt-2">Gemini procesa una imagen por solicitud; las cuotas dependen del proyecto y pueden cambiar.</small>
                 </div>
                 <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
                 <p id="ocr-estado" class="mb-2" role="status" aria-live="polite"></p>

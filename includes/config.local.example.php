@@ -21,5 +21,9 @@ return [
         'endpoint' => 'https://sistemaestudiante.alwaysdata.net/api_sync.php',
         'token' => 'reemplazar-por-un-token-aleatorio-de-al-menos-32-caracteres',
     ],
+    'gemini' => [
+        'api_key' => '',
+        'model' => 'gemini-4-hydrogen',
+    ],
     'offline_db_path' => dirname(__DIR__) . '/database/datos_locales.sqlite',
 ];
