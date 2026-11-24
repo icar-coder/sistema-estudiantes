@@ -32,35 +32,6 @@ function obtenerListaAsistenciaAdmin(PDO $pdo, int $añoEscolarId, int $seccionI
     return $statement->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function obtenerAsistenciasAdminEnRango(
-    PDO $pdo,
-    int $añoEscolarId,
-    int $seccionId,
-    string $fechaInicio,
-    string $fechaFin
-): array {
-    validarSeccionAsistenciaAdmin($pdo, $añoEscolarId, $seccionId);
-    if (!esFechaAsistenciaValida($fechaInicio) || !esFechaAsistenciaValida($fechaFin) ||
-        $fechaInicio > $fechaFin) {
-        throw new InvalidArgumentException('El rango de fechas seleccionado no es válido.');
-    }
-
-    $statement = $pdo->prepare(
-        'SELECT i.`id` AS `inscripcion_id`, e.`cedula_escolar`,
-                e.`nombre`, e.`apellido`, a.`fecha`, a.`estado`, a.`observaciones`
-         FROM `asistencias` a
-         JOIN `inscripciones` i ON i.`id` = a.`inscripcion_id`
-         JOIN `estudiantes` e ON e.`id` = i.`estudiante_id`
-         WHERE i.`año_escolar_id` = ?
-           AND i.`seccion_id` = ?
-           AND a.`fecha` BETWEEN ? AND ?
-         ORDER BY a.`fecha` DESC, e.`apellido`, e.`nombre`, i.`id`'
-    );
-    $statement->execute([$añoEscolarId, $seccionId, $fechaInicio, $fechaFin]);
-
-    return $statement->fetchAll(PDO::FETCH_ASSOC);
-}
-
 function guardarListaAsistenciaAdmin(
     PDO $pdo,
     int $añoEscolarId,
@@ -83,52 +54,6 @@ function guardarListaAsistenciaAdmin(
             'fecha' => $fecha,
             'estado' => $asistencias[$inscripcionId],
             'observaciones' => $observaciones[$inscripcionId] ?? '',
-        ];
-    }
-
-    return guardarCambiosAsistenciaAdmin($pdo, $cambios, $registradoPor);
-}
-
-function guardarAsistenciasAdminEnRango(
-    PDO $pdo,
-    int $añoEscolarId,
-    int $seccionId,
-    string $fechaInicio,
-    string $fechaFin,
-    array $asistencias,
-    array $observaciones,
-    ?int $registradoPor
-): int {
-    $registros = obtenerAsistenciasAdminEnRango(
-        $pdo,
-        $añoEscolarId,
-        $seccionId,
-        $fechaInicio,
-        $fechaFin
-    );
-    $cambios = [];
-    foreach ($registros as $registro) {
-        $inscripcionId = (int) $registro['inscripcion_id'];
-        $fecha = $registro['fecha'];
-        if (!array_key_exists($inscripcionId, $asistencias)) {
-            continue;
-        }
-        if (!is_array($asistencias[$inscripcionId])) {
-            throw new InvalidArgumentException('La lista de asistencias del rango no es válida.');
-        }
-        if (!array_key_exists($fecha, $asistencias[$inscripcionId])) {
-            continue;
-        }
-
-        $observacionesEstudiante = $observaciones[$inscripcionId] ?? [];
-        if (!is_array($observacionesEstudiante)) {
-            throw new InvalidArgumentException('Las observaciones de asistencia no son válidas.');
-        }
-        $cambios[] = [
-            'inscripcion_id' => $inscripcionId,
-            'fecha' => $fecha,
-            'estado' => $asistencias[$inscripcionId][$fecha],
-            'observaciones' => $observacionesEstudiante[$fecha] ?? '',
         ];
     }
 

@@ -471,7 +471,70 @@ $documentos_requeridos = [
     <?php if ($mostrar_formulario_completo): ?>
     <form method="POST" action="" id="formEstudiante">
         <input type="hidden" name="representante_cedula" value="<?php echo htmlspecialchars($cedula_rep_actual); ?>">
-        
+
+        <section
+            id="ocr-registro"
+            class="card mb-4"
+            data-worker-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/worker.min.js'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-core-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/tesseract-core-simd-lstm.wasm.js'), ENT_QUOTES, 'UTF-8'); ?>"
+            data-language-url="<?php echo htmlspecialchars(app_url('js/ocr/vendor/'), ENT_QUOTES, 'UTF-8'); ?>"
+            aria-labelledby="ocr-titulo"
+        >
+            <div class="card-header bg-info text-dark">
+                <h5 class="card-title mb-0" id="ocr-titulo">
+                    <i class="fas fa-file-image me-2"></i>Lectura de documentos (OCR)
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Selecciona una ficha, acta de nacimiento o tarjeta de vacunación.
+                    En la tarjeta solo se buscarán datos para identificar al estudiante; no se guardan vacunas.
+                </p>
+                <div class="alert alert-warning" role="note">
+                    Las imágenes se procesan en este equipo y no se suben ni se guardan.
+                    La lectura es una sugerencia y puede separar mal nombres y apellidos:
+                    confirma cada dato antes de registrar.
+                </div>
+                <div class="row align-items-end">
+                    <div class="col-lg-6 mb-3">
+                        <label for="ocr-archivos" class="form-label">Imágenes del documento</label>
+                        <input type="file" id="ocr-archivos" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
+                        <div class="form-text">Hasta 5 imágenes JPG, PNG o WebP; máximo 12 MB cada una. No admite PDF.</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <label for="ocr-tipo" class="form-label">Tipo de documento</label>
+                        <select id="ocr-tipo" class="form-select">
+                            <option value="auto">Detectar automáticamente</option>
+                            <option value="inscripcion">Ficha de inscripción</option>
+                            <option value="nacimiento">Acta de nacimiento</option>
+                            <option value="vacunas">Tarjeta de vacunación</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <label for="ocr-rotacion" class="form-label">Rotación de la imagen</label>
+                        <select id="ocr-rotacion" class="form-select">
+                            <option value="0">Sin rotar</option>
+                            <option value="90">90° a la derecha</option>
+                            <option value="180">180°</option>
+                            <option value="270">90° a la izquierda</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="button" class="btn btn-primary" id="ocr-leer">
+                        <i class="fas fa-search me-2"></i>Leer documento
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="ocr-aplicar" disabled>
+                        <i class="fas fa-check me-2"></i>Aplicar sugerencias a campos vacíos
+                    </button>
+                </div>
+                <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
+                <p id="ocr-estado" class="mb-2" role="status" aria-live="polite"></p>
+                <label for="ocr-texto" class="form-label">Texto reconocido para revisar</label>
+                <textarea id="ocr-texto" class="form-control" rows="7" readonly></textarea>
+            </div>
+        </section>
+
         <!-- Información del Año Escolar y Grado -->
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
@@ -1193,5 +1256,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?php if ($mostrar_formulario_completo): ?>
+<script src="<?php echo htmlspecialchars(app_url('js/ocr/vendor/tesseract.min.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script src="<?php echo htmlspecialchars(app_url('js/ocr/registro.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<?php endif; ?>
 <script src="../../js/validaciones-formularios.js"></script>
 <?php include '../../includes/footer.php'; ?>
