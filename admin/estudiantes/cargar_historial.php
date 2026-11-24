@@ -167,22 +167,53 @@ $grados = $pdo->query(
     'SELECT id, nombre, numero FROM grados ORDER BY orden, numero'
 )->fetchAll(PDO::FETCH_ASSOC);
 
-$areas = $pdo->query(
-    "SELECT id, nombre, codigo
-     FROM areas_aprendizaje
-     WHERE estado = 'activa'
-     ORDER BY nombre"
-)->fetchAll(PDO::FETCH_ASSOC);
+$planAreas = [];
+if ($anioId > 0 && databaseTableExists($pdo, 'años_escolares_areas')) {
+    $stmt = $pdo->prepare(
+        "SELECT aa.id, aa.nombre, aa.codigo
+         FROM areas_aprendizaje aa
+         JOIN años_escolares_areas pea ON pea.area_id = aa.id
+         WHERE pea.año_escolar_id = ? AND aa.estado = 'activa'
+         ORDER BY aa.nombre"
+    );
+    $stmt->execute([$anioId]);
+    $planAreas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+if ($planAreas === []) {
+    $areas = $pdo->query(
+        "SELECT id, nombre, codigo
+         FROM areas_aprendizaje
+         WHERE estado = 'activa'
+         ORDER BY nombre"
+    )->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $areas = $planAreas;
+}
 $indicadoresPorArea = [];
 foreach ($areas as $area) {
-    $stmt = $pdo->prepare(
-        "SELECT id, nombre, descripcion
-         FROM areas_indicadores
-         WHERE area_id = ? AND estado = 'activo'
-         ORDER BY orden, id"
-    );
-    $stmt->execute([(int) $area['id']]);
-    $indicadoresPorArea[(int) $area['id']] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $planIndicadores = [];
+    if ($anioId > 0 && databaseTableExists($pdo, 'años_escolares_indicadores')) {
+        $stmt = $pdo->prepare(
+            "SELECT ai.id, ai.nombre, ai.descripcion
+             FROM areas_indicadores ai
+             JOIN años_escolares_indicadores pei ON pei.indicador_id = ai.id
+             WHERE pei.año_escolar_id = ? AND ai.area_id = ? AND ai.estado = 'activo'
+             ORDER BY ai.orden, ai.id"
+        );
+        $stmt->execute([$anioId, (int) $area['id']]);
+        $planIndicadores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    if ($planIndicadores === []) {
+        $stmt = $pdo->prepare(
+            "SELECT id, nombre, descripcion
+             FROM areas_indicadores
+             WHERE area_id = ? AND estado = 'activo'
+             ORDER BY orden, id"
+        );
+        $stmt->execute([(int) $area['id']]);
+        $planIndicadores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    $indicadoresPorArea[(int) $area['id']] = $planIndicadores;
 }
 
 $historialExistente = null;

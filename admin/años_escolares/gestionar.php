@@ -153,6 +153,11 @@ try {
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
+                                                    <a href="configurar_plan.php?año_escolar_id=<?php echo $año['id']; ?>"
+                                                       class="btn btn-outline-info"
+                                                       title="Configurar áreas e indicadores del año">
+                                                        <i class="fas fa-sitemap"></i>
+                                                    </a>
                                                     <a href="editar.php?id=<?php echo $año['id']; ?>" 
                                                        class="btn btn-outline-primary" 
                                                        title="Editar">
