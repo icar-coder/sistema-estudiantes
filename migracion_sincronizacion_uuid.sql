@@ -255,3 +255,87 @@ DROP TRIGGER IF EXISTS `trg_sync_uuid_usuarios_bi`;
 CREATE TRIGGER `trg_sync_uuid_usuarios_bi`
     BEFORE INSERT ON `usuarios` FOR EACH ROW
     SET NEW.`uuid` = IF(NEW.`uuid` IS NULL OR NEW.`uuid` = '', UUID(), NEW.`uuid`);
+
+-- Las relaciones del plan anual también deben tener UUID para sincronizarse.
+CREATE TABLE IF NOT EXISTS `años_escolares_areas` (
+    `año_escolar_id` int(11) NOT NULL,
+    `area_id` int(11) NOT NULL,
+    PRIMARY KEY (`año_escolar_id`, `area_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `años_escolares_indicadores` (
+    `año_escolar_id` int(11) NOT NULL,
+    `indicador_id` int(11) NOT NULL,
+    PRIMARY KEY (`año_escolar_id`, `indicador_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `plan_anual_areas` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `uuid` char(36) NOT NULL,
+    `sincronizado` tinyint(4) NOT NULL DEFAULT 0,
+    `año_escolar_id` int(11) NOT NULL,
+    `area_id` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_plan_anual_area_uuid` (`uuid`),
+    UNIQUE KEY `uq_plan_anual_area` (`año_escolar_id`, `area_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `plan_anual_indicadores` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `uuid` char(36) NOT NULL,
+    `sincronizado` tinyint(4) NOT NULL DEFAULT 0,
+    `año_escolar_id` int(11) NOT NULL,
+    `indicador_id` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_plan_anual_indicador_uuid` (`uuid`),
+    UNIQUE KEY `uq_plan_anual_indicador` (`año_escolar_id`, `indicador_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TRIGGER IF EXISTS `trg_sync_uuid_plan_anual_areas_bi`;
+CREATE TRIGGER `trg_sync_uuid_plan_anual_areas_bi`
+    BEFORE INSERT ON `plan_anual_areas` FOR EACH ROW
+    SET NEW.`uuid` = IF(NEW.`uuid` IS NULL OR NEW.`uuid` = '', UUID(), NEW.`uuid`);
+
+DROP TRIGGER IF EXISTS `trg_sync_uuid_plan_anual_indicadores_bi`;
+CREATE TRIGGER `trg_sync_uuid_plan_anual_indicadores_bi`
+    BEFORE INSERT ON `plan_anual_indicadores` FOR EACH ROW
+    SET NEW.`uuid` = IF(NEW.`uuid` IS NULL OR NEW.`uuid` = '', UUID(), NEW.`uuid`);
+
+INSERT IGNORE INTO `plan_anual_areas` (`uuid`, `sincronizado`, `año_escolar_id`, `area_id`)
+    SELECT UUID(), 0, `año_escolar_id`, `area_id` FROM `años_escolares_areas`;
+
+INSERT IGNORE INTO `plan_anual_indicadores`
+    (`uuid`, `sincronizado`, `año_escolar_id`, `indicador_id`)
+    SELECT UUID(), 0, `año_escolar_id`, `indicador_id` FROM `años_escolares_indicadores`;
+
+INSERT IGNORE INTO `plan_anual_areas`
+    (`uuid`, `sincronizado`, `año_escolar_id`, `area_id`)
+    SELECT UUID(), 0, `ae`.`id`, `aa`.`id`
+    FROM `años_escolares` AS `ae`
+    JOIN `areas_aprendizaje` AS `aa` ON `aa`.`estado` = 'activa'
+    WHERE `ae`.`estado` IN ('activo', 'inactivo')
+      AND NOT EXISTS (
+          SELECT 1 FROM `plan_anual_areas` AS `paa`
+          WHERE `paa`.`año_escolar_id` = `ae`.`id`
+      );
+
+INSERT IGNORE INTO `plan_anual_indicadores`
+    (`uuid`, `sincronizado`, `año_escolar_id`, `indicador_id`)
+    SELECT UUID(), 0, `paa`.`año_escolar_id`, `ai`.`id`
+    FROM `plan_anual_areas` AS `paa`
+    JOIN `areas_indicadores` AS `ai`
+      ON `ai`.`area_id` = `paa`.`area_id` AND `ai`.`estado` = 'activo'
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM `plan_anual_indicadores` AS `pai`
+        JOIN `areas_indicadores` AS `existing_ai`
+          ON `existing_ai`.`id` = `pai`.`indicador_id`
+        WHERE `pai`.`año_escolar_id` = `paa`.`año_escolar_id`
+          AND `existing_ai`.`area_id` = `paa`.`area_id`
+    );
+
+INSERT IGNORE INTO `sync_map` (`uuid`, `tabla`, `id_remoto`)
+    SELECT `uuid`, 'plan_anual_areas', `id` FROM `plan_anual_areas`;
+
+INSERT IGNORE INTO `sync_map` (`uuid`, `tabla`, `id_remoto`)
+    SELECT `uuid`, 'plan_anual_indicadores', `id` FROM `plan_anual_indicadores`;

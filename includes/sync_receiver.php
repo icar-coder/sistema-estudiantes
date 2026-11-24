@@ -51,6 +51,22 @@ function syncReceiverSchema(): array
                 'area_id' => ['table' => 'areas_aprendizaje', 'nullable' => false],
             ],
         ],
+        'plan_anual_areas' => [
+            'fields' => ['año_escolar_id', 'area_id'],
+            'required' => [],
+            'foreign_keys' => [
+                'año_escolar_id' => ['table' => 'años_escolares', 'nullable' => false],
+                'area_id' => ['table' => 'areas_aprendizaje', 'nullable' => false],
+            ],
+        ],
+        'plan_anual_indicadores' => [
+            'fields' => ['año_escolar_id', 'indicador_id'],
+            'required' => [],
+            'foreign_keys' => [
+                'año_escolar_id' => ['table' => 'años_escolares', 'nullable' => false],
+                'indicador_id' => ['table' => 'areas_indicadores', 'nullable' => false],
+            ],
+        ],
         'secciones' => [
             'fields' => [
                 'año_escolar_id', 'grado_id', 'nombre', 'capacidad', 'nivel', 'tipo_grado',
@@ -197,6 +213,8 @@ function syncReceiverOrder(): array
         'profesores',
         'representantes',
         'areas_indicadores',
+        'plan_anual_areas',
+        'plan_anual_indicadores',
         'secciones',
         'lapsos',
         'estudiantes',

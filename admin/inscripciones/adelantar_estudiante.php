@@ -1,8 +1,10 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/functions_plan_anual.php';
 checkAuth();
 checkRole(['admin']);
+planAnualMigrarCatalogosExistentes($pdo);
 
 $inscripcion_id = $_GET['inscripcion_id'] ?? null;
 $estudiante_id = $_GET['estudiante_id'] ?? null;
@@ -58,16 +60,23 @@ $stmt = $pdo->prepare("
 $stmt->execute([$datos_estudiante['grado_actual_id']]);
 $grados_superiores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obtener áreas de aprendizaje e indicadores
-$areas_aprendizaje = [];
-$stmt = $pdo->query("SELECT * FROM areas_aprendizaje WHERE estado = 'activa' ORDER BY nombre");
-$areas_aprendizaje = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+// Obtener el plan académico del año al que pertenece la inscripción.
+$areas_aprendizaje = planAnualObtenerAreas(
+    $pdo,
+    (int) $datos_estudiante['año_escolar_id']
+);
+$indicadoresPermitidos = [];
 foreach ($areas_aprendizaje as &$area) {
-    $stmt = $pdo->prepare("SELECT * FROM areas_indicadores WHERE area_id = ? AND estado = 'activo' ORDER BY orden");
-    $stmt->execute([$area['id']]);
-    $area['indicadores'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $area['indicadores'] = planAnualObtenerIndicadores(
+        $pdo,
+        (int) $datos_estudiante['año_escolar_id'],
+        (int) $area['id']
+    );
+    foreach ($area['indicadores'] as $indicador) {
+        $indicadoresPermitidos[(int) $indicador['id']] = true;
+    }
 }
+unset($area);
 
 $mensaje = '';
 $tipo_mensaje = '';
@@ -117,12 +126,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adelantar_estudiante'
         if (isset($_POST['indicadores']) && is_array($_POST['indicadores'])) {
             foreach ($_POST['indicadores'] as $indicador_id => $valoracion) {
                 if (!empty($valoracion)) {
+                    $indicador_id = (string) $indicador_id;
+                    $valoracion = strtoupper(trim((string) $valoracion));
+                    if (!ctype_digit($indicador_id) ||
+                        !isset($indicadoresPermitidos[(int) $indicador_id]) ||
+                        !in_array($valoracion, ['LE', 'L', 'PA', 'IP', 'NL'], true)) {
+                        throw new RuntimeException(
+                            'La evaluación contiene indicadores que no pertenecen al plan de ese año.'
+                        );
+                    }
                     $stmt = $pdo->prepare("
                         INSERT INTO historial_indicadores 
                         (historial_id, indicador_id, valoracion) 
                         VALUES (?, ?, ?)
                     ");
-                    $stmt->execute([$historial_id, $indicador_id, $valoracion]);
+                    $stmt->execute([$historial_id, (int) $indicador_id, $valoracion]);
                 }
             }
         }

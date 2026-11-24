@@ -185,4 +185,71 @@ assertSyncReceiverTest(
     'Un borrado atrasado no debe invalidar una recepción posterior.'
 );
 
+$annualPdo = new PDO('sqlite::memory:');
+$annualPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+foreach (syncReceiverOrder() as $table) {
+    $columns = [
+        '`id` INTEGER PRIMARY KEY AUTOINCREMENT',
+        '`uuid` TEXT NOT NULL UNIQUE',
+        '`sincronizado` INTEGER NOT NULL DEFAULT 0',
+    ];
+    foreach (syncReceiverSchema()[$table]['fields'] as $column) {
+        $columns[] = syncQuoteIdentifier($column) . ' ' .
+            (isset(syncReceiverSchema()[$table]['foreign_keys'][$column]) ? 'INTEGER' : 'TEXT');
+    }
+    $annualPdo->exec(
+        'CREATE TABLE ' . syncQuoteIdentifier($table) . ' (' . implode(', ', $columns) . ')'
+    );
+}
+$annualPdo->exec(
+    'CREATE TABLE `sync_map` (
+        `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+        `uuid` TEXT NOT NULL,
+        `tabla` TEXT NOT NULL,
+        `id_remoto` INTEGER NOT NULL,
+        `last_received_at` TEXT DEFAULT NULL,
+        UNIQUE (`uuid`, `tabla`)
+    )'
+);
+$annualRecords = [
+    'plan_anual_areas' => [[
+        'uuid' => '66666666-6666-4666-8666-666666666666',
+        'uuid_año_escolar_id' => '11111111-1111-4111-8111-111111111111',
+        'uuid_area_id' => '22222222-2222-4222-8222-222222222222',
+    ]],
+    'plan_anual_indicadores' => [[
+        'uuid' => '77777777-7777-4777-8777-777777777777',
+        'uuid_año_escolar_id' => '11111111-1111-4111-8111-111111111111',
+        'uuid_indicador_id' => '33333333-3333-4333-8333-333333333333',
+    ]],
+    'areas_indicadores' => [[
+        'uuid' => '33333333-3333-4333-8333-333333333333',
+        'nombre' => 'Indicador anual',
+        'uuid_area_id' => '22222222-2222-4222-8222-222222222222',
+    ]],
+    'años_escolares' => [[
+        'uuid' => '11111111-1111-4111-8111-111111111111',
+        'nombre' => '2025-2026',
+    ]],
+    'areas_aprendizaje' => [[
+        'uuid' => '22222222-2222-4222-8222-222222222222',
+        'nombre' => 'Matemática',
+    ]],
+];
+$annualResults = syncProcessRecords($annualPdo, $annualRecords, '2025-02-01 10:00:00.000000');
+assertSyncReceiverTest(
+    count($annualResults) === 5 &&
+        (int) $annualPdo->query(
+            'SELECT COUNT(*) FROM `plan_anual_areas` WHERE `año_escolar_id` = (
+                SELECT `id` FROM `años_escolares` WHERE `nombre` = "2025-2026"
+            )'
+        )->fetchColumn() === 1 &&
+        (int) $annualPdo->query(
+            'SELECT COUNT(*) FROM `plan_anual_indicadores` WHERE `indicador_id` = (
+                SELECT `id` FROM `areas_indicadores` WHERE `nombre` = "Indicador anual"
+            )'
+        )->fetchColumn() === 1,
+    'Las asociaciones del plan anual deben sincronizarse resolviendo sus UUID de claves foráneas.'
+);
+
 echo "sync receiver tests passed\n";

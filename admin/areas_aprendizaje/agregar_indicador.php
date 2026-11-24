@@ -1,4 +1,5 @@
 <?php
+require __DIR__ . '/redirigir_plan_anual.php';
 // admin/areas_aprendizaje/agregar_indicador.php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';

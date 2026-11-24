@@ -1,9 +1,11 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/functions_plan_anual.php';
 require_once '../../includes/functions_evaluacion.php';
 checkAuth();
 checkRole(['admin']);
+planAnualMigrarCatalogosExistentes($pdo);
 
 $seccion_id = $_GET['seccion_id'] ?? null;
 
@@ -67,12 +69,16 @@ try {
         SELECT aa.id as area_id, aa.nombre as area_nombre, aa.codigo,
                ai.id as indicador_id, ai.nombre as indicador_nombre, ai.descripcion as indicador_descripcion,
                ai.escala, ai.orden
-        FROM areas_aprendizaje aa
-        LEFT JOIN areas_indicadores ai ON aa.id = ai.area_id AND ai.estado = 'activo'
-        WHERE aa.nivel = ? AND aa.estado = 'activa'
+        FROM plan_anual_areas pea
+        JOIN areas_aprendizaje aa ON aa.id = pea.area_id
+        LEFT JOIN plan_anual_indicadores pei
+          ON pei.año_escolar_id = pea.año_escolar_id
+        LEFT JOIN areas_indicadores ai
+          ON ai.id = pei.indicador_id AND ai.area_id = aa.id
+        WHERE pea.año_escolar_id = ? AND aa.nivel = ?
         ORDER BY aa.nombre, ai.orden
     ");
-    $stmt->execute([$seccion['nivel']]);
+    $stmt->execute([$seccion['año_id'], $seccion['nivel']]);
     $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     foreach ($resultados as $row) {

@@ -1,9 +1,11 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
-require_once '../../includes/database_helpers.php';
+require_once '../../includes/functions_plan_anual.php';
 checkAuth();
 checkRole(['admin']);
+
+planAnualMigrarCatalogosExistentes($pdo);
 
 $mensaje = '';
 $tipoMensaje = '';
@@ -37,6 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $pdo->beginTransaction();
+
+            $indicadoresPermitidos = [];
+            foreach (planAnualObtenerAreas($pdo, $anioId) as $areaPermitida) {
+                foreach (planAnualObtenerIndicadores($pdo, $anioId, (int) $areaPermitida['id']) as $indicadorPermitido) {
+                    $indicadoresPermitidos[(int) $indicadorPermitido['id']] = true;
+                }
+            }
+            foreach ($indicadores as $indicadorId => $valoracion) {
+                if (trim((string) $valoracion) === '') {
+                    continue;
+                }
+                if (!ctype_digit((string) $indicadorId) ||
+                    !isset($indicadoresPermitidos[(int) $indicadorId]) ||
+                    !in_array(strtoupper(trim((string) $valoracion)), ['LE', 'L', 'PA', 'IP', 'NL'], true)) {
+                    throw new InvalidArgumentException(
+                        'La evaluación contiene indicadores que no pertenecen al plan de ese año.'
+                    );
+                }
+            }
 
             $stmt = $pdo->prepare(
                 'SELECT id FROM historial_academico
@@ -167,53 +188,14 @@ $grados = $pdo->query(
     'SELECT id, nombre, numero FROM grados ORDER BY orden, numero'
 )->fetchAll(PDO::FETCH_ASSOC);
 
-$planAreas = [];
-if ($anioId > 0 && databaseTableExists($pdo, 'años_escolares_areas')) {
-    $stmt = $pdo->prepare(
-        "SELECT aa.id, aa.nombre, aa.codigo
-         FROM areas_aprendizaje aa
-         JOIN años_escolares_areas pea ON pea.area_id = aa.id
-         WHERE pea.año_escolar_id = ? AND aa.estado = 'activa'
-         ORDER BY aa.nombre"
-    );
-    $stmt->execute([$anioId]);
-    $planAreas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-if ($planAreas === []) {
-    $areas = $pdo->query(
-        "SELECT id, nombre, codigo
-         FROM areas_aprendizaje
-         WHERE estado = 'activa'
-         ORDER BY nombre"
-    )->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $areas = $planAreas;
-}
+$areas = $anioId > 0 ? planAnualObtenerAreas($pdo, $anioId) : [];
 $indicadoresPorArea = [];
 foreach ($areas as $area) {
-    $planIndicadores = [];
-    if ($anioId > 0 && databaseTableExists($pdo, 'años_escolares_indicadores')) {
-        $stmt = $pdo->prepare(
-            "SELECT ai.id, ai.nombre, ai.descripcion
-             FROM areas_indicadores ai
-             JOIN años_escolares_indicadores pei ON pei.indicador_id = ai.id
-             WHERE pei.año_escolar_id = ? AND ai.area_id = ? AND ai.estado = 'activo'
-             ORDER BY ai.orden, ai.id"
-        );
-        $stmt->execute([$anioId, (int) $area['id']]);
-        $planIndicadores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    if ($planIndicadores === []) {
-        $stmt = $pdo->prepare(
-            "SELECT id, nombre, descripcion
-             FROM areas_indicadores
-             WHERE area_id = ? AND estado = 'activo'
-             ORDER BY orden, id"
-        );
-        $stmt->execute([(int) $area['id']]);
-        $planIndicadores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    $indicadoresPorArea[(int) $area['id']] = $planIndicadores;
+    $indicadoresPorArea[(int) $area['id']] = planAnualObtenerIndicadores(
+        $pdo,
+        $anioId,
+        (int) $area['id']
+    );
 }
 
 $historialExistente = null;

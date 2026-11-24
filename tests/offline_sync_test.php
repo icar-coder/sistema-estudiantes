@@ -336,6 +336,38 @@ assertOfflineSyncTest(
     )->fetchColumn() === count(syncReceiverOrder()) * 3,
     'Deben instalarse los disparadores de altas, cambios y borrados de todas las tablas.'
 );
+$yearInsert = $completePdo->prepare(
+    'INSERT INTO `años_escolares` (`uuid`, `nombre`) VALUES (?, ?)'
+);
+$yearInsert->execute(['11111111-1111-4111-8111-111111111111', '2025-2026']);
+$yearId = (int) $completePdo->lastInsertId();
+$areaInsert = $completePdo->prepare(
+    'INSERT INTO `areas_aprendizaje` (`uuid`, `nombre`) VALUES (?, ?)'
+);
+$areaInsert->execute(['22222222-2222-4222-8222-222222222222', 'Matemática']);
+$areaId = (int) $completePdo->lastInsertId();
+$associationInsert = $completePdo->prepare(
+    'INSERT INTO `plan_anual_areas`
+     (`uuid`, `año_escolar_id`, `area_id`) VALUES (?, ?, ?)'
+);
+$associationInsert->execute(['33333333-3333-4333-8333-333333333333', $yearId, $areaId]);
+$associationPayload = json_decode(
+    $completePdo->query(
+        'SELECT `payload_json` FROM `offline_sync_outbox`
+         WHERE `tabla` = "plan_anual_areas"
+           AND `uuid` = "33333333-3333-4333-8333-333333333333"'
+    )->fetchColumn(),
+    true
+);
+assertOfflineSyncTest(
+    ($associationPayload['uuid_año_escolar_id'] ?? null) === '11111111-1111-4111-8111-111111111111' &&
+        ($associationPayload['uuid_area_id'] ?? null) === '22222222-2222-4222-8222-222222222222',
+    'La cola offline debe enviar UUID de las claves foráneas del plan anual.'
+);
+$completePdo->exec(
+    'DELETE FROM `offline_sync_outbox`
+     WHERE `tabla` IN ("años_escolares", "areas_aprendizaje", "plan_anual_areas")'
+);
 $completePdo->exec(
     'UPDATE `sync_map` SET `id_remoto` = 0
      WHERE `uuid` = "66666666-6666-4666-8666-666666666666" AND `tabla` = "representantes"'

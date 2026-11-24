@@ -25,6 +25,7 @@ foreach ([
     '/admin/reportes/promedios.php',
     '/admin/usuarios/gestionar.php',
     '/admin/respaldos/index.php',
+    '/admin/horarios/gestionar.php',
 ] as $unavailableRoute) {
     assertOfflineAdminMenuTest(
         strpos($menu, 'href="' . $unavailableRoute . '"') === false,
@@ -38,6 +39,7 @@ foreach ([
     '/admin/estudiantes/gestionar.php',
     '/admin/profesores/gestionar.php',
     '/admin/asistencias/gestionar.php',
+    '/admin/profesores/asignaciones.php',
     '/admin/reportes/literales.php',
     '/admin/sincronizacion.php',
 ] as $availableRoute) {

@@ -1,9 +1,11 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/functions_plan_anual.php';
 require_once '../../includes/functions_evaluacion.php';
 checkAuth();
 checkRole(['admin']);
+planAnualMigrarCatalogosExistentes($pdo);
 requireOnlineFeature($pdo, 'El reporte de estadísticas por literales');
 
 $tablasRequeridas = [
@@ -154,8 +156,17 @@ if ($año_escolar_id) {
             SELECT aa.nombre as area,
                    COUNT(DISTINCT hi.indicador_id) as indicadores_evaluados,
                    COUNT(DISTINCT i.id) as estudiantes_evaluados,
-                   ROUND(COUNT(DISTINCT hi.indicador_id) * 100.0 / (SELECT COUNT(*) FROM areas_indicadores WHERE estado = 'activo'), 2) as porcentaje_indicadores
+                   ROUND(
+                       COUNT(DISTINCT hi.indicador_id) * 100.0 /
+                       NULLIF((
+                           SELECT COUNT(*) FROM plan_anual_indicadores
+                           WHERE año_escolar_id = ?
+                       ), 0),
+                       2
+                   ) as porcentaje_indicadores
             FROM historial_indicadores hi
+            JOIN plan_anual_indicadores pei
+              ON pei.indicador_id = hi.indicador_id AND pei.año_escolar_id = ?
             JOIN inscripciones i ON hi.historial_id IN (
                 SELECT id FROM historial_academico WHERE estudiante_id = i.estudiante_id AND año_escolar_id = ?
             )
@@ -165,7 +176,12 @@ if ($año_escolar_id) {
             GROUP BY aa.id, aa.nombre
             ORDER BY porcentaje_indicadores DESC
         ");
-        $stmt->execute([$año_escolar_id, $año_escolar_id]);
+        $stmt->execute([
+            $año_escolar_id,
+            $año_escolar_id,
+            $año_escolar_id,
+            $año_escolar_id,
+        ]);
         $estadisticas['evaluacion_areas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Preparar datos para gráficas

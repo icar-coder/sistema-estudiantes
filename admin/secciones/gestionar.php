@@ -425,11 +425,19 @@ try {
                                                     <i class="fas fa-users"></i>
                                                 </a>
                                                 
-                                                <a href="asignar_profesores.php?id=<?php echo $seccion['id']; ?>" 
-                                                   class="btn btn-sm btn-outline-info" 
-                                                   title="Gestionar Horario">
-                                                    <i class="fas fa-clock"></i> Horario
-                                                </a>
+                                                <?php if (!empty($seccion['grado_id'])): ?>
+                                                    <a href="../profesores/asignaciones.php?año_escolar_id=<?php echo (int) $seccion['año_escolar_id']; ?>&grado_id=<?php echo (int) $seccion['grado_id']; ?>&seccion_id=<?php echo (int) $seccion['id']; ?>"
+                                                       class="btn btn-sm btn-outline-info"
+                                                       title="Asignar profesor">
+                                                        <i class="fas fa-chalkboard-teacher"></i> Profesor
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="editar.php?id=<?php echo (int) $seccion['id']; ?>"
+                                                       class="btn btn-sm btn-outline-warning"
+                                                       title="Completar el grado de esta sección">
+                                                        <i class="fas fa-graduation-cap"></i> Asignar grado
+                                                    </a>
+                                                <?php endif; ?>
                                                 
                                                 <a href="generar_constancia_seccion.php?seccion_id=<?php echo $seccion['id']; ?>" 
                                                    class="btn btn-outline-warning" 

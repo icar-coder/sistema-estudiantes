@@ -57,16 +57,10 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                         <span>Secciones</span>
                     </a>
                 </div>
-                <div class="nav-item <?php echo (strpos($current_path, '/admin/secciones/') === false && strpos($current_path, '/admin/horarios/') !== false) ? 'active' : ''; ?>">
-                    <a href="<?php echo $base; ?>/admin/horarios/gestionar.php" class="nav-link">
-                        <i class="fas fa-clock"></i>
-                        <span>Horarios</span>
-                    </a>
-                </div>
                 <div class="nav-item">
-                    <a href="<?php echo $base; ?>/admin/areas_aprendizaje/gestionar.php" class="nav-link">
+                    <a href="<?php echo $base; ?>/admin/años_escolares/configurar_plan.php" class="nav-link">
                         <i class="fas fa-puzzle-piece"></i>
-                        <span>Áreas de Aprendizaje</span>
+                        <span>Plan de Áreas e Indicadores</span>
                     </a>
                 </div>
             </div>
@@ -142,6 +136,12 @@ $offlineMode = isset($pdo) && $pdo instanceof PDO && isSqliteDatabase($pdo);
                     <a href="<?php echo $base; ?>/admin/profesores/gestionar.php" class="nav-link">
                         <i class="fas fa-user-tie"></i>
                         <span>Profesores</span>
+                    </a>
+                </div>
+                <div class="nav-item <?php echo strpos($current_path, '/admin/profesores/asignaciones.php') !== false ? 'active' : ''; ?>">
+                    <a href="<?php echo $base; ?>/admin/profesores/asignaciones.php" class="nav-link">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Asignar profesores</span>
                     </a>
                 </div>
                 <?php if (!$offlineMode): ?>

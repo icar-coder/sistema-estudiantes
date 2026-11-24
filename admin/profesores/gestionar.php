@@ -229,9 +229,9 @@ try {
                                             </a>
                                             
                                             <!-- Botón Asignar Secciones -->
-                                            <a href="asignar.php?id=<?php echo $profesor['id']; ?>" 
+                                            <a href="asignaciones.php?profesor_id=<?php echo $profesor['id']; ?>"
                                                class="btn btn-outline-success" 
-                                               title="Asignar Secciones">
+                                               title="Asignar grados y secciones">
                                                 <i class="fas fa-chalkboard-teacher"></i>
                                             </a>
                                             

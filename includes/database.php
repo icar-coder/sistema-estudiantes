@@ -11,6 +11,8 @@ $databaseDriver = $configuredDriver !== false && $configuredDriver !== ''
     ? strtolower($configuredDriver)
     : strtolower((string) ($localConfig['db_driver'] ?? 'mysql'));
 
+require_once __DIR__ . '/database_helpers.php';
+
 if ($databaseDriver === 'mysql') {
     require_once __DIR__ . '/database_mysql.php';
 } elseif ($databaseDriver === 'sqlite') {
@@ -28,6 +30,8 @@ if ($databaseDriver === 'mysql') {
     $pdo = offlineSyncConnect();
     sqliteRegisterFunctions($pdo);
     if ($databasePath !== ':memory:') {
+        require_once __DIR__ . '/functions_plan_anual.php';
+        planAnualMigrarCatalogosExistentes($pdo);
         if (offlineSyncIsEnabled()) {
             offlineSyncInstallTriggers($pdo);
         } else {
@@ -38,4 +42,7 @@ if ($databaseDriver === 'mysql') {
     throw new RuntimeException('APP_DB_DRIVER debe ser mysql o sqlite.');
 }
 
-require_once __DIR__ . '/database_helpers.php';
+if ($databaseDriver === 'mysql') {
+    require_once __DIR__ . '/functions_plan_anual.php';
+    planAnualMigrarCatalogosExistentes($pdo);
+}

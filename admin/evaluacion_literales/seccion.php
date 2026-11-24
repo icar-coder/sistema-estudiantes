@@ -1,8 +1,10 @@
 <?php
 require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
+require_once '../../includes/functions_plan_anual.php';
 checkAuth();
 checkRole(['admin']);
+planAnualMigrarCatalogosExistentes($pdo);
 error_log("DEBUG seccion.php - seccion_id recibido: " . ($seccion_id ?? 'NULL'));
 error_log("DEBUG seccion.php - GET completo: " . print_r($_GET, true));
 $seccion_id = $_GET['seccion_id'] ?? null;
@@ -63,13 +65,11 @@ try {
 
 // Obtener áreas de aprendizaje para esta sección (basado en el nivel de la sección)
 try {
-    $stmt = $pdo->prepare("
-        SELECT * FROM areas_aprendizaje 
-        WHERE nivel = ? AND estado = 'activa'
-        ORDER BY nombre
-    ");
-    $stmt->execute([$seccion['nivel']]);
-    $areas_aprendizaje = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $areas_aprendizaje = planAnualObtenerAreas(
+        $pdo,
+        (int) $seccion['año_id'],
+        (string) $seccion['nivel']
+    );
 } catch (PDOException $e) {
     error_log("Error al cargar áreas de aprendizaje: " . $e->getMessage());
     $areas_aprendizaje = [];
@@ -236,7 +236,7 @@ foreach ($lapsos as $lapso) {
                 <div class="alert alert-warning text-center">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     No hay áreas de aprendizaje configuradas para el nivel <?php echo ucfirst($seccion['nivel']); ?>.
-                    <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar áreas</a>
+                    <a href="../años_escolares/configurar_plan.php?año_escolar_id=<?php echo (int) $seccion['año_id']; ?>" class="alert-link">Configurar el plan anual</a>
                 </div>
             <?php else: ?>
                 <div class="row">
@@ -256,18 +256,21 @@ foreach ($lapsos as $lapso) {
                                             <?php
                                             // Contar indicadores para esta área
                                             try {
-                                                $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM areas_indicadores WHERE area_id = ? AND estado = 'activo'");
-                                                $stmt->execute([$area['id']]);
-                                                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                                                echo $result['total'] . ' indicadores';
+                                                $stmt = $pdo->prepare(
+                                                    'SELECT COUNT(*) FROM plan_anual_indicadores pei
+                                                     JOIN areas_indicadores ai ON ai.id = pei.indicador_id
+                                                     WHERE pei.año_escolar_id = ? AND ai.area_id = ?'
+                                                );
+                                                $stmt->execute([$seccion['año_id'], $area['id']]);
+                                                echo $stmt->fetchColumn() . ' indicadores';
                                             } catch (PDOException $e) {
                                                 echo '0 indicadores';
                                             }
                                             ?>
                                         </small>
-                                        <a href="../areas_aprendizaje/gestionar_indicadores.php?area_id=<?php echo $area['id']; ?>" 
+                                        <a href="../años_escolares/configurar_plan.php?año_escolar_id=<?php echo (int) $seccion['año_id']; ?>"
                                            class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye me-1"></i>Ver
+                                            <i class="fas fa-eye me-1"></i>Ver plan
                                         </a>
                                     </div>
                                 </div>

@@ -138,6 +138,29 @@ try {
         'icono' => 'fas fa-chalkboard-teacher',
         'cantidad' => $profesores_count
     ];
+
+    $seccionesConGrado = 0;
+    $seccionesSinProfesor = 0;
+    if ($año_activo) {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) AS total,
+                    SUM(CASE WHEN profesor_id IS NULL THEN 1 ELSE 0 END) AS sin_profesor
+             FROM secciones
+             WHERE año_escolar_id = ? AND grado_id IS NOT NULL'
+        );
+        $stmt->execute([$año_activo['id']]);
+        $asignacionesStats = $stmt->fetch(PDO::FETCH_ASSOC);
+        $seccionesConGrado = (int) ($asignacionesStats['total'] ?? 0);
+        $seccionesSinProfesor = (int) ($asignacionesStats['sin_profesor'] ?? 0);
+    }
+    $checklist['asignacion_profesores'] = [
+        'completado' => $seccionesConGrado > 0 && $seccionesSinProfesor === 0,
+        'titulo' => 'Profesores asignados',
+        'descripcion' => 'Asignar profesores por grado y sección',
+        'enlace' => 'profesores/asignaciones.php',
+        'icono' => 'fas fa-chalkboard-teacher',
+        'cantidad' => max(0, $seccionesConGrado - $seccionesSinProfesor)
+    ];
     
     // 6. Verificar estudiantes
     $checklist['estudiantes'] = [
@@ -157,22 +180,6 @@ try {
         'enlace' => 'inscripciones/gestionar.php',
         'icono' => 'fas fa-user-check',
         'cantidad' => $inscripciones_count
-    ];
-    
-    // 8. Verificar horarios
-    try {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM horarios_asignaciones");
-        $horarios_count = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    } catch (Exception $e) {
-        $horarios_count = 0;
-    }
-    $checklist['horarios'] = [
-        'completado' => $horarios_count > 0,
-        'titulo' => 'Horarios Configurados',
-        'descripcion' => 'Asignar horarios a las secciones',
-        'enlace' => 'horarios/gestionar.php',
-        'icono' => 'fas fa-clock',
-        'cantidad' => $horarios_count
     ];
     
     // Calcular progreso general
@@ -356,7 +363,7 @@ include '../includes/sidebar_admin.php';
                                 <ul class="mb-0 small">
                                     <li>Siga el orden del checklist para una configuración óptima</li>
                                     <li>Configure primero el año escolar y las áreas de aprendizaje</li>
-                                    <li>Asigne horarios después de crear secciones y profesores</li>
+                                    <li>Asigne profesores por grado y ajuste cada sección si hace falta</li>
                                 </ul>
                             </div>
                         </div>

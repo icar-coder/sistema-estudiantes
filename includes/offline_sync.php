@@ -232,7 +232,7 @@ function offlineSyncInstallTriggers(PDO $pdo, ?array $tables = null): void
         $version = $pdo->query(
             'SELECT `value` FROM `offline_sync_metadata` WHERE `key` = "trigger_version"'
         )->fetchColumn();
-        if ($version === '3') {
+        if ($version === '4') {
             return;
         }
         offlineSyncSeedSyncMap($pdo);

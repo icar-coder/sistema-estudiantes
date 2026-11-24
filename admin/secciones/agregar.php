@@ -69,14 +69,6 @@ foreach ($profesores as $profesor) {
 }
 sort($especialidades);
 
-// Obtener áreas de aprendizaje para primaria
-try {
-    $stmt = $pdo->query("SELECT id, nombre, codigo FROM areas_aprendizaje WHERE nivel = 'primaria' AND estado = 'activa' ORDER BY nombre");
-    $areas_aprendizaje = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $areas_aprendizaje = [];
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Si viene de un grado específico, usar ese grado_id, sino usar el del formulario
     $grado_id = filter_var($grado_id_preseleccionado ?: ($_POST['grado_id'] ?? null), FILTER_VALIDATE_INT);
@@ -122,7 +114,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($año_escolar_id === false || $año_escolar_id < 1) $campos_faltantes[] = "Año Escolar";
     if ($capacidad === false || ($capacidad !== null && $capacidad < 1)) $campos_faltantes[] = "Capacidad";
     if ($profesor_id === false || ($profesor_id !== null && $profesor_id < 1)) $campos_faltantes[] = "Profesor Titular";
-    if ($profesor_id === null) $campos_faltantes[] = "Profesor Titular";
     
     if (empty($campos_faltantes)) {
         try {
@@ -148,37 +139,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 error_log("DEBUG - Sección creada con ID: " . $seccion_id);
                 
-                // Crear horario automático
-                if (count($areas_aprendizaje) > 0) {
-                    $dias_semana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
-                    $horarios_base = [
-                        ['07:30:00', '08:15:00'],
-                        ['08:15:00', '09:00:00'],
-                        ['09:00:00', '09:45:00'],
-                        ['09:45:00', '10:30:00'],
-                        ['10:30:00', '11:15:00'],
-                        ['11:15:00', '12:00:00']
-                    ];
-                    
-                    $area_index = 0;
-                    $total_areas = count($areas_aprendizaje);
-                    
-                    foreach ($dias_semana as $dia) {
-                        foreach ($horarios_base as $horario) {
-                            if ($area_index < $total_areas) {
-                                $area_id = $areas_aprendizaje[$area_index]['id'];
-                                $stmt = $pdo->prepare("INSERT INTO horarios_asignaciones (seccion_id, año_escolar_id, dia_semana, hora_inicio, hora_fin, area_id, profesor_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                                $stmt->execute([$seccion_id, $año_escolar_id, $dia, $horario[0], $horario[1], $area_id, $profesor_id]);
-                                $area_index++;
-                                if ($area_index >= $total_areas) $area_index = 0;
-                            }
-                        }
-                    }
-                    error_log("DEBUG - Horarios creados para " . $total_areas . " áreas");
-                }
-                
                 $pdo->commit();
-                $mensaje = "Sección '$nombre' agregada correctamente con " . count($areas_aprendizaje) . " áreas de aprendizaje";
+                $mensaje = $profesor_id === null
+                    ? "Sección '$nombre' agregada correctamente. Puedes asignar el profesor después."
+                    : "Sección '$nombre' agregada correctamente con profesor titular asignado.";
                 $tipo_mensaje = "success";
                 $_POST = [];
 
@@ -525,7 +489,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <!-- Lista de profesores con filtro -->
                         <div class="mb-3">
-                            <label class="form-label">Seleccionar Profesor Titular *</label>
+                            <label class="form-label">Profesor titular (opcional)</label>
                             <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 10px;">
                                 <?php if (count($profesores) > 0): ?>
                                     <?php foreach ($profesores as $profesor): ?>
@@ -591,53 +555,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="nivel" value="primaria">
                 <input type="hidden" name="tipo_grado" value="grado">
                 
-                <!-- Información de áreas de aprendizaje -->
-                <?php if (count($areas_aprendizaje) > 0): ?>
-                <div class="card mt-4">
-                    <div class="card-header bg-light">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-book me-2"></i>Áreas de Aprendizaje Asignadas Automáticamente
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-success">
-                            <small>
-                                <i class="fas fa-check-circle me-1"></i>
-                                <strong>Configuración Automática:</strong> El profesor titular será asignado a TODAS estas áreas de aprendizaje.
-                            </small>
-                        </div>
-                        
-                        <div class="row">
-                            <?php foreach ($areas_aprendizaje as $area): ?>
-                            <div class="col-md-4 mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                    <label class="form-check-label">
-                                        <strong><?php echo htmlspecialchars($area['nombre']); ?></strong>
-                                        <?php if ($area['codigo']): ?>
-                                            <small class="text-muted">(<?php echo htmlspecialchars($area['codigo']); ?>)</small>
-                                        <?php endif; ?>
-                                    </label>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Puedes asignar un profesor ahora o hacerlo después por grado y sección desde
+                    <a href="../profesores/asignaciones.php" class="alert-link">Asignar profesores</a>.
                 </div>
-                <?php else: ?>
-                <div class="alert alert-warning mt-4">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Advertencia:</strong> No hay áreas de aprendizaje configuradas para primaria.
-                    <a href="../areas_aprendizaje/agregar.php" class="alert-link">Configurar áreas de aprendizaje</a>
-                </div>
-                <?php endif; ?>
                 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                     <button type="reset" class="btn btn-outline-secondary me-md-2" onclick="limpiarFormulario()">
                         <i class="fas fa-undo me-2"></i>Limpiar
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Guardar Sección y Horario
+                        <i class="fas fa-save me-2"></i>Guardar sección
                     </button>
                 </div>
             </form>
@@ -806,7 +735,6 @@ document.getElementById('form-seccion').addEventListener('submit', function(e) {
     if (!gradoId) errores.push("• Seleccione el grado");
     if (!letra) errores.push("• Seleccione la letra de la sección");
     if (!añoEscolar) errores.push("• Seleccione el año escolar");
-    if (!profesor) errores.push("• Seleccione un profesor titular");
     
     if (errores.length > 0) {
         e.preventDefault();
@@ -814,17 +742,12 @@ document.getElementById('form-seccion').addEventListener('submit', function(e) {
         return false;
     }
     
-    <?php if (count($areas_aprendizaje) === 0): ?>
-    if (!confirm('ADVERTENCIA: No hay áreas de aprendizaje configuradas para primaria. ¿Desea continuar de todos modos?')) {
-        e.preventDefault();
-        return false;
-    }
-    <?php endif; ?>
-    
     // Mostrar confirmación final
     const nombreGrado = gradosData[gradoId] || '';
     const nombreSeccion = nombreGrado + ' ' + letra;
-    const profesorNombre = profesor ? document.querySelector('label[for="profesor_' + profesor.value + '"]').textContent.trim() : '';
+    const profesorNombre = profesor
+        ? document.querySelector('label[for="profesor_' + profesor.value + '"]').textContent.trim()
+        : 'Por asignar después';
     
     if (!confirm(`¿Está seguro de crear la sección "${nombreSeccion}"?\n\nProfesor: ${profesorNombre}`)) {
         e.preventDefault();
