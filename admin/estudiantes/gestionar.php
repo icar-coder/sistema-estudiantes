@@ -435,6 +435,11 @@ try {
                                                        title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    <a href="cargar_historial.php?estudiante_id=<?php echo $estudiante['id']; ?>"
+                                                       class="btn btn-outline-warning"
+                                                       title="Cargar historial e indicadores">
+                                                        <i class="fas fa-history"></i>
+                                                    </a>
                                                     <a href="../inscripciones/inscribir.php?estudiante_id=<?php echo $estudiante['id']; ?>" 
                                                        class="btn btn-outline-success" 
                                                        title="Inscribir">
