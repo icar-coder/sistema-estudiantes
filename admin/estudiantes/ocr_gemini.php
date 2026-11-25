@@ -296,7 +296,7 @@ if ($usarOpenRouter) {
         'messages' => [
             ['role' => 'user', 'content' => $contenidoOpenRouter],
         ],
-        'max_tokens' => 2048,
+        'max_tokens' => 8192,
         'stream' => false,
         'response_format' => [
             'type' => 'json_schema',
