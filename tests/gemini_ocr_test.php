@@ -114,6 +114,26 @@ assertGeminiOcrTest(
     'Debe extraer texto de la respuesta compatible de OpenRouter.'
 );
 
+$textoEstructurado = geminiOcrOpenRouterResponseText([
+    'choices' => [
+        ['message' => ['content' => null, 'parsed' => ['ok' => true]]],
+    ],
+]);
+assertGeminiOcrTest(
+    $textoEstructurado === '{"ok":true}',
+    'Debe aceptar la respuesta JSON estructurada de OpenRouter cuando no hay texto.'
+);
+
+$diagnosticoOpenRouter = geminiOcrOpenRouterOutputDiagnostic([
+    'model' => 'proveedor/modelo',
+    'choices' => [['finish_reason' => 'length', 'message' => ['content' => null]]],
+]);
+assertGeminiOcrTest(
+    strpos($diagnosticoOpenRouter, 'modelo proveedor/modelo') !== false &&
+    strpos($diagnosticoOpenRouter, 'motivo length') !== false,
+    'Debe exponer solo metadatos de diagnóstico seguros cuando falta la salida.'
+);
+
 $schemaEstricta = geminiOcrStrictJsonSchema(geminiOcrResponseSchema());
 assertGeminiOcrTest(
     $schemaEstricta['additionalProperties'] === false &&

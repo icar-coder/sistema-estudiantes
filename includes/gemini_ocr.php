@@ -180,21 +180,81 @@ function geminiOcrStrictJsonSchema(array $schema): array
 
 function geminiOcrOpenRouterResponseText(array $response): ?string
 {
-    $content = $response['choices'][0]['message']['content'] ?? null;
-    if (is_string($content)) {
-        return $content;
-    }
-    if (!is_array($content)) {
+    $message = $response['choices'][0]['message'] ?? null;
+    if (!is_array($message)) {
         return null;
     }
 
-    $parts = [];
-    foreach ($content as $part) {
-        if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
-            $parts[] = $part['text'];
+    $content = $message['content'] ?? null;
+    if (is_string($content)) {
+        if (trim($content) !== '') {
+            return $content;
         }
     }
-    return $parts ? implode('', $parts) : null;
+    if (is_array($content)) {
+        $parts = [];
+        foreach ($content as $part) {
+            if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+                $parts[] = $part['text'];
+            }
+        }
+        $texto = $parts ? implode('', $parts) : '';
+        if (trim($texto) !== '') {
+            return $texto;
+        }
+    }
+
+    if (isset($message['parsed']) && is_array($message['parsed'])) {
+        $textoEstructurado = json_encode(
+            $message['parsed'],
+            JSON_UNESCAPED_UNICODE
+        );
+        if (is_string($textoEstructurado)) {
+            return $textoEstructurado;
+        }
+    }
+    return null;
+}
+
+function geminiOcrOpenRouterOutputDiagnostic(array $response): string
+{
+    $details = [];
+    $error = $response['error'] ?? null;
+    if (is_array($error) && isset($error['code']) &&
+        (is_string($error['code']) || is_int($error['code']))) {
+        $code = preg_replace(
+            '/[^A-Za-z0-9_.-]/',
+            '',
+            (string) $error['code']
+        );
+        if ($code !== '') {
+            $details[] = 'código ' . substr($code, 0, 40);
+        }
+    }
+
+    $model = $response['model'] ?? '';
+    if (is_string($model)) {
+        $model = preg_replace('/[^A-Za-z0-9._\/-]/', '', $model);
+        if ($model !== '') {
+            $details[] = 'modelo ' . substr($model, 0, 100);
+        }
+    }
+
+    $choice = $response['choices'][0] ?? [];
+    if (is_array($choice) && isset($choice['finish_reason']) &&
+        is_string($choice['finish_reason'])) {
+        $reason = preg_replace('/[^A-Za-z0-9_-]/', '', $choice['finish_reason']);
+        if ($reason !== '') {
+            $details[] = 'motivo ' . substr($reason, 0, 40);
+        }
+    }
+    $message = is_array($choice) ? ($choice['message'] ?? null) : null;
+    if (is_array($message) && !empty($message['refusal'])) {
+        $details[] = 'respuesta rechazada';
+    }
+
+    return 'OpenRouter respondió sin texto utilizable' .
+        ($details ? ' (' . implode('; ', $details) . ')' : '') . '.';
 }
 
 function geminiOcrPostJson(string $url, array $headers, string $body, int $timeout): array

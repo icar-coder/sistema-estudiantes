@@ -306,6 +306,9 @@ if ($usarOpenRouter) {
                 'schema' => geminiOcrStrictJsonSchema($schema),
             ],
         ],
+        'provider' => [
+            'require_parameters' => true,
+        ],
     ];
 
     try {
@@ -361,7 +364,10 @@ if ($usarOpenRouter) {
     }
     $textoRespuesta = geminiOcrOpenRouterResponseText($respuestaDecodificada);
     if ($textoRespuesta === null) {
-        responderOcrGemini(502, ['error' => 'openrouter_output_missing', 'message' => 'El modelo gratuito no devolvió datos que se puedan revisar.']);
+        responderOcrGemini(502, [
+            'error' => 'openrouter_output_missing',
+            'message' => geminiOcrOpenRouterOutputDiagnostic($respuestaDecodificada),
+        ]);
     }
     $proveedorUsado = 'OpenRouter Free';
     $modeloUsado = isset($respuestaDecodificada['model']) &&
