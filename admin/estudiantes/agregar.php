@@ -497,15 +497,16 @@ $documentos_requeridos = [
                     En la tarjeta solo se buscarán datos para identificar al estudiante; no se guardan vacunas.
                 </p>
                 <div class="alert alert-warning" role="note">
-                    La lectura local se procesa en este equipo. Si eliges Gemini, la imagen seleccionada
-                    se enviará a Google para su análisis y no se guardará en esta aplicación.
+                    La lectura local se procesa en este equipo. Si eliges Gemini, se enviarán a Google
+                    todas las imágenes seleccionadas como documentos del mismo estudiante; se procesarán
+                    juntas en una sola solicitud y no se guardarán en esta aplicación.
                     Revisa sus condiciones de tratamiento de datos antes de continuar.
                 </div>
                 <div class="row align-items-end">
                     <div class="col-lg-6 mb-3">
                         <label for="ocr-archivos" class="form-label">Imágenes del documento</label>
                         <input type="file" id="ocr-archivos" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
-                        <div class="form-text">Hasta 5 imágenes JPG, PNG o WebP; máximo 12 MB cada una. No admite PDF.</div>
+                        <div class="form-text">Hasta 5 imágenes del mismo estudiante (JPG, PNG o WebP); máximo 12 MB cada una. Para Gemini, 3 MB combinados tras prepararlas. No admite PDF.</div>
                     </div>
                     <div class="col-sm-6 col-lg-3 mb-3">
                         <label for="ocr-tipo" class="form-label">Tipo de documento</label>
@@ -541,13 +542,13 @@ $documentos_requeridos = [
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="ocr-gemini-consentimiento">
                         <label class="form-check-label" for="ocr-gemini-consentimiento">
-                            Para esta evaluación confirmo que la imagen es sintética o está completamente
-                            anonimizada. Entiendo que se enviará a Google y que el nivel gratuito puede usar
-                            el contenido para mejorar sus productos. No usaré documentos reales ni datos
-                            personales en esta función.
+                            Para esta evaluación confirmo que todas las imágenes seleccionadas son sintéticas
+                            o están completamente anonimizadas. Entiendo que se enviarán juntas a Google y que
+                            el nivel gratuito puede usar el contenido para mejorar sus productos. No usaré
+                            documentos reales ni datos personales en esta función.
                         </label>
                     </div>
-                    <small class="d-block mt-2">Gemini procesa una imagen por solicitud; las cuotas dependen del proyecto y pueden cambiar.</small>
+                    <small class="d-block mt-2">Gemini procesa hasta 5 imágenes del mismo estudiante en una solicitud; las cuotas dependen del proyecto y pueden cambiar.</small>
                 </div>
                 <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
                 <p id="ocr-estado" class="mb-2" role="status" aria-live="polite"></p>

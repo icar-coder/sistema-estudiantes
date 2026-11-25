@@ -320,7 +320,8 @@
             botonGemini.disabled = procesoActivo ||
                 !consentimientoGemini.checked ||
                 !archivos.files ||
-                archivos.files.length !== 1;
+                archivos.files.length < 1 ||
+                archivos.files.length > 5;
         }
 
         archivos.addEventListener('change', () => {
@@ -415,12 +416,15 @@
                 estado.textContent = 'Confirma que la imagen es sintética o está completamente anonimizada.';
                 return;
             }
-            if (seleccionados.length !== 1) {
-                estado.textContent = 'Selecciona exactamente una imagen para evaluar con Gemini.';
+            if (seleccionados.length < 1 || seleccionados.length > 5) {
+                estado.textContent = 'Selecciona entre 1 y 5 imágenes del mismo estudiante para evaluar con Gemini.';
                 return;
             }
-            if (!['image/jpeg', 'image/png', 'image/webp'].includes(seleccionados[0].type)) {
-                estado.textContent = 'Selecciona una imagen JPG, PNG o WebP.';
+            if (seleccionados.some((archivo) =>
+                !['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type) ||
+                archivo.size > 12 * 1024 * 1024
+            )) {
+                estado.textContent = 'Selecciona imágenes JPG, PNG o WebP, de máximo 12 MB cada una.';
                 return;
             }
 
@@ -432,22 +436,35 @@
             actualizarBotonGemini();
             botonAplicar.disabled = true;
             progreso.value = 0;
-            estado.textContent = 'Preparando y enviando la imagen seleccionada a Gemini…';
+            estado.textContent = `Preparando ${seleccionados.length} imagen(es) para enviarlas juntas a Gemini…`;
             try {
-                const canvas = await prepararImagen(seleccionados[0], Number(rotacion.value));
-                const imagenPreparada = await new Promise((resolve) => {
-                    canvas.toBlob(resolve, 'image/jpeg', 0.88);
-                });
-                if (!imagenPreparada) {
-                    throw new Error('El navegador no pudo preparar la imagen.');
-                }
-                if (imagenPreparada.size > 4 * 1024 * 1024) {
-                    throw new Error('La imagen preparada supera el límite de 4 MB.');
+                const imagenesPreparadas = [];
+                let tamanoTotal = 0;
+                for (let indice = 0; indice < seleccionados.length; indice += 1) {
+                    estado.textContent = `Preparando imagen ${indice + 1} de ${seleccionados.length}…`;
+                    const canvas = await prepararImagen(
+                        seleccionados[indice],
+                        Number(rotacion.value)
+                    );
+                    const imagenPreparada = await new Promise((resolve) => {
+                        canvas.toBlob(resolve, 'image/jpeg', 0.88);
+                    });
+                    if (!imagenPreparada) {
+                        throw new Error(`El navegador no pudo preparar la imagen ${indice + 1}.`);
+                    }
+                    tamanoTotal += imagenPreparada.size;
+                    if (tamanoTotal > 3 * 1024 * 1024) {
+                        throw new Error('Las imágenes preparadas superan el límite combinado de 3 MB.');
+                    }
+                    imagenesPreparadas.push(imagenPreparada);
                 }
 
                 const datos = new FormData();
                 datos.append('confirmacion_sintetica', '1');
-                datos.append('imagen', imagenPreparada, 'documento.jpg');
+                imagenesPreparadas.forEach((imagenPreparada, indice) => {
+                    datos.append('imagenes[]', imagenPreparada, `documento-${indice + 1}.jpg`);
+                });
+                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es) juntas a Gemini…`;
                 const respuesta = await fetch(panel.dataset.geminiUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -507,7 +524,7 @@
                     ? `Gemini terminó. Hay ${cantidad} sugerencia(s); compáralas y revísalas antes de aplicarlas.`
                     : 'Gemini no encontró datos utilizables. Completa los campos manualmente.';
             } catch (error) {
-                estado.textContent = `No se pudo evaluar la imagen con Gemini: ${error.message}`;
+                estado.textContent = `No se pudieron evaluar las imágenes con Gemini: ${error.message}`;
             } finally {
                 consentimientoGemini.checked = false;
                 archivos.disabled = false;
