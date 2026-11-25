@@ -70,6 +70,11 @@ $pdo->exec('CREATE TABLE `historial_indicadores` (
     `momento` INTEGER,
     `valoracion` TEXT
 )');
+$pdo->exec('CREATE TABLE `plan_anual_indicadores` (
+    `id` INTEGER PRIMARY KEY,
+    `año_escolar_id` INTEGER,
+    `indicador_id` INTEGER
+)');
 
 $pdo->exec("INSERT INTO `secciones` VALUES (10, 'A'), (20, 'B'), (30, 'C')");
 $pdo->exec("INSERT INTO `lapsos` VALUES
@@ -104,6 +109,10 @@ $pdo->exec("INSERT INTO `areas_aprendizaje` VALUES
 $pdo->exec("INSERT INTO `areas_indicadores` VALUES
     (31, 1, 'Lectura', 'Lee diversos tipos de textos', 1),
     (32, 2, 'Calculo', 'Opera con numeros naturales', 1)");
+$pdo->exec("INSERT INTO `plan_anual_indicadores` VALUES
+    (51, 1, 31),
+    (52, 1, 32),
+    (53, 2, 32)");
 $pdo->exec("INSERT INTO `historial_indicadores` VALUES
     (41, 21, 31, 1, 'LE'),
     (42, 21, 32, 2, 'L'),
@@ -154,6 +163,60 @@ assertLiteralReportTest(
     $historicoIndicadores['estudiantes'][0]['literal_final'] === 'A' &&
     $historicoIndicadores['indicadores'][4][0]['valoracion'] === 'LE',
     'El reporte debe incluir estudiantes históricos sin inscripción y sus indicadores.'
+);
+
+$estadisticasLiteralesFinales = obtenerEstadisticasLiteralesFinales($pdo, 1);
+$conteosLiteralesFinales = array_column(
+    $estadisticasLiteralesFinales['literales_finales'],
+    'cantidad',
+    'literal'
+);
+assertLiteralReportTest(
+    (int) $conteosLiteralesFinales['A'] === 2 &&
+    (int) $conteosLiteralesFinales['B'] === 1 &&
+    count($estadisticasLiteralesFinales['top_estudiantes']) === 3,
+    'Las estadísticas finales deben incorporar historiales sin inscripción y evitar duplicar estudiantes inscritos.'
+);
+assertLiteralReportTest(
+    $estadisticasLiteralesFinales['top_estudiantes'][1]['seccion'] === 'Historial académico',
+    'Los estudiantes históricos destacados deben identificarse sin asignarles una sección real.'
+);
+$estadisticasSeccion = obtenerEstadisticasLiteralesFinales($pdo, 1, 10);
+assertLiteralReportTest(
+    count($estadisticasSeccion['literales_finales']) === 1 &&
+    $estadisticasSeccion['literales_finales'][0]['literal'] === 'B' &&
+    count($estadisticasSeccion['top_estudiantes']) === 1,
+    'Las estadísticas de literales finales deben respetar el filtro por sección.'
+);
+
+$resumenIndicadores = obtenerResumenIndicadores($pdo, 1);
+$lengua = array_values(array_filter(
+    $resumenIndicadores,
+    static function (array $fila): bool {
+        return $fila['area'] === 'Lengua';
+    }
+))[0];
+$matematica = array_values(array_filter(
+    $resumenIndicadores,
+    static function (array $fila): bool {
+        return $fila['area'] === 'Matematica';
+    }
+))[0];
+assertLiteralReportTest(
+    (int) $lengua['le'] === 1 &&
+    (int) $lengua['pa'] === 1 &&
+    (int) $lengua['total'] === 2 &&
+    (int) $matematica['le'] === 1 &&
+    (int) $matematica['l'] === 1,
+    'El resumen debe contar valoraciones por indicador e incluir el historial del año.'
+);
+
+$resumenFiltrado = obtenerResumenIndicadores($pdo, 1, 10, 1);
+assertLiteralReportTest(
+    count($resumenFiltrado) === 1 &&
+    (int) $resumenFiltrado[0]['le'] === 1 &&
+    (int) $resumenFiltrado[0]['total'] === 1,
+    'El resumen de indicadores debe respetar sección y momento.'
 );
 
 echo "literal report tests passed\n";

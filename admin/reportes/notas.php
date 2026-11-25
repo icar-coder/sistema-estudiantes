@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../includes/database.php';
 require_once '../../includes/functions_plan_anual.php';
 require_once '../../includes/functions_evaluacion.php';
+require_once '../../includes/functions_reportes.php';
 checkAuth();
 checkRole(['admin']);
 planAnualMigrarCatalogosExistentes($pdo);
@@ -21,6 +22,7 @@ $tablasRequeridas = [
     'historial_indicadores',
     'areas_indicadores',
     'areas_aprendizaje',
+    'plan_anual_indicadores',
 ];
 $esquema_faltante = [];
 foreach ($tablasRequeridas as $tabla) {
@@ -32,7 +34,17 @@ foreach ($tablasRequeridas as $tabla) {
 // Obtener parámetros de filtro
 $año_escolar_id = $_GET['año_escolar_id'] ?? '';
 $seccion_id = $_GET['seccion_id'] ?? '';
+$seccion_filtro_id = ctype_digit((string) $seccion_id) && (int) $seccion_id > 0
+    ? (int) $seccion_id
+    : null;
 $lapso_id = $_GET['lapso_id'] ?? '';
+$momento_indicador_raw = $_GET['momento_indicador'] ?? '';
+$momento_indicador = is_string($momento_indicador_raw) &&
+    in_array($momento_indicador_raw, ['1', '2', '3'], true)
+        ? (int) $momento_indicador_raw
+        : null;
+$tieneMomentoIndicador = databaseTableExists($pdo, 'historial_indicadores') &&
+    databaseColumnExists($pdo, 'historial_indicadores', 'momento');
 
 // Obtener años escolares para el filtro
 try {
@@ -85,7 +97,7 @@ $datos_graficas = [];
 if ($año_escolar_id) {
     try {
         // Distribución de literales por sección (para el lapso más reciente o todos)
-        $stmt = $pdo->prepare("
+        $sqlDistribucion = "
             SELECT s.nombre as seccion, 
                    ll.literal,
                    COUNT(*) as cantidad
@@ -94,16 +106,27 @@ if ($año_escolar_id) {
             JOIN secciones s ON i.seccion_id = s.id
             JOIN lapsos l ON ll.lapso_id = l.id
             WHERE i.año_escolar_id = ?
-            " . ($lapso_id ? " AND ll.lapso_id = ?" : " AND l.numero = (SELECT MAX(numero) FROM lapsos WHERE año_escolar_id = ?)") . "
+        ";
+        $parametrosDistribucion = [$año_escolar_id];
+        if ($seccion_filtro_id !== null) {
+            $sqlDistribucion .= " AND i.seccion_id = ?";
+            $parametrosDistribucion[] = $seccion_filtro_id;
+        }
+        if ($lapso_id) {
+            $sqlDistribucion .= " AND ll.lapso_id = ?";
+            $parametrosDistribucion[] = $lapso_id;
+        } else {
+            $sqlDistribucion .= " AND l.numero = (
+                SELECT MAX(numero) FROM lapsos WHERE año_escolar_id = ?
+            )";
+            $parametrosDistribucion[] = $año_escolar_id;
+        }
+        $sqlDistribucion .= "
             GROUP BY s.nombre, ll.literal
             ORDER BY s.nombre, ll.literal
-        ");
-        
-        if ($lapso_id) {
-            $stmt->execute([$año_escolar_id, $lapso_id]);
-        } else {
-            $stmt->execute([$año_escolar_id, $año_escolar_id]);
-        }
+        ";
+        $stmt = $pdo->prepare($sqlDistribucion);
+        $stmt->execute($parametrosDistribucion);
         
         $distribucion_literales = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -119,37 +142,13 @@ if ($año_escolar_id) {
         
         $estadisticas['distribucion_literales'] = $literales_por_seccion;
 
-        // Literales finales del año
-        $stmt = $pdo->prepare("
-            SELECT lf.literal_final as literal, COUNT(*) as cantidad
-            FROM literales_finales lf
-            JOIN inscripciones i ON lf.inscripcion_id = i.id
-            WHERE i.año_escolar_id = ?
-            GROUP BY lf.literal_final
-            ORDER BY lf.literal_final
-        ");
-        $stmt->execute([$año_escolar_id]);
-        $estadisticas['literales_finales'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Top estudiantes (basado en literales)
-        $stmt = $pdo->prepare("
-            SELECT e.nombre, e.apellido, s.nombre as seccion, lf.literal_final as literal
-            FROM literales_finales lf
-            JOIN inscripciones i ON lf.inscripcion_id = i.id
-            JOIN estudiantes e ON i.estudiante_id = e.id
-            JOIN secciones s ON i.seccion_id = s.id
-            WHERE i.año_escolar_id = ? AND lf.literal_final IN ('A', 'B')
-            ORDER BY 
-                CASE lf.literal_final 
-                    WHEN 'A' THEN 1 
-                    WHEN 'B' THEN 2 
-                    ELSE 3 
-                END,
-                e.apellido, e.nombre
-            LIMIT 15
-        ");
-        $stmt->execute([$año_escolar_id]);
-        $estadisticas['top_estudiantes'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $estadisticasLiteralesFinales = obtenerEstadisticasLiteralesFinales(
+            $pdo,
+            (int) $año_escolar_id,
+            $seccion_filtro_id
+        );
+        $estadisticas['literales_finales'] = $estadisticasLiteralesFinales['literales_finales'];
+        $estadisticas['top_estudiantes'] = $estadisticasLiteralesFinales['top_estudiantes'];
 
         // Estadísticas de evaluación por áreas de aprendizaje
         $stmt = $pdo->prepare("
@@ -183,6 +182,13 @@ if ($año_escolar_id) {
             $año_escolar_id,
         ]);
         $estadisticas['evaluacion_areas'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $estadisticas['indicadores'] = obtenerResumenIndicadores(
+            $pdo,
+            (int) $año_escolar_id,
+            $seccion_filtro_id,
+            $tieneMomentoIndicador ? $momento_indicador : null
+        );
 
         // Preparar datos para gráficas
         $datos_graficas['labels_secciones'] = array_keys($literales_por_seccion);
@@ -262,7 +268,7 @@ function getLiteralColor($literal) {
 
 <div class="container-fluid p-4">
             <h2 class="mb-4">
-                <i class="fas fa-chart-bar me-2"></i>Reportes y Estadísticas por Literales
+                <i class="fas fa-chart-bar me-2"></i>Reportes y Estadísticas por Literales e Indicadores
             </h2>
 
             <!-- Filtros -->
@@ -274,7 +280,7 @@ function getLiteralColor($literal) {
                 </div>
                 <div class="card-body">
                     <form method="GET" class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="año_escolar_id" class="form-label">Año Escolar</label>
                             <select class="form-select" id="año_escolar_id" name="año_escolar_id">
                                 <option value="">Seleccionar año escolar</option>
@@ -286,7 +292,7 @@ function getLiteralColor($literal) {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="seccion_id" class="form-label">Sección</label>
                             <select class="form-select" id="seccion_id" name="seccion_id">
                                 <option value="">Todas las secciones</option>
@@ -298,7 +304,7 @@ function getLiteralColor($literal) {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="lapso_id" class="form-label">Lapso</label>
                             <select class="form-select" id="lapso_id" name="lapso_id">
                                 <option value="">Lapso más reciente</option>
@@ -309,6 +315,20 @@ function getLiteralColor($literal) {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="momento_indicador" class="form-label">Momento del indicador</label>
+                            <select class="form-select" id="momento_indicador" name="momento_indicador"
+                                    <?php echo !$tieneMomentoIndicador ? 'disabled' : ''; ?>>
+                                <option value="">Todos los momentos</option>
+                                <?php foreach ([1, 2, 3] as $numeroMomento): ?>
+                                    <option value="<?php echo $numeroMomento; ?>"
+                                        <?php echo $momento_indicador === $numeroMomento ? 'selected' : ''; ?>>
+                                        Momento <?php echo $numeroMomento; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">Este filtro es independiente del lapso.</div>
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">
@@ -415,6 +435,63 @@ function getLiteralColor($literal) {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-list-alt me-2"></i>Resultados por Indicador
+                                    <small class="ms-2">
+                                        (<?php echo $momento_indicador === null
+                                            ? 'Todos los momentos'
+                                            : 'Momento ' . $momento_indicador; ?>)
+                                    </small>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted">
+                                    Cantidad de evaluaciones registradas por valoración. Al seleccionar todos los momentos,
+                                    un estudiante puede aparecer más de una vez para el mismo indicador.
+                                </p>
+                                <?php if (!empty($estadisticas['indicadores'])): ?>
+                                    <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                                        <table class="table table-sm table-striped table-bordered align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Área de aprendizaje</th>
+                                                    <th>Indicador</th>
+                                                    <th>LE</th>
+                                                    <th>L</th>
+                                                    <th>PA</th>
+                                                    <th>IP</th>
+                                                    <th>NL</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($estadisticas['indicadores'] as $filaIndicador): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($filaIndicador['area']); ?></td>
+                                                        <td><?php echo htmlspecialchars($filaIndicador['indicador']); ?></td>
+                                                        <td class="text-center"><?php echo (int) $filaIndicador['le']; ?></td>
+                                                        <td class="text-center"><?php echo (int) $filaIndicador['l']; ?></td>
+                                                        <td class="text-center"><?php echo (int) $filaIndicador['pa']; ?></td>
+                                                        <td class="text-center"><?php echo (int) $filaIndicador['ip']; ?></td>
+                                                        <td class="text-center"><?php echo (int) $filaIndicador['nl']; ?></td>
+                                                        <td class="text-center fw-bold"><?php echo (int) $filaIndicador['total']; ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="text-muted mb-0">No hay valoraciones de indicadores para los filtros seleccionados.</p>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
