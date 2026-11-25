@@ -101,6 +101,27 @@ assertGeminiOcrTest(
     'Solo los errores temporales de Gemini deben activar el fallback.'
 );
 
+$secuenciaModelos = geminiOcrModelSequence(
+    [' gemini-custom ', 'gemini-3.5-flash-lite'],
+    ['gemini-3.5-flash-lite', 'gemini-3.8-flash']
+);
+assertGeminiOcrTest(
+    $secuenciaModelos === [
+        'gemini-custom',
+        'gemini-3.5-flash-lite',
+        'gemini-3.8-flash',
+    ],
+    'Debe conservar el orden configurado y eliminar modelos duplicados.'
+);
+
+$rechazoModelos = false;
+try {
+    geminiOcrModelSequence(['gemini-3.5-flash-lite'], ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-3.2-flash']);
+} catch (InvalidArgumentException $exception) {
+    $rechazoModelos = true;
+}
+assertGeminiOcrTest($rechazoModelos, 'Debe limitar la rotación automática a tres modelos.');
+
 $textoOpenRouter = geminiOcrOpenRouterResponseText([
     'choices' => [
         ['message' => ['content' => [

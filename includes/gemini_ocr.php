@@ -159,6 +159,31 @@ function geminiOcrShouldFallbackToOpenRouter(
     );
 }
 
+function geminiOcrModelSequence(array $preferredModels, array $fallbackModels = []): array
+{
+    $models = [];
+    foreach (array_merge($preferredModels, $fallbackModels) as $model) {
+        if (!is_string($model)) {
+            throw new InvalidArgumentException('Los modelos de Gemini deben ser cadenas.');
+        }
+        $model = trim($model);
+        if (!preg_match('/^[A-Za-z0-9._-]{1,80}$/', $model)) {
+            throw new InvalidArgumentException('El nombre de un modelo Gemini no es válido.');
+        }
+        if (!in_array($model, $models, true)) {
+            $models[] = $model;
+        }
+        if (count($models) > 3) {
+            throw new InvalidArgumentException('La lista de modelos Gemini supera el máximo permitido.');
+        }
+    }
+
+    if (!$models) {
+        throw new InvalidArgumentException('Configura al menos un modelo Gemini.');
+    }
+    return $models;
+}
+
 function geminiOcrStrictJsonSchema(array $schema): array
 {
     if (($schema['type'] ?? '') === 'object') {

@@ -474,7 +474,7 @@
             actualizarBotonGemini();
             botonAplicar.disabled = true;
             progreso.value = 0;
-            estado.textContent = `Preparando ${seleccionados.length} imagen(es) para Gemini con respaldo gratuito…`;
+            estado.textContent = `Preparando ${seleccionados.length} imagen(es) para probar Gemini y su respaldo gratuito…`;
             try {
                 const imagenesPreparadas = [];
                 let tamanoTotal = 0;
@@ -502,7 +502,7 @@
                 imagenesPreparadas.forEach((imagenPreparada, indice) => {
                     datos.append('imagenes[]', imagenPreparada, `documento-${indice + 1}.jpg`);
                 });
-                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es) a Gemini… Si no está disponible, se probará el modelo gratuito de respaldo.`;
+                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es): se probarán hasta 3 modelos Gemini y luego OpenRouter si es necesario.`;
                 const respuesta = await fetch(panel.dataset.geminiUrl, {
                     method: 'POST',
                     credentials: 'same-origin',

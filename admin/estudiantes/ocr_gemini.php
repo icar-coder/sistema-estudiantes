@@ -122,12 +122,57 @@ for ($indice = 0; $indice < $cantidadImagenes; $indice++) {
     ];
 }
 
-$modelo = getenv('GEMINI_MODEL');
-if ($modelo === false || trim($modelo) === '') {
-    $modelo = $configGemini['model'] ?? 'gemini-3.1-flash-lite';
+$modelosPredeterminados = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
+    'gemini-3.1-flash-lite',
+];
+$modelosEnv = getenv('GEMINI_MODELS');
+if ($modelosEnv !== false && trim($modelosEnv) !== '') {
+    $modelosPreferidos = explode(',', $modelosEnv);
+    $modelosAlternativos = [];
+} elseif (($modeloPrincipalEnv = getenv('GEMINI_MODEL')) !== false &&
+    trim($modeloPrincipalEnv) !== '') {
+    $modelosPreferidos = [$modeloPrincipalEnv];
+    $modelosAlternativos = array_slice(
+        array_values(array_diff($modelosPredeterminados, [trim($modeloPrincipalEnv)])),
+        0,
+        2
+    );
+} elseif (array_key_exists('models', $configGemini)) {
+    if (!is_array($configGemini['models'])) {
+        responderOcrGemini(500, ['error' => 'gemini_models_invalid', 'message' => 'La lista gemini.models debe ser un arreglo de modelos válidos.']);
+    }
+    $modelosPreferidos = $configGemini['models'];
+    $modelosAlternativos = [];
+} else {
+    $modeloPrincipal = $configGemini['model'] ?? '';
+    if ($modeloPrincipal === null ||
+        (is_string($modeloPrincipal) && trim($modeloPrincipal) === '')) {
+        $modelosPreferidos = $modelosPredeterminados;
+        $modelosAlternativos = [];
+    } elseif (!is_string($modeloPrincipal)) {
+        $modelosPreferidos = [$modeloPrincipal];
+        $modelosAlternativos = [];
+    } else {
+        $modelosPreferidos = [$modeloPrincipal];
+        $modelosAlternativos = array_slice(
+            array_values(array_diff($modelosPredeterminados, [trim($modeloPrincipal)])),
+            0,
+            2
+        );
+    }
 }
-if (!is_string($modelo) || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $modelo)) {
-    responderOcrGemini(500, ['error' => 'gemini_model_invalid', 'message' => 'El modelo Gemini configurado no es válido.']);
+try {
+    $modelosGemini = geminiOcrModelSequence(
+        $modelosPreferidos,
+        $modelosAlternativos
+    );
+} catch (InvalidArgumentException $exception) {
+    responderOcrGemini(500, [
+        'error' => 'gemini_models_invalid',
+        'message' => 'La lista de modelos Gemini no es válida; configura de uno a tres modelos.',
+    ]);
 }
 
 $schema = geminiOcrResponseSchema();
@@ -141,8 +186,7 @@ $prompt = 'Extrae únicamente los datos legibles del mismo estudiante y de su re
     . 'No inventes ni completes datos por contexto. Devuelve cadenas vacías cuando un campo no aparezca o no sea legible. '
     . 'Las fechas deben estar en formato YYYY-MM-DD. Usa género solo si está explícito: masculino o femenino. '
     . 'Los nombres y apellidos deben mantenerse separados como aparecen en el documento. Devuelve parentesco en minúsculas usando solo el catálogo permitido, tipo_vivienda con la opción exacta del formulario, personas_conviven como dígitos entre 1 y 20, cédula escolar sin espacios ni signos, y teléfonos como cadenas de dígitos con código de área.';
-$solicitud = [
-    'model' => $modelo,
+$solicitudGemini = [
     'store' => false,
     'generation_config' => ['max_output_tokens' => 2048],
     'input' => [
@@ -157,42 +201,88 @@ $solicitud = [
         'schema' => $schema,
     ],
 ];
-$solicitud['input'] = array_merge($solicitud['input'], $entradaImagenes);
+$solicitudGemini['input'] = array_merge($solicitudGemini['input'], $entradaImagenes);
 
-try {
-    $cuerpoSolicitud = json_encode($solicitud, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-} catch (JsonException $exception) {
-    responderOcrGemini(500, ['error' => 'request_encoding_failed', 'message' => 'No se pudo preparar la solicitud de Gemini.']);
-}
+$usarOpenRouter = false;
+$estadoApi = 0;
+$ultimoErrorGemini = '';
+$resultado = null;
+$proveedorUsado = '';
+$modeloUsado = '';
+foreach ($modelosGemini as $modelo) {
+    $solicitud = $solicitudGemini;
+    $solicitud['model'] = $modelo;
 
-$respuestaGemini = geminiOcrPostJson(
-    'https://generativelanguage.googleapis.com/v1beta/interactions',
-    [
-        'Content-Type: application/json',
-        'x-goog-api-key: ' . trim($apiKey),
-        'Api-Revision: 2026-05-20',
-    ],
-    $cuerpoSolicitud,
-    45
-);
-$respuestaApi = $respuestaGemini['body'];
-$estadoApi = $respuestaGemini['status'];
-$falloConexionGemini = $respuestaApi === false;
-$usarOpenRouter = geminiOcrShouldFallbackToOpenRouter($estadoApi, $falloConexionGemini);
-$respuestaDecodificada = null;
-$textoRespuesta = null;
-$proveedorUsado = 'Gemini';
-$modeloUsado = $modelo;
+    try {
+        $cuerpoSolicitud = json_encode(
+            $solicitud,
+            JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+        );
+    } catch (JsonException $exception) {
+        responderOcrGemini(500, ['error' => 'request_encoding_failed', 'message' => 'No se pudo preparar la solicitud de Gemini.']);
+    }
 
-if ($falloConexionGemini) {
-    error_log('Fallo de conexión de OCR Gemini: ' . $respuestaGemini['error']);
-} elseif ($estadoApi === 401 || $estadoApi === 403) {
-    error_log('Gemini rechazó la clave de API para OCR (HTTP ' . $estadoApi . ').');
-    responderOcrGemini(503, ['error' => 'gemini_auth_failed', 'message' => 'Gemini rechazó la clave configurada. Revisa GEMINI_API_KEY; no se intentó el respaldo.']);
-} elseif ($estadoApi >= 200 && $estadoApi < 300) {
+    $respuestaGemini = geminiOcrPostJson(
+        'https://generativelanguage.googleapis.com/v1beta/interactions',
+        [
+            'Content-Type: application/json',
+            'x-goog-api-key: ' . trim($apiKey),
+            'Api-Revision: 2026-05-20',
+        ],
+        $cuerpoSolicitud,
+        45
+    );
+    $respuestaApi = $respuestaGemini['body'];
+    $estadoApi = $respuestaGemini['status'];
+
+    if ($respuestaApi === false) {
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'no se pudo conectar con Google';
+        error_log(
+            'Fallo de conexión de OCR Gemini (modelo ' . $modelo . '): ' .
+            $respuestaGemini['error']
+        );
+        break;
+    }
+    if ($estadoApi === 401 || $estadoApi === 403) {
+        error_log('Gemini rechazó la clave de API para OCR (HTTP ' . $estadoApi . ').');
+        responderOcrGemini(503, ['error' => 'gemini_auth_failed', 'message' => 'Gemini rechazó la clave configurada. Revisa GEMINI_API_KEY; no se intentó el respaldo.']);
+    }
+    if ($estadoApi === 404) {
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'no encontró el modelo ' . $modelo . ' (HTTP 404)';
+        error_log('OCR Gemini no encontró el modelo configurado ' . $modelo . '.');
+        continue;
+    }
+    if ($estadoApi === 400) {
+        responderOcrGemini(502, [
+            'error' => 'gemini_request_invalid',
+            'message' => 'Google rechazó la solicitud (HTTP 400). Revisa el formato; no se intentó el respaldo.',
+        ]);
+    }
+    if (geminiOcrShouldFallbackToOpenRouter($estadoApi)) {
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'respondió con HTTP ' . $estadoApi . ' al probar ' . $modelo;
+        error_log(
+            'Error temporal de servicio OCR Gemini (HTTP ' . $estadoApi .
+            ', modelo ' . $modelo . ').'
+        );
+        continue;
+    }
+    if ($estadoApi < 200 || $estadoApi >= 300) {
+        error_log('Error de servicio OCR Gemini (HTTP ' . $estadoApi . ').');
+        responderOcrGemini(502, [
+            'error' => 'gemini_request_failed',
+            'message' => 'Google rechazó la solicitud de Gemini (HTTP ' . $estadoApi . '). No se intentó el respaldo.',
+        ]);
+    }
+
     $respuestaDecodificada = json_decode($respuestaApi, true);
     if (!is_array($respuestaDecodificada)) {
-        responderOcrGemini(502, ['error' => 'gemini_response_invalid', 'message' => 'Gemini devolvió una respuesta inválida. No se intentó el respaldo.']);
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'devolvió una respuesta inválida con ' . $modelo;
+        error_log('Respuesta OCR Gemini inválida (modelo ' . $modelo . ').');
+        continue;
     }
 
     $interaccion = $respuestaDecodificada['interaction'] ?? $respuestaDecodificada;
@@ -207,7 +297,8 @@ if ($falloConexionGemini) {
         error_log(
             'OCR Gemini interaction terminó con estado ' .
             preg_replace('/[^a-z_]/', '', $estadoInteraccion) .
-            ($erroresInteraccion ? ' (' . implode(',', $erroresInteraccion) . ')' : '') . '.'
+            ($erroresInteraccion ? ' (' . implode(',', $erroresInteraccion) . ')' : '') .
+            ' para ' . $modelo . '.'
         );
         $usarOpenRouter = geminiOcrShouldFallbackToOpenRouter(
             $estadoApi,
@@ -216,65 +307,61 @@ if ($falloConexionGemini) {
             $erroresInteraccion
         );
 
+        if ($estadoInteraccion === 'in_progress') {
+            responderOcrGemini(502, [
+                'error' => 'gemini_still_processing',
+                'message' => 'Gemini aún no terminó la lectura. Espera un momento antes de volver a intentarlo.',
+            ]);
+        }
         if (!$usarOpenRouter) {
             $detalleEstado = $estadoInteraccion;
             if ($erroresInteraccion) {
                 $detalleEstado .= ', código ' . implode(', ', $erroresInteraccion);
-            }
-            if ($estadoInteraccion === 'in_progress') {
-                responderOcrGemini(502, [
-                    'error' => 'gemini_still_processing',
-                    'message' => 'Gemini aún no terminó la lectura (' . $detalleEstado . '). Espera un momento antes de volver a intentarlo.',
-                ]);
             }
             responderOcrGemini(502, [
                 'error' => 'gemini_interaction_incomplete',
                 'message' => 'Gemini no devolvió una lectura completa (estado: ' . $detalleEstado . ').',
             ]);
         }
-    } else {
-        $textoRespuesta = geminiOcrResponseText($respuestaDecodificada);
-        if ($textoRespuesta === null) {
-            responderOcrGemini(502, ['error' => 'gemini_output_missing', 'message' => 'Gemini no devolvió datos que se puedan revisar. No se intentó el respaldo.']);
-        }
+        $ultimoErrorGemini = 'falló temporalmente con ' . $modelo;
+        continue;
     }
-} elseif (!$usarOpenRouter) {
-    $respuestaErrorApi = is_string($respuestaApi) ? json_decode($respuestaApi, true) : null;
-    $estadoErrorApi = is_array($respuestaErrorApi)
-        ? ($respuestaErrorApi['error']['status'] ?? '')
-        : '';
-    if (!is_string($estadoErrorApi) ||
-        !preg_match('/^[A-Z_]{1,60}$/', $estadoErrorApi)) {
-        $estadoErrorApi = 'UNKNOWN';
-    }
-    error_log(
-        'Error de servicio OCR Gemini (HTTP ' . $estadoApi .
-        ', estado ' . $estadoErrorApi . ').'
-    );
 
-    if ($estadoApi === 400) {
-        responderOcrGemini(502, [
-            'error' => 'gemini_request_invalid',
-            'message' => 'Google rechazó la solicitud (HTTP 400). Revisa el modelo y el formato de la solicitud; no se intentó el respaldo.',
-        ]);
+    $textoRespuestaGemini = geminiOcrResponseText($respuestaDecodificada);
+    $resultadoDecodificadoGemini = is_string($textoRespuestaGemini)
+        ? json_decode($textoRespuestaGemini, true)
+        : null;
+    if (!is_array($resultadoDecodificadoGemini)) {
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'no devolvió una lectura utilizable con ' . $modelo;
+        error_log('Salida OCR Gemini no utilizable (modelo ' . $modelo . ').');
+        continue;
     }
-    if ($estadoApi === 404) {
-        responderOcrGemini(502, [
-            'error' => 'gemini_model_unavailable',
-            'message' => 'El modelo Gemini configurado no está disponible para este proyecto (HTTP 404). Revisa GEMINI_MODEL; no se intentó el respaldo.',
-        ]);
+
+    try {
+        $resultado = geminiOcrValidateResult($resultadoDecodificadoGemini);
+    } catch (InvalidArgumentException $exception) {
+        $usarOpenRouter = true;
+        $ultimoErrorGemini = 'devolvió datos incompletos con ' . $modelo;
+        error_log('Salida OCR Gemini no superó la validación (modelo ' . $modelo . ').');
+        continue;
     }
-    responderOcrGemini(502, [
-        'error' => 'gemini_request_failed',
-        'message' => 'Google rechazó la solicitud de Gemini (HTTP ' . $estadoApi . '). No se intentó el respaldo.',
-    ]);
+
+    $usarOpenRouter = false;
+    $proveedorUsado = 'Gemini';
+    $modeloUsado = $modelo;
+    break;
+}
+
+if ($resultado === null) {
+    $usarOpenRouter = true;
 }
 
 if ($usarOpenRouter) {
     if (trim($openRouterApiKey) === '') {
-        $causaGemini = $falloConexionGemini
-            ? 'no se pudo conectar'
-            : 'respondió con HTTP ' . $estadoApi;
+        $causaGemini = $ultimoErrorGemini !== ''
+            ? $ultimoErrorGemini
+            : 'no pudo completar la lectura con los modelos configurados';
         responderOcrGemini(503, [
             'error' => 'openrouter_not_configured',
             'message' => 'Gemini ' . $causaGemini . ', pero OpenRouter no está configurado. Añade su clave en openrouter.api_key para habilitar el respaldo gratuito.',
@@ -369,22 +456,20 @@ if ($usarOpenRouter) {
             'message' => geminiOcrOpenRouterOutputDiagnostic($respuestaDecodificada),
         ]);
     }
+    $resultadoDecodificado = json_decode($textoRespuesta, true);
+    if (!is_array($resultadoDecodificado)) {
+        responderOcrGemini(502, ['error' => 'ocr_ai_output_invalid', 'message' => 'OpenRouter devolvió datos con un formato inesperado.']);
+    }
+    try {
+        $resultado = geminiOcrValidateResult($resultadoDecodificado);
+    } catch (InvalidArgumentException $exception) {
+        responderOcrGemini(502, ['error' => 'ocr_ai_output_invalid', 'message' => 'OpenRouter devolvió datos que no se pueden usar como sugerencias.']);
+    }
     $proveedorUsado = 'OpenRouter Free';
     $modeloUsado = isset($respuestaDecodificada['model']) &&
         is_string($respuestaDecodificada['model'])
         ? $respuestaDecodificada['model']
         : 'openrouter/free';
-}
-
-$resultadoDecodificado = json_decode($textoRespuesta, true);
-if (!is_array($resultadoDecodificado)) {
-    responderOcrGemini(502, ['error' => 'ocr_ai_output_invalid', 'message' => 'El proveedor de IA devolvió datos con un formato inesperado.']);
-}
-
-try {
-    $resultado = geminiOcrValidateResult($resultadoDecodificado);
-} catch (InvalidArgumentException $exception) {
-    responderOcrGemini(502, ['error' => 'ocr_ai_output_invalid', 'message' => 'El proveedor de IA devolvió datos que no se pueden usar como sugerencias.']);
 }
 
 responderOcrGemini(200, [
