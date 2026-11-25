@@ -497,10 +497,10 @@ $documentos_requeridos = [
                     En la tarjeta solo se buscarán datos para identificar al estudiante; no se guardan vacunas.
                 </p>
                 <div class="alert alert-warning" role="note">
-                    La lectura local se procesa en este equipo. Si eliges Gemini, se enviarán a Google
-                    todas las imágenes seleccionadas como documentos del mismo estudiante; se procesarán
-                    juntas en una sola solicitud y no se guardarán en esta aplicación.
-                    Revisa sus condiciones de tratamiento de datos antes de continuar.
+                    La lectura local se procesa en este equipo. La evaluación en la nube envía las imágenes
+                    a Google; si Gemini no está disponible, se envían a OpenRouter y al modelo gratuito que
+                    elija su router. Esas empresas y el proveedor del modelo tienen sus propias condiciones
+                    de privacidad. La aplicación no guarda las imágenes.
                 </div>
                 <div class="row align-items-end">
                     <div class="col-lg-6 mb-3">
@@ -532,7 +532,7 @@ $documentos_requeridos = [
                         <i class="fas fa-search me-2"></i>Leer documento
                     </button>
                     <button type="button" class="btn btn-outline-primary" id="ocr-gemini" disabled>
-                        <i class="fas fa-cloud me-2"></i>Evaluar con Gemini
+                        <i class="fas fa-cloud me-2"></i>Evaluar con IA (Gemini / respaldo gratis)
                     </button>
                     <button type="button" class="btn btn-outline-success" id="ocr-aplicar" disabled>
                         <i class="fas fa-check me-2"></i>Aplicar sugerencias a campos vacíos
@@ -543,13 +543,13 @@ $documentos_requeridos = [
                         <input class="form-check-input" type="checkbox" id="ocr-gemini-consentimiento">
                         <label class="form-check-label" for="ocr-gemini-consentimiento">
                             Para esta evaluación confirmo que todas las imágenes seleccionadas son sintéticas
-                            o están completamente anonimizadas. Entiendo que se enviarán juntas a Google y que
-                            el nivel gratuito puede usar el contenido para mejorar sus productos. No usaré
-                            documentos reales ni datos personales en esta función.
+                            o están completamente anonimizadas. Entiendo que se enviarán a Google y, si falla
+                            temporalmente, a OpenRouter y al proveedor del modelo gratuito seleccionado.
+                            No usaré documentos reales ni datos personales en esta función.
                         </label>
                     </div>
                     <small class="d-block mt-2">Selecciona todas las imágenes primero y luego marca la confirmación. Si cambias la selección, tendrás que confirmarla de nuevo.</small>
-                    <small class="d-block mt-2">Gemini procesa hasta 5 imágenes del mismo estudiante en una solicitud; las cuotas dependen del proyecto y pueden cambiar.</small>
+                    <small class="d-block mt-2">Se prueban hasta 5 imágenes en una solicitud. OpenRouter usa únicamente su router de modelos gratuitos compatibles con imágenes; la disponibilidad y las cuotas pueden cambiar.</small>
                 </div>
                 <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
                 <p id="ocr-estado" class="mb-2" role="status" aria-live="polite"></p>

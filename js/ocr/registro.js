@@ -474,7 +474,7 @@
             actualizarBotonGemini();
             botonAplicar.disabled = true;
             progreso.value = 0;
-            estado.textContent = `Preparando ${seleccionados.length} imagen(es) para enviarlas juntas a Gemini…`;
+            estado.textContent = `Preparando ${seleccionados.length} imagen(es) para Gemini con respaldo gratuito…`;
             try {
                 const imagenesPreparadas = [];
                 let tamanoTotal = 0;
@@ -502,7 +502,7 @@
                 imagenesPreparadas.forEach((imagenPreparada, indice) => {
                     datos.append('imagenes[]', imagenPreparada, `documento-${indice + 1}.jpg`);
                 });
-                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es) juntas a Gemini…`;
+                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es) a Gemini… Si no está disponible, se probará el modelo gratuito de respaldo.`;
                 const respuesta = await fetch(panel.dataset.geminiUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -570,14 +570,15 @@
                 }
 
                 const cantidad = Object.keys(sugerenciasActuales).length;
-                salida.value = `${salida.value}${salida.value ? '\n\n' : ''}--- Gemini (${contenido.model}) ---\n${JSON.stringify(contenido.result, null, 2)}`;
+                const proveedor = contenido.provider || 'Gemini';
+                salida.value = `${salida.value}${salida.value ? '\n\n' : ''}--- ${proveedor} (${contenido.model}) ---\n${JSON.stringify(contenido.result, null, 2)}`;
                 progreso.value = 100;
                 botonAplicar.disabled = cantidad === 0;
                 estado.textContent = cantidad
-                    ? `Gemini terminó. Hay ${cantidad} sugerencia(s); compáralas y revísalas antes de aplicarlas.`
-                    : 'Gemini no encontró datos utilizables. Completa los campos manualmente.';
+                    ? `${proveedor} terminó. Hay ${cantidad} sugerencia(s); compáralas y revísalas antes de aplicarlas.`
+                    : `${proveedor} no encontró datos utilizables. Completa los campos manualmente.`;
             } catch (error) {
-                estado.textContent = `No se pudieron evaluar las imágenes con Gemini: ${error.message}`;
+                estado.textContent = `No se pudieron evaluar las imágenes con IA: ${error.message}`;
             } finally {
                 consentimientoGemini.checked = false;
                 archivos.disabled = false;

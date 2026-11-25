@@ -138,6 +138,97 @@ function geminiOcrInteractionErrorCodes(array $errors): array
     return $codes;
 }
 
+function geminiOcrShouldFallbackToOpenRouter(
+    int $httpStatus,
+    bool $connectionFailed = false,
+    string $interactionStatus = '',
+    array $interactionErrorCodes = []
+): bool {
+    if ($connectionFailed || $httpStatus === 408 || $httpStatus === 429 ||
+        $httpStatus >= 500) {
+        return true;
+    }
+
+    if ($interactionStatus !== 'failed') {
+        return false;
+    }
+
+    return (bool) array_intersect(
+        ['DEADLINE_EXCEEDED', 'INTERNAL', 'RESOURCE_EXHAUSTED', 'UNAVAILABLE'],
+        $interactionErrorCodes
+    );
+}
+
+function geminiOcrStrictJsonSchema(array $schema): array
+{
+    if (($schema['type'] ?? '') === 'object') {
+        $schema['additionalProperties'] = false;
+        if (isset($schema['properties']) && is_array($schema['properties'])) {
+            foreach ($schema['properties'] as $name => $property) {
+                if (is_array($property)) {
+                    $schema['properties'][$name] = geminiOcrStrictJsonSchema($property);
+                }
+            }
+        }
+    }
+    if (($schema['type'] ?? '') === 'array' &&
+        isset($schema['items']) && is_array($schema['items'])) {
+        $schema['items'] = geminiOcrStrictJsonSchema($schema['items']);
+    }
+    return $schema;
+}
+
+function geminiOcrOpenRouterResponseText(array $response): ?string
+{
+    $content = $response['choices'][0]['message']['content'] ?? null;
+    if (is_string($content)) {
+        return $content;
+    }
+    if (!is_array($content)) {
+        return null;
+    }
+
+    $parts = [];
+    foreach ($content as $part) {
+        if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+            $parts[] = $part['text'];
+        }
+    }
+    return $parts ? implode('', $parts) : null;
+}
+
+function geminiOcrPostJson(string $url, array $headers, string $body, int $timeout): array
+{
+    $curl = curl_init($url);
+    if ($curl === false) {
+        return ['body' => false, 'status' => 0, 'error' => 'curl_init_failed'];
+    }
+
+    $configured = curl_setopt_array($curl, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_POSTFIELDS => $body,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+    if (!$configured) {
+        curl_close($curl);
+        return ['body' => false, 'status' => 0, 'error' => 'curl_options_failed'];
+    }
+
+    $responseBody = curl_exec($curl);
+    $error = $responseBody === false ? curl_error($curl) : '';
+    $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+
+    return ['body' => $responseBody, 'status' => $status, 'error' => $error];
+}
+
 function geminiOcrValidateResult(array $resultado): array
 {
     $limites = [

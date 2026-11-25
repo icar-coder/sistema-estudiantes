@@ -25,5 +25,8 @@ return [
         'api_key' => '',
         'model' => 'gemini-3.1-flash-lite',
     ],
+    'openrouter' => [
+        'api_key' => '',
+    ],
     'offline_db_path' => dirname(__DIR__) . '/database/datos_locales.sqlite',
 ];

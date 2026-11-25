@@ -87,6 +87,41 @@ assertGeminiOcrTest(
     'Debe reducir los errores a códigos seguros y únicos, sin exponer mensajes remotos.'
 );
 
+assertGeminiOcrTest(
+    geminiOcrShouldFallbackToOpenRouter(408) &&
+    geminiOcrShouldFallbackToOpenRouter(503) &&
+    geminiOcrShouldFallbackToOpenRouter(429) &&
+    geminiOcrShouldFallbackToOpenRouter(0, true) &&
+    geminiOcrShouldFallbackToOpenRouter(200, false, 'failed', ['UNAVAILABLE']) &&
+    !geminiOcrShouldFallbackToOpenRouter(401) &&
+    !geminiOcrShouldFallbackToOpenRouter(403) &&
+    !geminiOcrShouldFallbackToOpenRouter(400) &&
+    !geminiOcrShouldFallbackToOpenRouter(404) &&
+    !geminiOcrShouldFallbackToOpenRouter(200, false, 'failed', ['SAFETY']),
+    'Solo los errores temporales de Gemini deben activar el fallback.'
+);
+
+$textoOpenRouter = geminiOcrOpenRouterResponseText([
+    'choices' => [
+        ['message' => ['content' => [
+            ['type' => 'text', 'text' => '{"estudiante":'],
+            ['type' => 'text', 'text' => '{"nombre":"Ana"}}'],
+        ]]],
+    ],
+]);
+assertGeminiOcrTest(
+    $textoOpenRouter === '{"estudiante":{"nombre":"Ana"}}',
+    'Debe extraer texto de la respuesta compatible de OpenRouter.'
+);
+
+$schemaEstricta = geminiOcrStrictJsonSchema(geminiOcrResponseSchema());
+assertGeminiOcrTest(
+    $schemaEstricta['additionalProperties'] === false &&
+    $schemaEstricta['properties']['estudiante']['additionalProperties'] === false &&
+    $schemaEstricta['properties']['representante']['additionalProperties'] === false,
+    'El esquema OpenRouter debe cerrar las propiedades de todos los objetos.'
+);
+
 $resultadoInvalido = $resultado;
 $resultadoInvalido['estudiante']['fecha_nacimiento'] = '2018-02-30';
 $rechazado = false;
