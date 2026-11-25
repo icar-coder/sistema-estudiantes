@@ -393,6 +393,76 @@ function escaparHistorial($valor): string
                         </div>
                     </div>
 
+                    <?php
+                    $indicadoresParaOcr = [];
+                    foreach ($areas as $areaOcr) {
+                        foreach ($indicadoresPorArea[(int) $areaOcr['id']] ?? [] as $indicadorOcr) {
+                            $indicadoresParaOcr[] = [
+                                'id' => (int) $indicadorOcr['id'],
+                                'text' => trim((string) ($indicadorOcr['descripcion'] ?: $indicadorOcr['nombre'])),
+                            ];
+                        }
+                    }
+                    ?>
+                    <section
+                        id="historial-ocr"
+                        class="card border-info mb-4"
+                        data-worker-url="<?php echo escaparHistorial(app_url('js/ocr/assets/worker.min.js')); ?>"
+                        data-core-url="<?php echo escaparHistorial(app_url('js/ocr/assets/tesseract-core-simd-lstm.wasm.js')); ?>"
+                        data-language-url="<?php echo escaparHistorial(app_url('js/ocr/assets/')); ?>"
+                        data-indicators="<?php echo escaparHistorial(json_encode($indicadoresParaOcr, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)); ?>"
+                    >
+                        <div class="card-header bg-info-subtle">
+                            <strong><i class="fas fa-file-image me-2"></i>Lectura local de la tabla de indicadores</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted">
+                                Las imágenes se procesan en este equipo y no se envían a Gemini. El OCR buscará las X
+                                bajo las columnas LE, L, PA, IP y NL; revisa las sugerencias antes de aplicarlas.
+                            </p>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-lg-6">
+                                    <label for="historial-ocr-files" class="form-label">Fotos o páginas del registro</label>
+                                    <input type="file" id="historial-ocr-files" class="form-control"
+                                           accept="image/jpeg,image/png,image/webp" multiple>
+                                    <div class="form-text">Hasta 5 imágenes JPG, PNG o WebP; máximo 12 MB cada una.</div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <label for="historial-ocr-rotation" class="form-label">Rotación</label>
+                                    <select id="historial-ocr-rotation" class="form-select">
+                                        <option value="0">Sin rotar</option>
+                                        <option value="90">90° a la derecha</option>
+                                        <option value="180">180°</option>
+                                        <option value="270">90° a la izquierda</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3">
+                                    <button type="button" class="btn btn-outline-primary w-100" id="historial-ocr-read">
+                                        <i class="fas fa-search me-1"></i>Analizar localmente
+                                    </button>
+                                </div>
+                            </div>
+                            <progress id="historial-ocr-progress" class="w-100 mt-3" max="100" value="0"></progress>
+                            <p id="historial-ocr-status" class="small mt-2 mb-0" role="status" aria-live="polite"></p>
+                            <div id="historial-ocr-results" class="mt-3" hidden>
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                                    <strong>Sugerencias detectadas</strong>
+                                    <button type="button" class="btn btn-sm btn-success" id="historial-ocr-apply" disabled>
+                                        Aplicar sugerencias
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr><th>Indicador del plan</th><th>Valoración detectada</th><th>Coincidencia aproximada</th></tr>
+                                        </thead>
+                                        <tbody id="historial-ocr-suggestions"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <?php foreach ($areas as $area): ?>
                         <?php $indicadores = $indicadoresPorArea[(int) $area['id']] ?? []; ?>
                         <?php if ($indicadores !== []): ?>
@@ -444,5 +514,8 @@ function escaparHistorial($valor): string
         <?php endif; ?>
     </div>
 </main>
+
+<script id="historial-ocr-library" src="<?php echo escaparHistorial(app_url('js/ocr/assets/tesseract.min.js')); ?>"></script>
+<script src="<?php echo escaparHistorial(app_url('js/ocr/historial_indicadores.js')); ?>"></script>
 
 <?php include '../../includes/footer.php'; ?>

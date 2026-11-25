@@ -548,6 +548,7 @@ $documentos_requeridos = [
                             documentos reales ni datos personales en esta función.
                         </label>
                     </div>
+                    <small class="d-block mt-2">Selecciona todas las imágenes primero y luego marca la confirmación. Si cambias la selección, tendrás que confirmarla de nuevo.</small>
                     <small class="d-block mt-2">Gemini procesa hasta 5 imágenes del mismo estudiante en una solicitud; las cuotas dependen del proyecto y pueden cambiar.</small>
                 </div>
                 <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
@@ -1280,7 +1281,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <?php if ($mostrar_formulario_completo): ?>
 <script id="ocr-tesseract-library" src="<?php echo htmlspecialchars(app_url('js/ocr/assets/tesseract.min.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
-<script src="<?php echo htmlspecialchars(app_url('js/ocr/registro.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<script src="<?php echo htmlspecialchars(
+    app_url('js/ocr/registro.js') . '?v=' . filemtime(__DIR__ . '/../../js/ocr/registro.js'),
+    ENT_QUOTES,
+    'UTF-8'
+); ?>"></script>
 <?php endif; ?>
 <script src="../../js/validaciones-formularios.js"></script>
 <?php include '../../includes/footer.php'; ?>

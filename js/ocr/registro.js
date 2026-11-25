@@ -329,6 +329,7 @@
             actualizarBotonGemini();
         });
         consentimientoGemini.addEventListener('change', actualizarBotonGemini);
+        actualizarBotonGemini();
 
         botonLeer.addEventListener('click', async () => {
             const seleccionados = Array.from(archivos.files || []);
