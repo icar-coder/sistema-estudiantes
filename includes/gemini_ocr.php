@@ -173,7 +173,7 @@ function geminiOcrModelSequence(array $preferredModels, array $fallbackModels = 
         if (!in_array($model, $models, true)) {
             $models[] = $model;
         }
-        if (count($models) > 3) {
+        if (count($models) > 7) {
             throw new InvalidArgumentException('La lista de modelos Gemini supera el máximo permitido.');
         }
     }

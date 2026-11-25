@@ -498,7 +498,7 @@ $documentos_requeridos = [
                 </p>
                 <div class="alert alert-warning" role="note">
                     La lectura local se procesa en este equipo. La evaluación en la nube envía las imágenes
-                    a hasta tres modelos de Google, uno tras otro; si ninguno puede procesarlas, se envían a
+                    a hasta siete modelos de Google, uno tras otro; si ninguno puede procesarlas, se envían a
                     OpenRouter y al modelo gratuito que elija su router. Esas empresas y el proveedor del
                     modelo tienen sus propias condiciones de privacidad. La aplicación no guarda las imágenes.
                 </div>
@@ -543,13 +543,13 @@ $documentos_requeridos = [
                         <input class="form-check-input" type="checkbox" id="ocr-gemini-consentimiento">
                         <label class="form-check-label" for="ocr-gemini-consentimiento">
                             Para esta evaluación confirmo que todas las imágenes seleccionadas son sintéticas
-                            o están completamente anonimizadas. Entiendo que pueden enviarse hasta a tres
+                            o están completamente anonimizadas. Entiendo que pueden enviarse hasta a siete
                             modelos de Google y, si ninguno las procesa, a OpenRouter y al proveedor del modelo
                             gratuito seleccionado. No usaré documentos reales ni datos personales en esta función.
                         </label>
                     </div>
                     <small class="d-block mt-2">Selecciona todas las imágenes primero y luego marca la confirmación. Si cambias la selección, tendrás que confirmarla de nuevo.</small>
-                    <small class="d-block mt-2">Se prueban hasta 5 imágenes del mismo estudiante con hasta 3 modelos Gemini en orden. Si fallan, se intenta OpenRouter; la disponibilidad y las cuotas pueden cambiar.</small>
+                    <small class="d-block mt-2">Se prueban hasta 5 imágenes del mismo estudiante con hasta 7 modelos Gemini en orden. Si fallan, se intenta OpenRouter; la disponibilidad y las cuotas pueden cambiar.</small>
                 </div>
                 <progress id="ocr-progreso" class="w-100 mb-2" max="100" value="0" aria-label="Progreso de lectura"></progress>
                 <p id="ocr-estado" class="mb-2" role="status" aria-live="polite"></p>

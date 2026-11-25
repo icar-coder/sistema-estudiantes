@@ -125,7 +125,11 @@ for ($indice = 0; $indice < $cantidadImagenes; $indice++) {
 $modelosPredeterminados = [
     'gemini-3.5-flash-lite',
     'gemini-3.8-flash',
+    'gemini-3.6-flash',
     'gemini-3.1-flash-lite',
+    'gemini-4-hydrogen',
+    'gemini-3-flash-preview',
+    'gemini-2.5-flash-lite',
 ];
 $modelosEnv = getenv('GEMINI_MODELS');
 if ($modelosEnv !== false && trim($modelosEnv) !== '') {
@@ -137,7 +141,7 @@ if ($modelosEnv !== false && trim($modelosEnv) !== '') {
     $modelosAlternativos = array_slice(
         array_values(array_diff($modelosPredeterminados, [trim($modeloPrincipalEnv)])),
         0,
-        2
+        6
     );
 } elseif (array_key_exists('models', $configGemini)) {
     if (!is_array($configGemini['models'])) {
@@ -159,7 +163,7 @@ if ($modelosEnv !== false && trim($modelosEnv) !== '') {
         $modelosAlternativos = array_slice(
             array_values(array_diff($modelosPredeterminados, [trim($modeloPrincipal)])),
             0,
-            2
+            6
         );
     }
 }
@@ -171,7 +175,7 @@ try {
 } catch (InvalidArgumentException $exception) {
     responderOcrGemini(500, [
         'error' => 'gemini_models_invalid',
-        'message' => 'La lista de modelos Gemini no es válida; configura de uno a tres modelos.',
+        'message' => 'La lista de modelos Gemini no es válida; configura de uno a siete modelos.',
     ]);
 }
 

@@ -502,7 +502,7 @@
                 imagenesPreparadas.forEach((imagenPreparada, indice) => {
                     datos.append('imagenes[]', imagenPreparada, `documento-${indice + 1}.jpg`);
                 });
-                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es): se probarán hasta 3 modelos Gemini y luego OpenRouter si es necesario.`;
+                estado.textContent = `Enviando ${imagenesPreparadas.length} imagen(es): se probarán hasta 7 modelos Gemini y luego OpenRouter si es necesario.`;
                 const respuesta = await fetch(panel.dataset.geminiUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
