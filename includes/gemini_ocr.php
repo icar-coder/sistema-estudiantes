@@ -118,6 +118,26 @@ function geminiOcrResponseText(array $respuesta): ?string
     return null;
 }
 
+function geminiOcrInteractionErrorCodes(array $errors): array
+{
+    $codes = [];
+    foreach ($errors as $error) {
+        if (!is_array($error) || !isset($error['code']) || !is_string($error['code'])) {
+            continue;
+        }
+        $code = $error['code'];
+        $separator = strrpos($code, '/');
+        if ($separator !== false) {
+            $code = substr($code, $separator + 1);
+        }
+        $code = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '_', $code));
+        if ($code !== '' && !in_array($code, $codes, true)) {
+            $codes[] = $code;
+        }
+    }
+    return $codes;
+}
+
 function geminiOcrValidateResult(array $resultado): array
 {
     $limites = [

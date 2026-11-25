@@ -76,6 +76,17 @@ $textoDirecto = geminiOcrResponseText([
 ]);
 assertGeminiOcrTest($textoDirecto === '{"ok":true}', 'Debe extraer texto de la respuesta REST directa.');
 
+$codigosError = geminiOcrInteractionErrorCodes([
+    ['code' => 'https://ai.google.dev/errors/RESOURCE_EXHAUSTED'],
+    ['code' => 'https://ai.google.dev/errors/RESOURCE_EXHAUSTED'],
+    ['message' => 'Este mensaje no debe tratarse como código.'],
+    ['code' => 'INVALID ARGUMENT'],
+]);
+assertGeminiOcrTest(
+    $codigosError === ['RESOURCE_EXHAUSTED', 'INVALID_ARGUMENT'],
+    'Debe reducir los errores a códigos seguros y únicos, sin exponer mensajes remotos.'
+);
+
 $resultadoInvalido = $resultado;
 $resultadoInvalido['estudiante']['fecha_nacimiento'] = '2018-02-30';
 $rechazado = false;

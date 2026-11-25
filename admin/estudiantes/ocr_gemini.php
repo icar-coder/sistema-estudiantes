@@ -242,7 +242,44 @@ if (!is_array($respuestaDecodificada)) {
 $interaccion = $respuestaDecodificada['interaction'] ?? $respuestaDecodificada;
 if (is_array($interaccion) && isset($interaccion['status']) &&
     $interaccion['status'] !== 'completed') {
-    responderOcrGemini(502, ['error' => 'gemini_interaction_incomplete', 'message' => 'Gemini no terminó de procesar la imagen. Inténtalo más tarde.']);
+    $estadoInteraccion = is_string($interaccion['status'])
+        ? $interaccion['status']
+        : 'unknown';
+    $erroresInteraccion = isset($interaccion['errors']) && is_array($interaccion['errors'])
+        ? geminiOcrInteractionErrorCodes($interaccion['errors'])
+        : [];
+    error_log(
+        'OCR Gemini interaction terminó con estado ' .
+        preg_replace('/[^a-z_]/', '', $estadoInteraccion) .
+        ($erroresInteraccion ? ' (' . implode(',', $erroresInteraccion) . ')' : '') . '.'
+    );
+
+    $detalleEstado = $estadoInteraccion;
+    if ($erroresInteraccion) {
+        $detalleEstado .= ', código ' . implode(', ', $erroresInteraccion);
+    }
+    if ($estadoInteraccion === 'incomplete') {
+        responderOcrGemini(502, [
+            'error' => 'gemini_output_incomplete',
+            'message' => 'Gemini inició la lectura, pero su respuesta quedó incompleta (' . $detalleEstado . '). Reduce la cantidad de imágenes o prueba de nuevo.',
+        ]);
+    }
+    if ($estadoInteraccion === 'in_progress') {
+        responderOcrGemini(502, [
+            'error' => 'gemini_still_processing',
+            'message' => 'Gemini aún no terminó la lectura (' . $detalleEstado . '). Espera un momento antes de volver a intentarlo.',
+        ]);
+    }
+    if ($estadoInteraccion === 'failed') {
+        responderOcrGemini(502, [
+            'error' => 'gemini_processing_failed',
+            'message' => 'Google aceptó la solicitud, pero falló al procesar las imágenes (' . $detalleEstado . '). Comprueba el modelo y la cuota en Google AI Studio.',
+        ]);
+    }
+    responderOcrGemini(502, [
+        'error' => 'gemini_interaction_incomplete',
+        'message' => 'Gemini no devolvió una lectura completa (estado: ' . $detalleEstado . ').',
+    ]);
 }
 
 $textoRespuesta = geminiOcrResponseText($respuestaDecodificada);
