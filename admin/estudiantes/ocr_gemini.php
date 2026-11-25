@@ -174,8 +174,42 @@ if ($estadoApi === 401 || $estadoApi === 403) {
     responderOcrGemini(503, ['error' => 'gemini_auth_failed', 'message' => 'Gemini rechazó la configuración de autenticación del servidor.']);
 }
 if ($estadoApi < 200 || $estadoApi >= 300) {
-    error_log('Error de servicio OCR Gemini (HTTP ' . $estadoApi . ').');
-    responderOcrGemini(502, ['error' => 'gemini_request_failed', 'message' => 'Gemini no pudo procesar la imagen. Inténtalo más tarde.']);
+    $respuestaErrorApi = json_decode($respuestaApi, true);
+    $estadoErrorApi = is_array($respuestaErrorApi)
+        ? ($respuestaErrorApi['error']['status'] ?? '')
+        : '';
+    if (!is_string($estadoErrorApi) ||
+        !preg_match('/^[A-Z_]{1,60}$/', $estadoErrorApi)) {
+        $estadoErrorApi = 'UNKNOWN';
+    }
+
+    error_log(
+        'Error de servicio OCR Gemini (HTTP ' . $estadoApi .
+        ', estado ' . $estadoErrorApi . ').'
+    );
+
+    if ($estadoApi === 400) {
+        responderOcrGemini(502, [
+            'error' => 'gemini_request_invalid',
+            'message' => 'Google rechazó la solicitud (HTTP 400). Revisa el modelo y el formato de la solicitud.',
+        ]);
+    }
+    if ($estadoApi === 404) {
+        responderOcrGemini(502, [
+            'error' => 'gemini_model_unavailable',
+            'message' => 'El modelo Gemini configurado no está disponible para este proyecto (HTTP 404). Revisa GEMINI_MODEL.',
+        ]);
+    }
+    if ($estadoApi >= 500) {
+        responderOcrGemini(502, [
+            'error' => 'gemini_service_error',
+            'message' => 'El servicio de Gemini presentó un error (HTTP ' . $estadoApi . '). Inténtalo más tarde.',
+        ]);
+    }
+    responderOcrGemini(502, [
+        'error' => 'gemini_request_failed',
+        'message' => 'Google rechazó la solicitud de Gemini (HTTP ' . $estadoApi . ').',
+    ]);
 }
 
 $respuestaDecodificada = json_decode($respuestaApi, true);
