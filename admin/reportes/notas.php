@@ -149,6 +149,8 @@ if ($año_escolar_id) {
         );
         $estadisticas['literales_finales'] = $estadisticasLiteralesFinales['literales_finales'];
         $estadisticas['top_estudiantes'] = $estadisticasLiteralesFinales['top_estudiantes'];
+        $estadisticas['literales_historicos_por_grado'] =
+            obtenerResumenLiteralesHistoricosPorGrado($pdo, (int) $año_escolar_id);
 
         // Estadísticas de evaluación por áreas de aprendizaje
         $stmt = $pdo->prepare("
@@ -212,6 +214,15 @@ if ($año_escolar_id) {
         foreach ($estadisticas['literales_finales'] as $final) {
             $datos_graficas['labels_finales'][] = "Literal " . $final['literal'];
             $datos_graficas['data_finales'][] = intval($final['cantidad']);
+        }
+
+        $datos_graficas['labels_historicos_grado'] =
+            array_keys($estadisticas['literales_historicos_por_grado']);
+        foreach (['A', 'B', 'C', 'D', 'E'] as $literal) {
+            $datos_graficas['data_historicos_grado_' . $literal] = [];
+            foreach ($estadisticas['literales_historicos_por_grado'] as $grado) {
+                $datos_graficas['data_historicos_grado_' . $literal][] = $grado[$literal];
+            }
         }
 
         // Datos para gráfica de áreas de aprendizaje
@@ -435,6 +446,30 @@ function getLiteralColor($literal) {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-graduation-cap me-2"></i>Literales Finales Históricos por Grado
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($estadisticas['literales_historicos_por_grado'])): ?>
+                                    <p class="small text-muted">
+                                        Solo historiales sin inscripción para ese año; esta gráfica no depende de sección ni lapso.
+                                    </p>
+                                    <canvas id="chartLiteralesHistoricosGrado" height="240"></canvas>
+                                <?php else: ?>
+                                    <p class="text-muted mb-0">
+                                        No hay literales finales históricos por grado para este año escolar.
+                                    </p>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -681,6 +716,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 plugins: {
                     legend: {
                         position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfica de literales históricos por grado
+    if (datosGraficas.labels_historicos_grado && datosGraficas.labels_historicos_grado.length > 0) {
+        const ctxHistoricos = document.getElementById('chartLiteralesHistoricosGrado').getContext('2d');
+        const coloresHistoricos = [
+            'rgba(40, 167, 69, 0.8)',
+            'rgba(23, 162, 184, 0.8)',
+            'rgba(0, 123, 255, 0.8)',
+            'rgba(255, 193, 7, 0.8)',
+            'rgba(220, 53, 69, 0.8)'
+        ];
+        new Chart(ctxHistoricos, {
+            type: 'bar',
+            data: {
+                labels: datosGraficas.labels_historicos_grado,
+                datasets: ['A', 'B', 'C', 'D', 'E'].map((literal, index) => ({
+                    label: 'Literal ' + literal,
+                    data: datosGraficas['data_historicos_grado_' + literal],
+                    backgroundColor: coloresHistoricos[index],
+                    borderColor: coloresHistoricos[index].replace('0.8', '1'),
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { stacked: true },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        title: {
+                            display: true,
+                            text: 'Cantidad de estudiantes'
+                        }
                     }
                 }
             }

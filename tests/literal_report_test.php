@@ -26,6 +26,12 @@ $pdo->exec('CREATE TABLE `estudiantes` (
     `apellido` TEXT
 )');
 $pdo->exec('CREATE TABLE `secciones` (`id` INTEGER PRIMARY KEY, `nombre` TEXT)');
+$pdo->exec('CREATE TABLE `grados` (
+    `id` INTEGER PRIMARY KEY,
+    `nombre` TEXT,
+    `numero` INTEGER,
+    `orden` INTEGER
+)');
 $pdo->exec('CREATE TABLE `lapsos` (
     `id` INTEGER PRIMARY KEY,
     `año_escolar_id` INTEGER,
@@ -50,6 +56,7 @@ $pdo->exec('CREATE TABLE `historial_academico` (
     `id` INTEGER PRIMARY KEY,
     `estudiante_id` INTEGER,
     `año_escolar_id` INTEGER,
+    `grado_id` INTEGER,
     `literal_final` TEXT
 )');
 $pdo->exec('CREATE TABLE `areas_aprendizaje` (
@@ -77,6 +84,9 @@ $pdo->exec('CREATE TABLE `plan_anual_indicadores` (
 )');
 
 $pdo->exec("INSERT INTO `secciones` VALUES (10, 'A'), (20, 'B'), (30, 'C')");
+$pdo->exec("INSERT INTO `grados` VALUES
+    (1, 'Primer Grado', 1, 1),
+    (2, 'Segundo Grado', 2, 2)");
 $pdo->exec("INSERT INTO `lapsos` VALUES
     (101, 1, 'Primer lapso', 1),
     (102, 1, 'Segundo lapso', 2),
@@ -100,9 +110,9 @@ $pdo->exec("INSERT INTO `literales_finales` VALUES
     (2, 13, 1, 'A'),
     (3, 14, 2, 'E')");
 $pdo->exec("INSERT INTO `historial_academico` VALUES
-    (21, 1, 1, 'B'),
-    (22, 3, 1, 'A'),
-    (23, 4, 1, 'A')");
+    (21, 1, 1, 1, 'B'),
+    (22, 3, 1, 2, 'A'),
+    (23, 4, 1, 2, 'A')");
 $pdo->exec("INSERT INTO `areas_aprendizaje` VALUES
     (1, 'Lengua'),
     (2, 'Matematica')");
@@ -187,6 +197,13 @@ assertLiteralReportTest(
     $estadisticasSeccion['literales_finales'][0]['literal'] === 'B' &&
     count($estadisticasSeccion['top_estudiantes']) === 1,
     'Las estadísticas de literales finales deben respetar el filtro por sección.'
+);
+
+$historicosPorGrado = obtenerResumenLiteralesHistoricosPorGrado($pdo, 1);
+assertLiteralReportTest(
+    count($historicosPorGrado) === 1 &&
+    $historicosPorGrado['Segundo Grado']['A'] === 1,
+    'El resumen histórico debe agrupar el literal final por grado y excluir inscripciones del mismo año.'
 );
 
 $resumenIndicadores = obtenerResumenIndicadores($pdo, 1);

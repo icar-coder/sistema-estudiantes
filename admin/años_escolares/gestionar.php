@@ -59,8 +59,8 @@ if (isset($_GET['eliminar'])) {
 try {
     $stmt = $pdo->query("
         SELECT ae.*,
-               COUNT(s.id) as total_secciones,
-               COUNT(i.id) as total_inscripciones
+               COUNT(DISTINCT s.id) as total_secciones,
+               COUNT(DISTINCT i.id) as total_inscripciones
         FROM años_escolares ae
         LEFT JOIN secciones s ON ae.id = s.año_escolar_id
         LEFT JOIN inscripciones i ON ae.id = i.año_escolar_id

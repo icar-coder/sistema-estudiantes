@@ -72,6 +72,41 @@ function obtenerEstadisticasLiteralesFinales(
     ];
 }
 
+function obtenerResumenLiteralesHistoricosPorGrado(PDO $pdo, int $añoEscolarId): array
+{
+    $statement = $pdo->prepare(
+        'SELECT COALESCE(g.`nombre`, \'Grado sin especificar\') AS `grado`,
+                ha.`literal_final` AS `literal`,
+                COUNT(*) AS `cantidad`
+         FROM `historial_academico` ha
+         LEFT JOIN `grados` g ON g.`id` = ha.`grado_id`
+         WHERE ha.`año_escolar_id` = ?
+           AND ha.`literal_final` IN (\'A\', \'B\', \'C\', \'D\', \'E\')
+           AND NOT EXISTS (
+               SELECT 1
+               FROM `inscripciones` i
+               WHERE i.`estudiante_id` = ha.`estudiante_id`
+                 AND i.`año_escolar_id` = ha.`año_escolar_id`
+           )
+         GROUP BY g.`id`, g.`nombre`, g.`orden`, g.`numero`, ha.`literal_final`
+         ORDER BY COALESCE(g.`orden`, 2147483647),
+                  COALESCE(g.`numero`, 2147483647),
+                  `grado`, ha.`literal_final`'
+    );
+    $statement->execute([$añoEscolarId]);
+
+    $resumen = [];
+    foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $registro) {
+        $grado = (string) $registro['grado'];
+        if (!isset($resumen[$grado])) {
+            $resumen[$grado] = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0];
+        }
+        $resumen[$grado][$registro['literal']] = (int) $registro['cantidad'];
+    }
+
+    return $resumen;
+}
+
 function obtenerResumenIndicadores(
     PDO $pdo,
     int $añoEscolarId,
