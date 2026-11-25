@@ -23,7 +23,7 @@ return [
     ],
     'gemini' => [
         'api_key' => '',
-        'model' => 'gemini-4-hydrogen',
+        'model' => 'gemini-3.1-flash-lite',
     ],
     'offline_db_path' => dirname(__DIR__) . '/database/datos_locales.sqlite',
 ];

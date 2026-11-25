@@ -91,7 +91,7 @@ if ($contenidoImagen === false) {
 
 $modelo = getenv('GEMINI_MODEL');
 if ($modelo === false || trim($modelo) === '') {
-    $modelo = $configGemini['model'] ?? 'gemini-4-hydrogen';
+    $modelo = $configGemini['model'] ?? 'gemini-3.1-flash-lite';
 }
 if (!is_string($modelo) || !preg_match('/^[A-Za-z0-9._-]{1,80}$/', $modelo)) {
     responderOcrGemini(500, ['error' => 'gemini_model_invalid', 'message' => 'El modelo Gemini configurado no es válido.']);
