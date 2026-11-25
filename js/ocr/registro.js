@@ -444,6 +444,9 @@
         });
 
         botonGemini.addEventListener('click', async () => {
+            if (procesoActivo || panel.dataset.geminiRequestActive === 'true') {
+                return;
+            }
             const seleccionados = Array.from(archivos.files || []);
             if (!consentimientoGemini.checked) {
                 estado.textContent = 'Confirma que la imagen es sintética o está completamente anonimizada.';
@@ -462,10 +465,12 @@
             }
 
             procesoActivo = true;
+            panel.dataset.geminiRequestActive = 'true';
             botonLeer.disabled = true;
             archivos.disabled = true;
             rotacion.disabled = true;
             consentimientoGemini.disabled = true;
+            botonGemini.disabled = true;
             actualizarBotonGemini();
             botonAplicar.disabled = true;
             progreso.value = 0;
@@ -580,6 +585,7 @@
                 consentimientoGemini.disabled = false;
                 botonLeer.disabled = false;
                 procesoActivo = false;
+                panel.dataset.geminiRequestActive = 'false';
                 actualizarBotonGemini();
             }
         });
