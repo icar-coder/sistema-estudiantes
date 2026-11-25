@@ -297,6 +297,38 @@
         return true;
     }
 
+    function aplicarTelefono(prefijo, valor, alternativo) {
+        let digitos = String(valor || '').replace(/\D/g, '');
+        if (digitos.length === 12 && digitos.startsWith('58')) {
+            digitos = `0${digitos.slice(2)}`;
+        } else if (digitos.length === 10 && /^4/.test(digitos)) {
+            digitos = `0${digitos}`;
+        }
+
+        let codigo = '';
+        let numero = '';
+        const telefonoValido = digitos.match(/^(04(?:12|14|16|24|26))(\d{7})$/);
+        if (telefonoValido) {
+            codigo = telefonoValido[1];
+            numero = telefonoValido[2];
+        } else if (/^\d{7}$/.test(digitos)) {
+            numero = digitos;
+        } else {
+            return 0;
+        }
+
+        const base = prefijo ? `${prefijo}_telefono` : 'telefono';
+        const sufijo = alternativo ? '_alternativo' : '';
+        let aplicados = 0;
+        if (codigo && establecerValorSiVacio(`${base}${sufijo}_codigo`, codigo)) {
+            aplicados += 1;
+        }
+        if (numero && establecerValorSiVacio(`${base}${sufijo}_numero`, numero)) {
+            aplicados += 1;
+        }
+        return aplicados;
+    }
+
     function inicializar() {
         const panel = document.getElementById('ocr-registro');
         if (!panel) {
@@ -488,21 +520,36 @@
 
                 const nombresCampos = {
                     estudiante: {
+                        cedula_escolar: 'cedula_escolar',
                         nombre: 'nombre',
                         apellido: 'apellido',
                         fecha_nacimiento: 'fecha_nacimiento',
                         genero: 'genero',
                         lugar_nacimiento: 'lugar_nacimiento',
+                        telefono: 'telefono_completo',
                         direccion: 'direccion',
                         escuela_anterior: 'escuela_anterior',
-                        email: 'email'
+                        email: 'email',
+                        tipo_vivienda: 'tipo_vivienda',
+                        personas_conviven: 'personas_conviven',
+                        documentos_presentados: 'documentos_presentados',
+                        habilidades_especiales: 'habilidades_especiales',
+                        enfermedades: 'enfermedades',
+                        alergias: 'alergias',
+                        medicamentos: 'medicamentos',
+                        observaciones: 'observaciones'
                     },
                     representante: {
                         nombre: 'representante_nombre',
                         apellido: 'representante_apellido',
                         cedula: 'representante_cedula',
+                        parentesco: 'representante_parentesco',
+                        telefono: 'representante_telefono_completo',
+                        telefono_alternativo: 'representante_telefono_alternativo_completo',
                         fecha_nacimiento: 'representante_fecha_nacimiento',
                         genero: 'representante_genero',
+                        profesion: 'representante_profesion',
+                        lugar_trabajo: 'representante_lugar_trabajo',
                         direccion: 'representante_direccion',
                         email: 'representante_email'
                     }
@@ -511,7 +558,7 @@
                 for (const [grupo, campos] of Object.entries(nombresCampos)) {
                     for (const [campo, nombreFormulario] of Object.entries(campos)) {
                         const valor = contenido.result[grupo][campo];
-                        if (valor) {
+                        if (Array.isArray(valor) ? valor.length > 0 : valor) {
                             sugerenciasActuales[nombreFormulario] = valor;
                         }
                     }
@@ -551,6 +598,31 @@
             delete sugerencias.representante_cedula_sugerida;
             delete sugerencias.representante_telefono;
             for (const [nombre, valor] of Object.entries(sugerencias)) {
+                if (nombre === 'documentos_presentados' && Array.isArray(valor)) {
+                    for (const documento of valor) {
+                        const casilla = document.querySelector(
+                            `input[name="documentos_presentados[]"][value="${documento}"]`
+                        );
+                        if (casilla && !casilla.checked) {
+                            casilla.checked = true;
+                            casilla.dispatchEvent(new Event('change', { bubbles: true }));
+                            aplicadas += 1;
+                        }
+                    }
+                    continue;
+                }
+                if (nombre === 'telefono_completo') {
+                    aplicadas += aplicarTelefono('', valor, false);
+                    continue;
+                }
+                if (nombre === 'representante_telefono_completo') {
+                    aplicadas += aplicarTelefono('representante', valor, false);
+                    continue;
+                }
+                if (nombre === 'representante_telefono_alternativo_completo') {
+                    aplicadas += aplicarTelefono('representante', valor, true);
+                    continue;
+                }
                 if (establecerValorSiVacio(nombre, valor)) {
                     aplicadas += 1;
                 }

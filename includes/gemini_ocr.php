@@ -3,23 +3,45 @@
 function geminiOcrResponseSchema(): array
 {
     $campos = [
+        'cedula_escolar' => 20,
         'nombre' => 100,
         'apellido' => 100,
         'fecha_nacimiento' => 10,
         'genero' => 10,
         'lugar_nacimiento' => 100,
+        'telefono' => 20,
         'direccion' => 500,
         'escuela_anterior' => 255,
         'email' => 255,
+        'tipo_vivienda' => 20,
+        'personas_conviven' => 2,
+        'habilidades_especiales' => 500,
+        'enfermedades' => 500,
+        'alergias' => 500,
+        'medicamentos' => 500,
+        'observaciones' => 1000,
     ];
     $representante = [
         'nombre' => 100,
         'apellido' => 100,
         'cedula' => 20,
+        'parentesco' => 10,
+        'telefono' => 20,
+        'telefono_alternativo' => 20,
         'fecha_nacimiento' => 10,
         'genero' => 10,
+        'profesion' => 100,
+        'lugar_trabajo' => 255,
         'direccion' => 500,
         'email' => 255,
+    ];
+    $documentosPresentados = [
+        'acta_nacimiento',
+        'cedula_representante',
+        'fotos',
+        'certificado_medico',
+        'boleta_anterior',
+        'partida_bautismo',
     ];
     $crearPropiedades = static function (array $definiciones): array {
         $propiedades = [];
@@ -32,18 +54,41 @@ function geminiOcrResponseSchema(): array
         $propiedades['genero']['enum'] = ['masculino', 'femenino', ''];
         return $propiedades;
     };
+    $propiedadesEstudiante = $crearPropiedades($campos);
+    $propiedadesEstudiante['tipo_vivienda']['enum'] = ['', 'Propia', 'Alquilada', 'Familiar', 'Otro'];
+    $propiedadesEstudiante['documentos_presentados'] = [
+        'type' => 'array',
+        'items' => [
+            'type' => 'string',
+            'enum' => $documentosPresentados,
+        ],
+        'maxItems' => count($documentosPresentados),
+    ];
+    $propiedadesRepresentante = $crearPropiedades($representante);
+    $propiedadesRepresentante['parentesco']['enum'] = [
+        '',
+        'madre',
+        'padre',
+        'abuelo',
+        'abuela',
+        'tio',
+        'tia',
+        'hermano',
+        'hermana',
+        'otro',
+    ];
 
     return [
         'type' => 'object',
         'properties' => [
             'estudiante' => [
                 'type' => 'object',
-                'properties' => $crearPropiedades($campos),
-                'required' => array_keys($campos),
+                'properties' => $propiedadesEstudiante,
+                'required' => array_merge(array_keys($campos), ['documentos_presentados']),
             ],
             'representante' => [
                 'type' => 'object',
-                'properties' => $crearPropiedades($representante),
+                'properties' => $propiedadesRepresentante,
                 'required' => array_keys($representante),
             ],
         ],
@@ -77,24 +122,46 @@ function geminiOcrValidateResult(array $resultado): array
 {
     $limites = [
         'estudiante' => [
+            'cedula_escolar' => 20,
             'nombre' => 100,
             'apellido' => 100,
             'fecha_nacimiento' => 10,
             'genero' => 10,
             'lugar_nacimiento' => 100,
+            'telefono' => 20,
             'direccion' => 500,
             'escuela_anterior' => 255,
             'email' => 255,
+            'tipo_vivienda' => 20,
+            'personas_conviven' => 2,
+            'habilidades_especiales' => 500,
+            'enfermedades' => 500,
+            'alergias' => 500,
+            'medicamentos' => 500,
+            'observaciones' => 1000,
         ],
         'representante' => [
             'nombre' => 100,
             'apellido' => 100,
             'cedula' => 20,
+            'parentesco' => 10,
+            'telefono' => 20,
+            'telefono_alternativo' => 20,
             'fecha_nacimiento' => 10,
             'genero' => 10,
+            'profesion' => 100,
+            'lugar_trabajo' => 255,
             'direccion' => 500,
             'email' => 255,
         ],
+    ];
+    $documentosPermitidos = [
+        'acta_nacimiento',
+        'cedula_representante',
+        'fotos',
+        'certificado_medico',
+        'boleta_anterior',
+        'partida_bautismo',
     ];
 
     $validado = [];
@@ -103,6 +170,22 @@ function geminiOcrValidateResult(array $resultado): array
             throw new InvalidArgumentException('Falta el grupo de datos esperado.');
         }
         $validado[$grupo] = [];
+        if ($grupo === 'estudiante') {
+            $documentos = $resultado[$grupo]['documentos_presentados'] ?? null;
+            if (!is_array($documentos) || count($documentos) > count($documentosPermitidos)) {
+                throw new InvalidArgumentException('La lista de documentos no es válida.');
+            }
+            $documentosValidados = [];
+            foreach ($documentos as $documento) {
+                if (!is_string($documento) ||
+                    !in_array($documento, $documentosPermitidos, true) ||
+                    in_array($documento, $documentosValidados, true)) {
+                    throw new InvalidArgumentException('La lista contiene documentos no permitidos.');
+                }
+                $documentosValidados[] = $documento;
+            }
+            $validado[$grupo]['documentos_presentados'] = $documentosValidados;
+        }
         foreach ($campos as $campo => $maximo) {
             $valor = $resultado[$grupo][$campo] ?? null;
             if (!is_string($valor)) {
@@ -121,6 +204,22 @@ function geminiOcrValidateResult(array $resultado): array
             }
             if ($campo === 'genero' && !in_array($valor, ['', 'masculino', 'femenino'], true)) {
                 throw new InvalidArgumentException('El género no está permitido.');
+            }
+            if ($campo === 'tipo_vivienda' &&
+                !in_array($valor, ['', 'Propia', 'Alquilada', 'Familiar', 'Otro'], true)) {
+                throw new InvalidArgumentException('El tipo de vivienda no está permitido.');
+            }
+            if ($campo === 'parentesco' &&
+                !in_array($valor, ['', 'madre', 'padre', 'abuelo', 'abuela', 'tio', 'tia', 'hermano', 'hermana', 'otro'], true)) {
+                throw new InvalidArgumentException('El parentesco no está permitido.');
+            }
+            if ($campo === 'personas_conviven' && $valor !== '' &&
+                (!ctype_digit($valor) || (int) $valor < 1 || (int) $valor > 20)) {
+                throw new InvalidArgumentException('La cantidad de personas que conviven no es válida.');
+            }
+            if ($campo === 'cedula_escolar' && $valor !== '' &&
+                !preg_match('/^[A-Za-z0-9]{1,20}$/', $valor)) {
+                throw new InvalidArgumentException('La cédula escolar no es válida.');
             }
             $validado[$grupo][$campo] = $valor;
         }
